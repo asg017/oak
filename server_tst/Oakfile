@@ -1,0 +1,21 @@
+{
+  "variables": [
+    "raw_csv": "./temp/raw.csv",
+    "all_clean": "./temp/all_clean.csv",
+    "la_only": "./temp/la_only.csv",
+    "la_uniq": "./temp/la_uniq.csv",
+    "by_year_graphic": "./out/by_year.svg",
+  ],
+  "deps": {
+    "raw_csv": [],
+    "all_clean": ["raw_csv"],
+    "la_only": ["all_clean"],
+    "la_uniq": ["la_only"],
+    "by_year_graphic": ["la_uniq"],
+  }
+  "recipes": {
+    "raw_csv": "wget https://......",
+    "all_clean": "python clean_all.py ${raw_csv} ${all_clean}",
+  }
+
+}
