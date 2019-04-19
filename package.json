@@ -1,5 +1,7 @@
 {
   "dependencies": {
-    "@observablehq/runtime": "^3.0.7"
+    "@observablehq/runtime": "^4.0.1",
+    "express": "^4.16.4",
+    "socket.io": "^2.2.0"
   }
 }
