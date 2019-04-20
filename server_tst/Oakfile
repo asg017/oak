@@ -3,27 +3,27 @@
     "raw_csv": {
       "deps": [],
       "filename":  "./temp/raw.csv",
-      "recipe": "wget https://......"
+      "recipe": "echo 'raw_csv yo'"
     },
     "all_clean": {
       "deps": ["raw_csv"],
       "filename": "./temp/all_clean.csv",
-      "recipe": "python clean_all.py ${raw_csv} ${all_clean}"
+      "recipe": "echo 'all_clean yo'"
     } ,
     "la_only": {
       "deps": ["all_clean"],
       "filename":  "./temp/la_only.csv",
-      "recipe": ""
+      "recipe": "echo 'la_only yo'"
     },
     "la_uniq": {
       "deps": ["la_only"],
       "filename": "./temp/la_uniq.csv",
-      "recipe": ""
+      "recipe": "echo 'la_uniq yo'"
     } ,
     "by_year_graphic": {
       "deps": ["la_uniq"],
       "filename": "./out/by_year.svg",
-      "recipe": ""
+      "recipe": "echo 'by_year_graphic yo'"
     }
   }
 }
