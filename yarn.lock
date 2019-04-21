@@ -18,7 +18,7 @@
     "@observablehq/stdlib" "^3.0.0"
     esm "^3.0.84"
 
-"@observablehq/stdlib@^3.0.0":
+"@observablehq/stdlib@^3.0.0", "@observablehq/stdlib@^3.0.2":
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/@observablehq/stdlib/-/stdlib-3.0.2.tgz#3db9d86b44fb8d2c38bcdd6c2d510360ad547de3"
   integrity sha512-ggAHBPVfTTD+oy5ZVxKfd7Qn9e6I+6U1pjfG6XLIW5vFeu+XzkzWHeOwqCOYJAM4o3TNYZPRIL7XHiPIy0SHTg==
@@ -354,7 +354,12 @@ isarray@2.0.1:
 
 "marked@git+https://github.com/observablehq/marked.git#94c6b946f462fd25db4465d71a6859183f86c57f":
   version "0.3.12"
+  uid "94c6b946f462fd25db4465d71a6859183f86c57f"
   resolved "git+https://github.com/observablehq/marked.git#94c6b946f462fd25db4465d71a6859183f86c57f"
+
+"marked@https://github.com/observablehq/marked.git#94c6b946f462fd25db4465d71a6859183f86c57f":
+  version "0.3.12"
+  resolved "https://github.com/observablehq/marked.git#94c6b946f462fd25db4465d71a6859183f86c57f"
 
 media-typer@0.3.0:
   version "0.3.0"
