@@ -9,7 +9,7 @@ class OakInspector {
   }
 
   pending() {
-    logger.info(`pending called`);
+    logger.info(`${this.initialName} pending called`);
     if (this.socket)
       this.socket.emit("pending", { initialName: this.initialName });
   }

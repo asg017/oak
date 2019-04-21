@@ -5,7 +5,7 @@ const logDate = timeFormat("%Y-%m-%d %H-%M-%S.%L");
 const createLogger = config => {
   const { label = "UNNAMED" } = config;
   return winston.createLogger({
-    level: "info",
+    level: "debug",
     format: winston.format.combine(
       winston.format.label({ label }),
       winston.format.prettyPrint(),
