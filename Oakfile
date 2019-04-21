@@ -8,7 +8,7 @@
     "all_clean": {
       "deps": ["raw_csv"],
       "filename": "./temp/all_clean.csv",
-      "recipe": "echo -n 'all_clean yo' > ${all_clean}"
+      "recipe": "echo -n 'all_clean yo' > ${all_clean} && echo 'all clean'"
     } ,
     "la_only": {
       "deps": ["all_clean"],
@@ -23,17 +23,17 @@
     "by_year_graphic": {
       "deps": ["la_uniq"],
       "filename": "./temp/by_year.svg",
-      "recipe": "echo -n 'by_year_graphic yo' > ${by_year_graphic}"
+      "recipe": "echo -n 'by_year_graphic yo' > ${by_year_graphic} && echo 'year graphic'"
     },
     "front_graphic": {
       "deps": ["la_uniq"],
       "filename": "./temp/front.svg",
-      "recipe": "echo -n 'front_graphic yo' > ${front_graphic} && echo 'yay'"
+      "recipe": "echo -n 'front_graphic yo' > ${front_graphic} && echo 'front graphic'"
     },
     "twitter_graphic": {
       "deps": ["la_uniq"],
       "filename": "./temp/twitter.svg",
-      "recipe": "echo -n 'twitter_graphic yo' > ${twitter_graphic}"
+      "recipe": "echo -n 'twitter_graphic yo' > ${twitter_graphic} && echo 'twitter graphic'"
     }
   }
 }
