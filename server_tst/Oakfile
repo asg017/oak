@@ -18,7 +18,7 @@
     "la_uniq": {
       "deps": ["la_only"],
       "filename": "./temp/la_uniq.csv",
-      "recipe": "echo -n 'la_uniq yo' > ${la_uniq}"
+      "recipe": "sleep 1 && echo -n 'la_uniq yo' > ${la_uniq}"
     } ,
     "by_year_graphic": {
       "deps": ["la_uniq"],

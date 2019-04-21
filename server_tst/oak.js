@@ -24,6 +24,7 @@ app.post("/update", (req, res) => {
 
 io.on("connection", socket => {
   console.log("connection!");
+  socket.emit("oakfile", Oak);
   socket.on("disconnect", socket => {
     console.log("disconnected!");
   });
@@ -33,14 +34,41 @@ server.listen(port, () =>
   console.log(`socket.io update server listening on ${port}!`)
 );
 
-const runtime = new Runtime();
-const inspector = new OakInspector();
-const m = runtime.module();
+const loadOakfile = ({ path = "Oakfile", cleanRecipe = true }) => {
+  return new Promise(function(resolve, reject) {
+    fs.readFile(path, "utf8", (err, contents) => {
+      if (err) reject(err);
+      try {
+        const oak = JSON.parse(contents);
+      } catch (err) {
+        reject(err);
+      }
+      if (cleanRecipe) {
+        for (let key in oak.variables) {
+          let { recipe } = oak.variables[key];
+          for (let key2 in oak.variables) {
+            recipe = recipe.replace(
+              `\${${key2}}`,
+              oak.variables[key2].filename
+            );
+          }
+          console.log(`New recipe: ${recipe}`);
+          oak.variables[key].recipe = recipe;
+        }
+      }
+      resolve(oak);
+    });
+  });
+};
 
+const runtime = new Runtime();
+const inspector = new OakInspector(io);
+const m = runtime.module();
+let Oak;
 fs.readFile("Oakfile", "utf8", (err, contents) => {
   if (err) throw err;
   const oak = JSON.parse(contents);
-
+  Oak = oak;
   for (let key in oak.variables) {
     let { recipe } = oak.variables[key];
     for (let key2 in oak.variables) {
@@ -54,50 +82,41 @@ fs.readFile("Oakfile", "utf8", (err, contents) => {
     const variable = oak.variables[key];
     console.log(variable);
     const { recipe, filename, deps } = variable;
-    deps.push("invalidation");
-    m.variable(inspector).define(key, deps, function() {
-      return Generators.observe(change => {
-        for (let i = 0; i < arguments.length; i++) {
-          console.log(
-            `\t${key}|argument[${i}]="${arguments[i]}" ${i !==
-              arguments.length - 1 && oak.variables[arguments[i]].filename}`
-          );
-        }
-        const watch = (curr, prev) => {
-          console.log(`${key} file update???`);
-          change(key);
-        };
-        fs.watchFile(filename, { persistent: false, interval: 1000 }, watch);
+    m.variable(new OakInspector(io, key)).define(
+      key,
+      [...deps, "invalidation"],
+      function() {
+        const invalidation = arguments[arguments.length - 1];
+        let process;
+        return Generators.observe(change => {
+          const watch = (curr, prev) => {
+            console.log(`${key} file update???`);
+            change(key);
+          };
+          fs.watchFile(filename, { persistent: false, interval: 500 }, watch);
 
-        arguments[arguments.length - 1].then(() => {
-          fs.unwatchFile(filename, watch);
-          console.log(
-            "########################################################################## invalidate???"
-          );
-        });
-        //console.log(arguments[1]);
-        const cmd = recipe.split(" ");
-        const child = spawn(recipe, {
-          shell: true
-        });
+          invalidation.then(() => {
+            console.log(`${key} invalidated`);
+            fs.unwatchFile(filename, watch);
+            if (process) process.kill();
+          });
+          process = spawn(recipe, { shell: true });
 
-        child.stdout.on("data", chunk => {
-          console.log("chunk", key, `${chunk}`);
-        });
+          process.stdout.on("data", chunk => {
+            io.emit("chunk", { key, chunk });
+          });
 
-        change(
-          new Promise((resolve, reject) => {
-            child.on("close", code => {
-              //console.log(`child process exited with code ${code}`);
-              resolve(`${key}`);
-            });
-            child.on("error", () => {
-              reject(`${key}`);
-            });
-          })
-        );
-        return () => fs.unwatchFile(filename, watch);
-      });
-    });
+          process.on("close", code => {
+            process = null;
+            //console.log(`child process exited with code ${code}`);
+          });
+          process.on("error", () => {
+            process = null;
+          });
+
+          return () => fs.unwatchFile(filename, watch);
+        });
+      }
+    );
   });
 });
