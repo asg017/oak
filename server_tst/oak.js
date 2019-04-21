@@ -34,14 +34,17 @@ server.listen(port, () =>
   console.log(`socket.io update server listening on ${port}!`)
 );
 
-const loadOakfile = ({ path = "Oakfile", cleanRecipe = true }) => {
+const loadOakfile = (config = {}) => {
+  const { path = "Oakfile", cleanRecipe = true } = config;
   return new Promise(function(resolve, reject) {
     fs.readFile(path, "utf8", (err, contents) => {
       if (err) reject(err);
+      let oak;
       try {
-        const oak = JSON.parse(contents);
+        oak = JSON.parse(contents);
       } catch (err) {
         reject(err);
+        return;
       }
       if (cleanRecipe) {
         for (let key in oak.variables) {
@@ -65,19 +68,7 @@ const runtime = new Runtime();
 const inspector = new OakInspector(io);
 const m = runtime.module();
 let Oak;
-fs.readFile("Oakfile", "utf8", (err, contents) => {
-  if (err) throw err;
-  const oak = JSON.parse(contents);
-  Oak = oak;
-  for (let key in oak.variables) {
-    let { recipe } = oak.variables[key];
-    for (let key2 in oak.variables) {
-      recipe = recipe.replace(`\${${key2}}`, oak.variables[key2].filename);
-    }
-    console.log(`New recipe: ${recipe}`);
-    oak.variables[key].recipe = recipe;
-  }
-
+loadOakfile().then(oak => {
   Object.keys(oak.variables).map(key => {
     const variable = oak.variables[key];
     console.log(variable);
