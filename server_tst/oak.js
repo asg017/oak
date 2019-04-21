@@ -5,25 +5,12 @@ const { spawn } = require("child_process");
 const { OakInspector } = require("./oak-inspector.js");
 
 const Generators = new Library().Generators;
-const app = require("express")();
-const server = require("http").createServer(app);
+const server = require("http").createServer();
 const io = require("socket.io")(server);
 const port = 3000;
 
-app.get("/", (req, res) => {
-  res.send("hello");
-});
-
-app.post("/update", (req, res) => {
-  console.log("updated endpoint hit");
-
-  io.emit("update", "spooky");
-
-  res.send("updated");
-});
-
 io.on("connection", socket => {
-  console.log("connection!");
+  console.log(`connection made ${socket.id}`);
   socket.emit("oakfile", Oak);
   socket.on("disconnect", socket => {
     console.log("disconnected!");
