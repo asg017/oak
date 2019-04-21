@@ -64,7 +64,6 @@ loadOakfile().then(oak => {
   Oak = oak;
   Object.keys(oak.variables).map(key => {
     const variable = oak.variables[key];
-    oakLogger.info(`${JSON.stringify(variable)}`);
     const { recipe, filename, deps } = variable;
     m.variable(new OakInspector(io, key)).define(
       key,
@@ -84,13 +83,13 @@ loadOakfile().then(oak => {
           };
           fs.watchFile(filename, { persistent: false, interval: 500 }, watch);
 
-          /*invalidation.then(() => {
-            oakLogger.info(`${key} invalidated`);
+          invalidation.then(() => {
+            oakLogger.info(
+              `${key} invalidated, unwatching ${filename}, proc=${process}`
+            );
             fs.unwatchFile(filename, watch);
-            oakLogger.info(`${key} invalidated2`);
             //if (process) process.kill();
-            //oakLogger.info(`${key} invalidated3`);
-          });*/
+          });
 
           const stat = await new Promise(function(resolve, reject) {
             fs.stat(variable.filename, (err, stats) => {
@@ -120,7 +119,7 @@ loadOakfile().then(oak => {
             process = spawn(recipe, { shell: true });
 
             process.stdout.on("data", chunk => {
-              processLogger.info(chunk);
+              //processLogger.info(chunk);
               io.emit("chunk", { key, chunk });
             });
 
@@ -133,12 +132,10 @@ loadOakfile().then(oak => {
               process = null;
               processLogger.error(`Process errored`);
             });
-          } else {
-            oakLogger.debug(`deps are not out of date`);
           }
 
           return () => {
-            oakLogger.debug("plese");
+            oakLogger.debug(`plese, queue dispose ${filename}`);
             fs.unwatchFile(filename, watch);
           };
         });
