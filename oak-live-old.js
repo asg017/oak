@@ -97,7 +97,7 @@ loadOakfile().then(oak => {
     m.variable(new OakInspector(io, key)).define(
       key,
       [...deps, "invalidation"],
-      async function() {
+      async function*() {
         const variableDependencies = Array.from(arguments).slice(
           0,
           arguments.length - 1
@@ -105,36 +105,72 @@ loadOakfile().then(oak => {
         const invalidation = arguments[arguments.length - 1];
         let process;
         let processLogger = oakLogger.child({ label: `process-${key}` });
-        return Generators.queue(async change => {
-          const watch = (curr, prev) => {
-            oakLogger.info(`${key} file UPDATE ${curr.size} ${prev.size}`);
-            change(curr);
-          };
-          fs.watchFile(filename, { persistent: false, interval: 500 }, watch);
+        const watch = (curr, prev) => {
+          oakLogger.info(`${key} file UPDATE ${curr.size} ${prev.size}`);
+          change(curr);
+        };
+        fs.watchFile(filename, { persistent: false, interval: 500 }, watch);
 
-          invalidation.then(() => {
-            oakLogger.info(
-              `${key} invalidated, unwatching ${filename}, proc=${process}`
-            );
-            fs.unwatchFile(filename, watch);
-            //if (process) process.kill();
-          });
+        invalidation.then(() => {
+          oakLogger.info(
+            `${key} invalidated, unwatching ${filename}, proc=${process}`
+          );
+          fs.unwatchFile(filename, watch);
+          //if (process) process.kill();
+        });
 
-          let stat = await getStat(variable.filename).catch(e => {
-            // TODO check error code, only "file not exists" error
-            oakLogger.error(
-              `Error reading stat for ${variable.filename} (intial): ${e}`
-            );
-            return null;
-          });
-          console.log(key, stat);
+        let stat = await getStat(variable.filename).catch(e => {
+          // TODO check error code, only "file not exists" error
+          oakLogger.error(
+            `Error reading stat for ${variable.filename} (intial): ${e}`
+          );
+          return null;
+        });
+        console.log(key, stat);
 
-          // ideally, this would only happen at most once, because the target file doesnt
-          // exist yet. after running the recipe, the target should exist
-          if (stat === null) {
-            oakLogger.info(
-              `[${key}] running recipe - bc inital stat not available - "${recipe}"`
+        // ideally, this would only happen at most once, because the target file doesnt
+        // exist yet. after running the recipe, the target should exist
+        if (stat === null) {
+          oakLogger.info(
+            `[${key}] running recipe - bc inital stat not available - "${recipe}"`
+          );
+          process = runRecipe(recipe)
+            .on("stdout", chunk => {
+              io.emit("chunk", { key, chunk });
+            })
+            .on("stderr", chunk => {
+              io.emit("stderr", { key, chunk });
+            })
+            .on("close", async code => {
+              process = null;
+              processLogger.info(`Process closing with code ${code}`);
+
+              const stat = await getStat(variable.filename).catch(e => {
+                oakLogger.error(
+                  `Error reading stat for ${
+                    variable.filename
+                  } (2nd attempt): ${e}`
+                );
+                throw e;
+              });
+              change(stat);
+            })
+            .on("error", () => {
+              process = null;
+              processLogger.error(`Process errored`);
+            });
+        } else {
+          const updatedDeps = variableDependencies.filter(
+            dep => dep.mtime > stat.mtime
+          );
+          console.log(updatedDeps.length);
+          if (updatedDeps.length > 0) {
+            oakLogger.debug(
+              `${key} is out of date because ${
+                updatedDeps.length
+              } dependices have updated. Calling recipe ${variable.recipe}`
             );
+            processLogger.info(`spawning process with "${recipe}"`);
             process = runRecipe(recipe)
               .on("stdout", chunk => {
                 io.emit("chunk", { key, chunk });
@@ -144,71 +180,33 @@ loadOakfile().then(oak => {
               })
               .on("close", async code => {
                 process = null;
+                //console.log(`child process exited with code ${code}`);
                 processLogger.info(`Process closing with code ${code}`);
 
-                const stat = await getStat(variable.filename).catch(e => {
+                const stat2 = await getStat(variable.filename).catch(e => {
                   oakLogger.error(
                     `Error reading stat for ${
                       variable.filename
                     } (2nd attempt): ${e}`
                   );
                   throw e;
+                  return null;
                 });
-                change(stat);
+                change(stat2);
               })
               .on("error", () => {
                 process = null;
                 processLogger.error(`Process errored`);
               });
           } else {
-            const updatedDeps = variableDependencies.filter(
-              dep => dep.mtime > stat.mtime
-            );
-            console.log(updatedDeps.length);
-            if (updatedDeps.length > 0) {
-              oakLogger.debug(
-                `${key} is out of date because ${
-                  updatedDeps.length
-                } dependices have updated. Calling recipe ${variable.recipe}`
-              );
-              processLogger.info(`spawning process with "${recipe}"`);
-              process = runRecipe(recipe)
-                .on("stdout", chunk => {
-                  io.emit("chunk", { key, chunk });
-                })
-                .on("stderr", chunk => {
-                  io.emit("stderr", { key, chunk });
-                })
-                .on("close", async code => {
-                  process = null;
-                  //console.log(`child process exited with code ${code}`);
-                  processLogger.info(`Process closing with code ${code}`);
-
-                  const stat2 = await getStat(variable.filename).catch(e => {
-                    oakLogger.error(
-                      `Error reading stat for ${
-                        variable.filename
-                      } (2nd attempt): ${e}`
-                    );
-                    throw e;
-                    return null;
-                  });
-                  change(stat2);
-                })
-                .on("error", () => {
-                  process = null;
-                  processLogger.error(`Process errored`);
-                });
-            } else {
-              change(stat);
-            }
+            change(stat);
           }
+        }
 
-          return () => {
-            oakLogger.debug(`plese, queue dispose ${filename}`);
-            fs.unwatchFile(filename, watch);
-          };
-        });
+        return () => {
+          oakLogger.debug(`plese, queue dispose ${filename}`);
+          fs.unwatchFile(filename, watch);
+        };
       }
     );
   });
