@@ -52,7 +52,7 @@ const m = runtime.module();
 const runRecipe = recipe => {
   const e = new EventEmitter();
   const process = spawn(recipe, { shell: true });
-  console.log("run recipe please");
+  console.log(`running recipe ${recipe}`);
   process.stdout.on("data", chunk => {
     e.emit("stdout", chunk);
   });

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 const argv = require("yargs") // eslint-disable-line
-  .command(["static [targets...]", "$0"], "Run oak statically", yargs =>
+  .command("static", "Run oak statically", yargs =>
     yargs
       .options("f", {
         alias: "file",
@@ -27,5 +27,6 @@ const argv = require("yargs") // eslint-disable-line
         default: 3000
       })
   )
+  .strict()
   .help().argv;
 console.log(argv);
