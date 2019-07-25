@@ -1,8 +1,9 @@
 fs = require("fs");
+const { createLogger } = require("./logging.js");
 
-export const oakLogger = createLogger({ label: "Oak" });
+const oakLogger = createLogger({ label: "Oak" });
 
-export const loadOakfile = (config = {}) => {
+const loadOakfile = (config = {}) => {
   const { path = "Oakfile", cleanRecipe = true } = config;
   return new Promise( (res, rej) => {
     fs.readFile(path, "utf8", (err, contents) => {
@@ -39,3 +40,10 @@ const getStat = filename =>
       res(stat);
     });
   });
+
+
+module.exports = {
+  getStat,
+  oakLogger,
+  loadOakfile
+}

@@ -1,24 +1,43 @@
 #!/usr/bin/env node
+
+const {oak_static} = require('./oak-static.js');
+const {oak_print} = require('./oak-print.js');
+
 const argv = require("yargs") // eslint-disable-line
-  .command(["static [oakfile] [targets..]", "$0"], "Run oak statically", yargs =>
-    yargs
-      .positional("oakfile", {
-        describe: "Path to Oakfile",
-        default: "Oakfile"
-      })
-      .positional("targets", {
-        description: "several targets"
-      })
+  .command(
+    ["static [oakfile] [targets..]", "$0"],
+    "Run oak statically",
+    yargs =>
+      yargs
+        .positional("oakfile", {
+          describe: "Path to Oakfile",
+          default: "Oakfile"
+        })
+        .positional("targets", {
+          description: "several targets"
+        })
   )
   .strict()
   .demandCommand()
+  .command("print [oakfile]", "Print an Oakfile depedency graph", yargs =>
+    yargs.positional("oakfile", {
+      describe: "Path to Oakfile",
+      default: "Oakfile"
+    })
+  )
+  .strict()
   .help().argv;
-
-console.log(argv);
 
 const command = argv._[0];
 
-switch(command) {
-  case 'static':
-    handleStatic(argv);
+switch (command) {
+  case "static":
+    oak_static(argv);
+    break;
+  case "print":
+    oak_print(argv);
+    break;
+  default:
+    throw Error(`${command} not a valid command`)
+    break;
 }
