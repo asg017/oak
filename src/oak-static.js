@@ -1,54 +1,20 @@
 fs = require("fs");
+
 const { Runtime } = require("@observablehq/runtime");
 const { Library } = require("@observablehq/stdlib");
 const { spawn } = require("child_process");
 const { OakInspector } = require("./oak-inspector.js");
 const { createLogger } = require("./logging.js");
+const {getStat, loadOakfile} = require("./utils.js")
+
 const EventEmitter = require("events");
 
 const oakLogger = createLogger({ label: "Oak" });
 
-const loadOakfile = (config = {}) => {
-  const { path = "Oakfile", cleanRecipe = true } = config;
-  return new Promise(function(resolve, reject) {
-    fs.readFile(path, "utf8", (err, contents) => {
-      if (err) reject(err);
-      let oak;
-      try {
-        oak = JSON.parse(contents);
-      } catch (err) {
-        console.error(err);
-        reject(err);
-        return;
-      }
-      if (cleanRecipe) {
-        for (let key in oak.variables) {
-          let { recipe } = oak.variables[key];
-          for (let key2 in oak.variables) {
-            recipe = recipe.replace(
-              `\${${key2}}`,
-              oak.variables[key2].filename
-            );
-          }
-          oak.variables[key].recipe = recipe;
-        }
-      }
-      resolve(oak);
-    });
-  });
-};
-
-const getStat = filename =>
-  new Promise(function(resolve, reject) {
-    fs.stat(filename, (err, stat) => {
-      if (err) reject(err);
-      resolve(stat);
-    });
-  });
-
 const runtime = new Runtime();
 const inspector = new OakInspector();
 const m = runtime.module();
+
 const runRecipe = recipe => {
   const e = new EventEmitter();
   const process = spawn(recipe, { shell: true });
@@ -94,7 +60,7 @@ loadOakfile().then(oak => {
         oakLogger.info(
           `[${key}] running recipe - bc inital stat not available - "${recipe}"`
         );
-        return new Promise((resolve, reject) => {
+        return new Promise((res, rej) => {
           process = runRecipe(recipe)
             .on("stdout", chunk => {})
             .on("stderr", chunk => {})
@@ -110,12 +76,12 @@ loadOakfile().then(oak => {
                 );
                 throw e;
               });
-              reject(stat);
+              rej(stat);
             })
             .on("error", () => {
               process = null;
               processLogger.error(`Process errored`);
-              reject("error");
+              rej("error");
             });
         });
       }
@@ -123,7 +89,7 @@ loadOakfile().then(oak => {
         dep => dep.mtime > stat.mtime
       );
       if (updatedDeps.length > 0) {
-        return new Promise(function(resolve, reject) {
+        return new Promise(function(res, rej) {
           oakLogger.debug(
             `${key} is out of date because ${
               updatedDeps.length
@@ -147,17 +113,17 @@ loadOakfile().then(oak => {
                 throw e;
                 return null;
               });
-              resolve(stat2);
+              res(stat2);
             })
             .on("error", () => {
               process = null;
               processLogger.error(`Process errored`);
-              reject("error2");
+              rej("error2");
             });
         });
       }
-      return new Promise(function(resolve, reject) {
-        resolve(stat);
+      return new Promise(function(res, rej) {
+        res(stat);
       });
     });
   });
