@@ -1,0 +1,24 @@
+#!/usr/bin/env node
+const argv = require("yargs") // eslint-disable-line
+  .command(["static [oakfile] [targets..]", "$0"], "Run oak statically", yargs =>
+    yargs
+      .positional("oakfile", {
+        describe: "Path to Oakfile",
+        default: "Oakfile"
+      })
+      .positional("targets", {
+        description: "several targets"
+      })
+  )
+  .strict()
+  .demandCommand()
+  .help().argv;
+
+console.log(argv);
+
+const command = argv._[0];
+
+switch(command) {
+  case 'static':
+    handleStatic(argv);
+}
