@@ -1,4 +1,4 @@
-import winston from "winston";
+import * as winston from "winston";
 import { timeFormat } from "d3-time-format";
 
 const logDate = timeFormat("%Y-%m-%d %H-%M-%S.%L");

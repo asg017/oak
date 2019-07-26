@@ -1,4 +1,4 @@
-import { loadOakfile }  from "./utils.js";
+import { loadOakfile } from "./utils";
 
 const styles = {
   bgWhite: { open: "\u001b[47m", close: "\u001b[49m" },
@@ -7,10 +7,12 @@ const styles = {
 };
 
 const styleVariable = v =>
-  `${styles.bold.open}${styles.black.open}${styles.bgWhite.open}${v}${styles.bgWhite.close}${styles.black.close}${styles.bold.close}`;
+  `${styles.bold.open}${styles.black.open}${styles.bgWhite.open}${v}${
+    styles.bgWhite.close
+  }${styles.black.close}${styles.bold.close}`;
 
 export async function oak_print(argv) {
-  const oakfile = await loadOakfile({ path: argv.oakfile });
+  const oakfile = await loadOakfile({ path: argv.oakfile, cleanRecipe: true });
   const { variables } = oakfile;
   console.log(`Oakfile at ${argv.oakfile}:`);
   Object.keys(variables).map(key => {

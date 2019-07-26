@@ -1,4 +1,4 @@
-const { createLogger } = require("./logging.js");
+import { createLogger } from "./logging";
 
 const logger = createLogger({ label: "OakInspector" });
 export class OakInspector {

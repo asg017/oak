@@ -1,19 +1,17 @@
 import * as fs from "fs";
 import { createLogger } from "./logging";
+import { OakfileConfigureType, OakType } from "./types";
 
-type OakfileConfigureType = {
-  path: string,
-  cleanRecipe: boolean
-};
+export const oakLogger = createLogger({ label: "Oak" });
 
-const oakLogger = createLogger({ label: "Oak" });
-
-const loadOakfile = (config?: OakfileConfigureType) => {
+export const loadOakfile = (
+  config?: OakfileConfigureType
+): Promise<OakType> => {
   const { path = "Oakfile", cleanRecipe = true } = config || {};
-  return new Promise( (res, rej) => {
-    fs.readFile(path, "utf8", (err: any, contents : string) => {
+  return new Promise((res, rej) => {
+    fs.readFile(path, "utf8", (err: any, contents: string) => {
       if (err) rej(err);
-      let oak;
+      let oak = null;
       try {
         oak = JSON.parse(contents);
       } catch (err) {
@@ -38,17 +36,10 @@ const loadOakfile = (config?: OakfileConfigureType) => {
   });
 };
 
-const getStat = filename =>
+export const getStat = (filename: string): Promise<fs.Stats> =>
   new Promise(function(res, rej) {
-    fs.stat(filename, (err:any, stat:any) => {
+    fs.stat(filename, (err: any, stat: any) => {
       if (err) rej(err);
       res(stat);
     });
   });
-
-
-module.exports = {
-  getStat,
-  oakLogger,
-  loadOakfile
-}

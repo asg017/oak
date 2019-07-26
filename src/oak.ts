@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
-import {oak_static} from './oak-static';
-import {oak_print} from './oak-print';
+import { oak_static } from "./oak-static";
+import { oak_print } from "./oak-print";
 
-import yargs from 'yargs';
+import * as yargs from "yargs";
 
-const argv = yargs 
+const argv = yargs
   .command(
     ["static [oakfile] [targets..]", "$0"],
     "Run oak statically",
@@ -34,12 +34,18 @@ const command = argv._[0];
 
 switch (command) {
   case "static":
-    oak_static(argv);
+    oak_static(argv)
+      .then(() => {
+        console.log(`oak static complete.`);
+      })
+      .catch(e => {
+        console.error("Oak static error:", e);
+      });
     break;
   case "print":
     oak_print(argv);
     break;
   default:
-    throw Error(`${command} not a valid command`)
+    throw Error(`${command} not a valid command`);
     break;
 }
