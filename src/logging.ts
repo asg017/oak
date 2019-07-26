@@ -1,8 +1,8 @@
-const winston = require("winston");
-const { timeFormat } = require("d3-time-format");
+import winston from "winston";
+import { timeFormat } from "d3-time-format";
 
 const logDate = timeFormat("%Y-%m-%d %H-%M-%S.%L");
-const createLogger = config => {
+export const createLogger = config => {
   const { label = "UNNAMED" } = config;
   return winston.createLogger({
     level: "debug",
@@ -19,4 +19,3 @@ const createLogger = config => {
     transports: [new winston.transports.Console()]
   });
 };
-module.exports = { createLogger };

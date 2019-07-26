@@ -1,12 +1,17 @@
-fs = require("fs");
-const { createLogger } = require("./logging.js");
+import * as fs from "fs";
+import { createLogger } from "./logging";
+
+type OakfileConfigureType = {
+  path: string,
+  cleanRecipe: boolean
+};
 
 const oakLogger = createLogger({ label: "Oak" });
 
-const loadOakfile = (config = {}) => {
-  const { path = "Oakfile", cleanRecipe = true } = config;
+const loadOakfile = (config?: OakfileConfigureType) => {
+  const { path = "Oakfile", cleanRecipe = true } = config || {};
   return new Promise( (res, rej) => {
-    fs.readFile(path, "utf8", (err, contents) => {
+    fs.readFile(path, "utf8", (err: any, contents : string) => {
       if (err) rej(err);
       let oak;
       try {
@@ -35,7 +40,7 @@ const loadOakfile = (config = {}) => {
 
 const getStat = filename =>
   new Promise(function(res, rej) {
-    fs.stat(filename, (err, stat) => {
+    fs.stat(filename, (err:any, stat:any) => {
       if (err) rej(err);
       res(stat);
     });

@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
-const {oak_static} = require('./oak-static.js');
-const {oak_print} = require('./oak-print.js');
+import {oak_static} from './oak-static';
+import {oak_print} from './oak-print';
 
-const argv = require("yargs") // eslint-disable-line
+import yargs from 'yargs';
+
+const argv = yargs 
   .command(
     ["static [oakfile] [targets..]", "$0"],
     "Run oak statically",

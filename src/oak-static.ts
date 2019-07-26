@@ -1,22 +1,20 @@
-fs = require("fs");
+import { Runtime } from "@observablehq/runtime";
+import { Library } from "@observablehq/stdlib";
+import { spawn } from "child_process";
+import { OakInspector } from "./oak-inspector";
+import { createLogger } from "./logging.js";
+import { getStat, loadOakfile } from "./utils.js";
 
-const { Runtime } = require("@observablehq/runtime");
-const { Library } = require("@observablehq/stdlib");
-const { spawn } = require("child_process");
-const { OakInspector } = require("./oak-inspector.js");
-const { createLogger } = require("./logging.js");
-const { getStat, loadOakfile } = require("./utils.js");
-
-const EventEmitter = require("events");
+import {EventEmitter} from "events";
 
 const oakLogger = createLogger({ label: "Oak" });
 
-function oak_static(argv) {
+export function oak_static(argv) {
   const runtime = new Runtime();
-  const inspector = new OakInspector();
+  const inspector = new OakInspector(null, 'default');
   const m = runtime.module();
 
-  const runRecipe = recipe => {
+  const runRecipe = (recipe : string) => {
     const e = new EventEmitter();
     const process = spawn(recipe, { shell: true });
     console.log(`running recipe ${recipe}`);
@@ -126,5 +124,3 @@ function oak_static(argv) {
     });
   });
 }
-
-module.exports = { oak_static };
