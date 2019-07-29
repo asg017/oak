@@ -2,6 +2,19 @@ import * as fs from "fs";
 import { createLogger } from "./logging";
 import { OakfileConfigureType, OakType } from "./types";
 
+/*
+enum OakfileLoadTypeEnum {
+  JSON = "JSON"
+}
+
+export class classOakfile {
+  data: OakType;
+  load(
+    filename: string,
+    type: OakfileLoadTypeEnum = OakfileLoadTypeEnum.JSON
+  ): {};
+}*/
+
 export const oakLogger = createLogger({ label: "Oak" });
 
 export const loadOakfile = (

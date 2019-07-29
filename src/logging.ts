@@ -1,8 +1,10 @@
-import * as winston from "winston";
+// import * as winston from "winston";
 import { timeFormat } from "d3-time-format";
 
 const logDate = timeFormat("%Y-%m-%d %H-%M-%S.%L");
 export const createLogger = config => {
+  return console;
+  /*
   const { label = "UNNAMED" } = config;
   return winston.createLogger({
     level: "debug",
@@ -18,4 +20,5 @@ export const createLogger = config => {
     ),
     transports: [new winston.transports.Console()]
   });
+  */
 };

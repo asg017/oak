@@ -69,7 +69,6 @@ function createVariableDefinition(
 ): (...variableDependenciesX: OakVariableWithStat[]) => Promise<object> {
   return async function(...variableDependencies: OakVariableWithStat[]) {
     let process;
-    let processLogger = oakLogger.child({ label: `process-${key}` });
 
     let stat = await getStat(oakVariable.filename).catch(e => {
       // TODO check error code, only "file not exists" error
