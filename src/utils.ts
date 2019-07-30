@@ -17,35 +17,63 @@ export class classOakfile {
 
 export const oakLogger = createLogger({ label: "Oak" });
 
+const convertMakefile = (oak: OakType): string => {
+  return ``;
+};
+
+const readJson = (path: string): Promise<any> =>
+  new Promise((resolve, reject) => {
+    fs.readFile(path, "utf8", (err: any, contents: string) => {
+      if (err) reject(err);
+      let object = null;
+      try {
+        object = JSON.parse(contents);
+      } catch (err) {
+        console.error(err);
+        reject(err);
+        return;
+      }
+      resolve(object);
+    });
+  });
+
 export const loadOakfile = (
   config?: OakfileConfigureType
 ): Promise<OakType> => {
   const { path = "Oakfile", cleanRecipe = true } = config || {};
   return new Promise((res, rej) => {
-    fs.readFile(path, "utf8", (err: any, contents: string) => {
-      if (err) rej(err);
-      let oak = null;
-      try {
-        oak = JSON.parse(contents);
-      } catch (err) {
-        console.error(err);
-        rej(err);
-        return;
-      }
-      if (cleanRecipe) {
-        for (let key in oak.variables) {
-          let { recipe } = oak.variables[key];
-          for (let key2 in oak.variables) {
-            recipe = recipe.replace(
-              `\${${key2}}`,
-              oak.variables[key2].filename
-            );
+    readJson(path)
+      .then(oak => {
+        // const replaceRecipeNames(rawRecipe:string, )
+        let Oak: OakType = {
+          variables: []
+        };
+        if (cleanRecipe) {
+          for (let key in oak.variables) {
+            let { recipe } = oak.variables[key];
+            for (let key2 in oak.variables) {
+              recipe = recipe.replace(
+                `\${${key2}}`,
+                oak.variables[key2].filename
+              );
+            }
+            oak.variables[key].recipe = recipe;
           }
-          oak.variables[key].recipe = recipe;
         }
-      }
-      res(oak);
-    });
+        Object.keys(oak.variables).map(key => {
+          const variable = oak.variables[key];
+          Oak.variables.push({
+            name: key,
+            deps: variable.deps,
+            recipe: variable.recipe,
+            filename: variable.filename
+          });
+        });
+        res(Oak);
+      })
+      .catch(err => {
+        rej(err);
+      });
   });
 };
 

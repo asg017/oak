@@ -64,8 +64,7 @@ function performRecipe(
 }
 
 function createVariableDefinition(
-  oakVariable: OakVariableType,
-  key: string
+  oakVariable: OakVariableType
 ): (...variableDependenciesX: OakVariableWithStat[]) => Promise<object> {
   return async function(...variableDependencies: OakVariableWithStat[]) {
     let process;
@@ -81,7 +80,9 @@ function createVariableDefinition(
     // exist yet. after running the recipe, the target should exist
     if (stat === null) {
       oakLogger.info(
-        `[${key}] running recipe - bc inital stat not available - "${
+        `[${
+          oakVariable.name
+        }] running recipe - bc inital stat not available - "${
           oakVariable.recipe
         }"`
       );
@@ -93,7 +94,7 @@ function createVariableDefinition(
     );
     if (updatedDeps.length > 0) {
       oakLogger.debug(
-        `${key} is out of date because ${
+        `${oakVariable.name} is out of date because ${
           updatedDeps.length
         } dependenices (${updatedDeps
           .map(dep => dep.oakVariable.filename)
@@ -112,18 +113,14 @@ export async function oak_static(argv) {
   const inspector = new OakInspector(null, "default");
   const m = runtime.module();
 
-  let Oak: OakType | null;
-
   console.log("TODO in oak_static, argv:");
   console.log(argv);
 
-  const oak = await loadOakfile();
-  Oak = oak;
-  Object.keys(oak.variables).map(key => {
-    const variable = oak.variables[key];
-    const variableDefinition = createVariableDefinition(variable, key);
-    m.variable(new OakInspector(null, key)).define(
-      key,
+  const oak: OakType = await loadOakfile();
+  oak.variables.map(variable => {
+    const variableDefinition = createVariableDefinition(variable);
+    m.variable(new OakInspector(null, variable.name)).define(
+      variable.name,
       variable.deps,
       variableDefinition
     );

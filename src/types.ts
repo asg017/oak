@@ -4,6 +4,7 @@ export type OakfileConfigureType = {
 };
 
 export type OakVariableType = {
+  name: string;
   deps: Array<string>;
   recipe: string;
   filename: string;

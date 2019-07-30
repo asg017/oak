@@ -12,12 +12,20 @@ const styleVariable = v =>
   }${styles.black.close}${styles.bold.close}`;
 
 export async function oak_print(argv) {
-  const oakfile = await loadOakfile({ path: argv.oakfile, cleanRecipe: true });
+  const oakfile = await loadOakfile({
+    path: argv.oakfile,
+    cleanRecipe: true
+  }).catch(e => {
+    console.error(`Error loading oakfile in oak_print:`, e);
+  });
+  if (!oakfile) {
+    throw Error("Couldnt parse oakfile correctly");
+  }
   const { variables } = oakfile;
   console.log(`Oakfile at ${argv.oakfile}:`);
-  Object.keys(variables).map(key => {
-    const target = variables[key];
-    console.log(`${styleVariable(key)} = ${target.filename}`);
+  variables.map(target => {
+    console.log(`${styleVariable(target.name)} = ${target.filename}`);
+    console.log(`\trecipe:"${target.recipe}"`);
     target.deps && console.log(`\t ${target.deps.join(", ")}`);
   });
 }
