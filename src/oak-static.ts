@@ -108,15 +108,19 @@ function createVariableDefinition(
   };
 }
 
-export async function oak_static(argv) {
+type OakStaticArgumentsType = {
+  filename: string;
+  targets: readonly string[];
+};
+
+export async function oak_static(args: OakStaticArgumentsType) {
   const runtime = new Runtime();
   const inspector = new OakInspector(null, "default");
   const m = runtime.module();
-
-  console.log("TODO in oak_static, argv:");
-  console.log(argv);
-
-  const oak: OakType = await loadOakfile();
+  const oak: OakType = await loadOakfile({
+    path: args.filename,
+    cleanRecipe: true
+  });
   oak.variables.map(variable => {
     const variableDefinition = createVariableDefinition(variable);
     m.variable(new OakInspector(null, variable.name)).define(
