@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import { createLogger } from "./logging";
-import { OakfileConfigureType, OakType } from "./types";
+import { OakType } from "./types";
 
 /*
 enum OakfileLoadTypeEnum {
@@ -37,10 +37,52 @@ const readJson = (path: string): Promise<any> =>
     });
   });
 
-export const loadOakfile = (
-  config?: OakfileConfigureType
-): Promise<OakType> => {
-  const { path = "Oakfile", cleanRecipe = true } = config || {};
+type OakfileConfigureType = {
+  path: string;
+  cleanRecipe: boolean;
+  type?: "JSON" | "observable";
+};
+
+type ObservableCellId = {
+  type: 'Identifier' | 'ViewExpression';
+  start: number;
+  end: number;
+  name?: string;
+  id?: ObservableCellId;
+}
+
+type ObservableCellBody = {
+
+}
+type ObservableCell = {
+  type: string;
+  id?: ObservableCellId;
+  async: boolean;
+  generator: boolean;
+  start: number;
+  end: number;
+  body?: ObservableCellBody;
+};
+
+type ObservableProgram = {
+  type: 'Program';
+  start: number;
+  end: number; 
+  cells: ObservableCell[];
+}
+import {parseModule} from '@observablehq/parser';
+
+const loadOakfileObservable = (path:string):Promise<OakType> {
+  return new Promise((resolve, reject)=>{
+    fs.readFile(path, 'utf8', (err:any, contents:string)=>{
+      if(err) reject(err);
+      const program:ObservableCell[] = parseModule(contents);
+      
+    })
+  })
+}
+const loadOakfileJson = (config: OakfileConfigureType): Promise<OakType> => {
+  const { path, cleanRecipe } = config;
   return new Promise((res, rej) => {
     readJson(path)
       .then(oak => {
@@ -75,6 +117,17 @@ export const loadOakfile = (
         rej(err);
       });
   });
+};
+export const loadOakfile = (
+  config?: OakfileConfigureType
+): Promise<OakType> => {
+  const { path = "Oakfile", cleanRecipe = true, type = "JSON" } = config || {};
+  switch (type) {
+    case "JSON":
+      return loadOakfileJson({ path, cleanRecipe });
+    case 'observable':
+      return loadOakfileObservable(path);
+  }
 };
 
 export const getStat = (filename: string): Promise<fs.Stats> =>

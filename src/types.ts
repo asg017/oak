@@ -1,8 +1,3 @@
-export type OakfileConfigureType = {
-  path: string;
-  cleanRecipe: boolean;
-};
-
 export type OakVariableType = {
   name: string;
   deps: Array<string>;

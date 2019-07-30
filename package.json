@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@microsoft/ts-command-line": "^4.2.6",
+    "@observablehq/parser": "^1.2.1",
     "@observablehq/runtime": "^4.0.1",
     "@observablehq/stdlib": "^3.0.2",
     "@types/node": "^12.6.8",
