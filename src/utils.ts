@@ -44,16 +44,14 @@ type OakfileConfigureType = {
 };
 
 type ObservableCellId = {
-  type: 'Identifier' | 'ViewExpression';
+  type: "Identifier" | "ViewExpression";
   start: number;
   end: number;
   name?: string;
   id?: ObservableCellId;
-}
+};
 
-type ObservableCellBody = {
-
-}
+type ObservableCellBody = {};
 type ObservableCell = {
   type: string;
   id?: ObservableCellId;
@@ -65,22 +63,11 @@ type ObservableCell = {
 };
 
 type ObservableProgram = {
-  type: 'Program';
+  type: "Program";
   start: number;
-  end: number; 
+  end: number;
   cells: ObservableCell[];
-}
-import {parseModule} from '@observablehq/parser';
-
-const loadOakfileObservable = (path:string):Promise<OakType> {
-  return new Promise((resolve, reject)=>{
-    fs.readFile(path, 'utf8', (err:any, contents:string)=>{
-      if(err) reject(err);
-      const program:ObservableCell[] = parseModule(contents);
-      
-    })
-  })
-}
+};
 const loadOakfileJson = (config: OakfileConfigureType): Promise<OakType> => {
   const { path, cleanRecipe } = config;
   return new Promise((res, rej) => {
@@ -125,8 +112,6 @@ export const loadOakfile = (
   switch (type) {
     case "JSON":
       return loadOakfileJson({ path, cleanRecipe });
-    case 'observable':
-      return loadOakfileObservable(path);
   }
 };
 
