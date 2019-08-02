@@ -1,5 +1,4 @@
 import { oak_static } from "./oak-static";
-import { oak_static2 } from "./oak-static2";
 import { oak_print } from "./oak-print";
 
 import {
@@ -28,7 +27,8 @@ class PrintAction extends CommandLineAction {
       argumentName: "FILENAME",
       parameterLongName: "--file",
       parameterShortName: "-f",
-      description: "Path to Oakfile."
+      description: "Path to Oakfile.",
+      defaultValue: "./Oakfile"
     });
   }
 }
@@ -46,8 +46,9 @@ class StaticAction extends CommandLineAction {
   }
   protected onExecute(): Promise<void> {
     oak_static({
-      filename: this._filename.value,
-      targets: this._targets.values
+      filename: this._filename.value
+      // TODO add ability to only build provided targets
+      // targets: this._targets.values
     });
     return Promise.resolve();
   }
@@ -57,40 +58,14 @@ class StaticAction extends CommandLineAction {
       argumentName: "FILENAME",
       parameterLongName: "--file",
       parameterShortName: "-f",
-      description: "Path to Oakfile."
+      description: "Path to Oakfile.",
+      defaultValue: "./Oakfile"
     });
     this._targets = this.defineStringListParameter({
       argumentName: "TARGETS",
       parameterLongName: "--targets",
       parameterShortName: "-t",
       description: "List of target names to resolve."
-    });
-  }
-}
-
-class StaticAction2 extends CommandLineAction {
-  private _filename: CommandLineStringParameter;
-
-  public constructor() {
-    super({
-      actionName: "staticc",
-      summary: "Statically run an Oakfile 2.",
-      documentation: "TODO"
-    });
-  }
-  protected onExecute(): Promise<void> {
-    oak_static2({
-      filename: this._filename.value
-    });
-    return Promise.resolve();
-  }
-
-  protected onDefineParameters(): void {
-    this._filename = this.defineStringParameter({
-      argumentName: "FILENAME",
-      parameterLongName: "--file",
-      parameterShortName: "-f",
-      description: "Path to Oakfile."
     });
   }
 }
@@ -104,7 +79,6 @@ class OakCommandLine extends CommandLineParser {
 
     this.addAction(new PrintAction());
     this.addAction(new StaticAction());
-    this.addAction(new StaticAction2());
   }
 
   protected onDefineParameters(): void {}

@@ -21,17 +21,23 @@ const executeCommand = (command: string) => {
   });
   return e;
 };
-const getStat = (filename: string): Promise<Stats> =>
+export const getStat = (filename: string): Promise<Stats | null> =>
   new Promise(function(res, rej) {
     stat(filename, (err: any, stat: any) => {
-      if (err) rej(err);
+      if (err) {
+        if (err.code === "ENOENT") {
+          res(null);
+          return;
+        }
+        rej(err);
+      }
       res(stat);
     });
   });
 
 export function bash(args = {}) {
   function transform(strings: string[], ...values: any[]): Promise<string> {
-    console.debug(`!! BASH HERE`, strings, values);
+    //console.debug(`!! BASH HERE`, strings, values);
     let s = strings[0];
     for (let i = 0, n = values.length; i < n; ++i)
       s +=
@@ -62,21 +68,29 @@ export function bash(args = {}) {
     : transform;
 }
 
-type fileInfo = {
-  stat: Stats;
+export class FileInfo {
   path: string;
-  recipe: () => void;
-};
-async function cell(params: { path: string; recipe: (any) => any }) {
-  const { path, recipe } = params;
-  recipe(path);
-  const stat = await getStat(path);
-  return {
-    stat,
-    path,
-    recipe
-  };
+  stat: Stats | null;
+  recipe: (any) => any;
+  constructor(path: string, stat: Stats | null, recipe: (any) => any) {
+    this.path = path;
+    this.stat = stat;
+    this.recipe = recipe;
+  }
+  async runRecipe() {
+    await this.recipe(this.path);
+  }
 }
+
+async function cell(params: {
+  path: string;
+  recipe: (any) => any;
+}): Promise<FileInfo> {
+  const { path, recipe } = params;
+  const stat = await getStat(path);
+  return new FileInfo(path, stat, recipe);
+}
+
 export default {
   bash: () => bash,
   cell: () => cell

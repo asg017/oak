@@ -1,49 +1,25 @@
-{
-  "variables": {
-    "dir_structure": {
-      "deps": [],
-      "filename": "./temp",
-      "recipe": "mkdir -p ${dir_structure}"
-    },
-    "raw_csv": {
-      "deps": ["dir_structure", "dir_structure"],
-      "filename":  "./temp/raw.csv",
-      "recipe": "echo -n 'raw_csv yo' > ${raw_csv}"
-    },
-    "all_clean": {
-      "deps": ["dir_structure", "raw_csv"],
-      "filename": "./temp/all_clean.csv",
-      "recipe": "echo -n 'all_clean yo' > ${all_clean} && echo 'all clean'"
-    } ,
-    "la_only": {
-      "deps": ["dir_structure", "all_clean"],
-      "filename":  "./temp/la_only.csv",
-      "recipe": "echo -n 'la_only yo' > ${la_only}"
-    },
-    "la_uniq": {
-      "deps": ["dir_structure", "la_only"],
-      "filename": "./temp/la_uniq.csv",
-      "recipe": "sleep 1 && echo -n 'la_uniq yo' > ${la_uniq}"
-    } ,
-    "la_shape": {
-      "deps": ["dir_structure"],
-      "filename": "./temp/la.geojson",
-      "recipe": "sleep 1 && echo -n 'la_shape yo' > ${la_shape}"
-    } ,
-    "by_year_graphic": {
-      "deps": ["dir_structure", "la_uniq"],
-      "filename": "./temp/by_year.svg",
-      "recipe": "echo -n 'by_year_graphic yo' > ${by_year_graphic} && echo 'year graphic'"
-    },
-    "front_graphic": {
-      "deps": ["dir_structure", "la_uniq", "la_shape"],
-      "filename": "./temp/front.svg",
-      "recipe": "echo -n 'front_graphic yo' > ${front_graphic} && echo 'front graphic'"
-    },
-    "twitter_graphic": {
-      "deps": ["dir_structure", "la_uniq"],
-      "filename": "./temp/twitter.svg",
-      "recipe": "echo -n 'twitter_graphic yo' > ${twitter_graphic} && echo 'twitter graphic'"
-    }
-  }
-}
+a = cell({
+    path: 'temp/a.txt',
+    recipe: a => bash`echo "hello its a! " > ${a}`
+})
+
+
+b = cell({
+    path: 'temp/b.txt',
+    recipe: b => bash`echo "hello now its b! " > ${b}`
+})
+
+c = cell({
+    path: 'temp/c.txt',
+    recipe: c => bash`cat ${a} ${b} > ${c}`
+})
+
+d = cell({
+    path: 'temp/d.txt',
+    recipe: d=> bash`cat ${c} > ${d}`
+})
+
+e = cell({
+    path: 'temp/e.txt',
+    recipe: e=> bash`cat ${d} > ${e}`
+})

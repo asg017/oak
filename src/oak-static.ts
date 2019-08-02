@@ -1,132 +1,97 @@
+import { parseModule } from "@observablehq/parser";
 import { Runtime } from "@observablehq/runtime";
-import { spawn } from "child_process";
-import { OakInspector } from "./oak-inspector";
-import { createLogger } from "./logging";
-import { getStat, loadOakfile } from "./utils";
-import { EventEmitter } from "events";
+import Library, { FileInfo, getStat } from "./Library";
+import { readFile } from "fs";
 
-import { OakVariableType, OakType } from "./types";
+const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
+const GeneratorFunction = Object.getPrototypeOf(function*() {}).constructor;
+const AsyncGeneratorFunction = Object.getPrototypeOf(async function*() {})
+  .constructor;
 
-type StatType = {
-  mtime: number;
-};
-
-type OakVariableWithStat = {
-  oakVariable: OakVariableType;
-  stat: StatType;
-};
-const oakLogger = createLogger({ label: "Oak" });
-
-const runRecipe = (recipe: string) => {
-  const e = new EventEmitter();
-  const process = spawn(recipe, { shell: true });
-  console.log(`running recipe ${recipe}`);
-  process.stdout.on("data", chunk => {
-    e.emit("stdout", chunk);
-  });
-  process.stderr.on("data", chunk => {
-    e.emit("stderr", chunk);
-  });
-
-  process.on("close", async code => {
-    e.emit("close", code);
-  });
-  process.on("error", () => {
-    e.emit("error");
-  });
-  return e;
-};
-
-function performRecipe(
-  oakVariable: OakVariableType
-): Promise<OakVariableWithStat> {
-  return new Promise((res, rej) => {
-    runRecipe(oakVariable.recipe)
-      .on("stdout", chunk => {})
-      .on("stderr", chunk => {})
-      .on("close", async code => {
-        console.info(`Process closing with code ${code}`);
-        const stat = await getStat(oakVariable.filename).catch(e => {
-          oakLogger.error(
-            `Error reading stat for ${oakVariable.filename} (2nd attempt): ${e}`
-          );
-          throw e;
-          return null;
-        });
-        res({ oakVariable, stat });
-      })
-      .on("error", () => {
-        process = null;
-        console.error(`Process errored`);
-        rej("error");
-      });
-  });
-}
-
-function createVariableDefinition(
-  oakVariable: OakVariableType
-): (...variableDependenciesX: OakVariableWithStat[]) => Promise<object> {
-  return async function(...variableDependencies: OakVariableWithStat[]) {
-    let process;
-
-    let stat = await getStat(oakVariable.filename).catch(e => {
-      // TODO check error code, only "file not exists" error
-      oakLogger.error(
-        `Error reading stat for ${oakVariable.filename} (intial): ${e}`
-      );
-      return null;
-    });
-    // ideally, this would only happen at most once, because the target file doesnt
-    // exist yet. after running the recipe, the target should exist
-    if (stat === null) {
-      oakLogger.info(
-        `[${
-          oakVariable.name
-        }] running recipe - bc inital stat not available - "${
-          oakVariable.recipe
-        }"`
-      );
-      return performRecipe(oakVariable);
+export async function oak_static(args: { filename: string }) {
+  const runtime = new Runtime(Library, {});
+  const inspector = {
+    pending() {
+      console.log(`pending`);
+    },
+    fulfilled(value) {
+      console.log(`${value} fulfilled`);
+    },
+    rejected(error) {
+      console.error(`${error} rejected`);
     }
-
-    const updatedDeps = variableDependencies.filter(
-      dep => dep.stat.mtime > stat.mtime
-    );
-    if (updatedDeps.length > 0) {
-      oakLogger.debug(
-        `${oakVariable.name} is out of date because ${
-          updatedDeps.length
-        } dependenices (${updatedDeps
-          .map(dep => dep.oakVariable.filename)
-          .join(",")}) have updated. Calling recipe '${oakVariable.recipe}'`
-      );
-      return performRecipe(oakVariable);
-    }
-    return new Promise(function(res, rej) {
-      res({ oakVariable, stat });
-    });
   };
-}
 
-type OakStaticArgumentsType = {
-  filename: string;
-  targets: readonly string[];
-};
-
-export async function oak_static(args: OakStaticArgumentsType) {
-  const runtime = new Runtime();
-  const inspector = new OakInspector(null, "default");
-  const m = runtime.module();
-  const oak: OakType = await loadOakfile({
-    path: args.filename,
-    cleanRecipe: true
+  const oakfileContents: string = await new Promise((resolve, reject) => {
+    readFile(args.filename, "utf8", (err: any, contents: string) => {
+      if (err) reject(err);
+      resolve(contents);
+    });
   });
-  oak.variables.map(variable => {
-    const variableDefinition = createVariableDefinition(variable);
-    m.variable(new OakInspector(null, variable.name)).define(
-      variable.name,
-      variable.deps,
-      variableDefinition
-    );
+  const parseResults = parseModule(oakfileContents);
+
+  const m = runtime.module();
+
+  parseResults.cells.map(cell => {
+    let name = null;
+    if (cell.id && cell.id.name) name = cell.id.name;
+    if (cell.body.type === "ImportDeclaration") {
+      throw Error(`Pls implement import handling`);
+    }
+    const bodyText = oakfileContents.substring(cell.body.start, cell.body.end);
+    let code;
+    if (cell.body.type !== "BlockStatement") {
+      if (cell.async)
+        code = `return (async function(){ return (${bodyText});})()`;
+      else code = `return (function(){ return (${bodyText});})()`;
+    } else code = bodyText;
+    const references = cell.references.map(ref => {
+      if (ref.type === "ViewExpression") throw Error("ViewExpression wat");
+      return ref.name;
+    });
+
+    let f;
+    if (cell.generator && cell.async)
+      f = new AsyncGeneratorFunction(...references, code);
+    else if (cell.async) f = new AsyncFunction(...references, code);
+    else if (cell.generator) f = new GeneratorFunction(...references, code);
+    else f = new Function(...references, code);
+    m.variable(inspector).define(name, references, async function(
+      ...dependencies
+    ) {
+      // dont try and get fileinfo for cell depends like `cell` or `bash`
+      let cellDependents = [];
+      dependencies.map(dependency => {
+        if (dependency instanceof FileInfo) {
+          cellDependents.push(dependency);
+        }
+      });
+      let currCell = await f(...dependencies);
+
+      if (currCell instanceof FileInfo) {
+        // run recipe if no file or if it's out of date
+        if (currCell.stat === null) {
+          console.log(
+            `Running recipe for ${currCell.path} because it doesnt exist`
+          );
+          await currCell.runRecipe();
+          currCell.stat = await getStat(currCell.path);
+          return currCell;
+        }
+        const deps = cellDependents.filter(
+          c => currCell.stat.mtime < c.stat.mtime
+        );
+        if (deps.length > 0) {
+          console.log(`Re-running recipe for ${currCell.path} because:`);
+          deps.map(d => console.log(`\t${d.path}`));
+          await currCell.runRecipe();
+          currCell.stat = await getStat(currCell.path);
+          return currCell;
+        } else {
+          console.log(`no need to re-run recipe for ${currCell.path}`);
+        }
+      }
+      return currCell;
+    });
   });
 }

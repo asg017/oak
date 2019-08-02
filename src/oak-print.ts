@@ -1,4 +1,5 @@
-import { loadOakfile } from "./utils";
+import { parseOakfile } from "./utils";
+import Library from "./Library";
 
 type OakPrintArgumentsType = {
   filename: string;
@@ -15,20 +16,16 @@ const styleVariable = (v: string) =>
   }${styles.black.close}${styles.bold.close}`;
 
 export async function oak_print(args: OakPrintArgumentsType): Promise<void> {
-  const oakfile = await loadOakfile({
-    path: args.filename,
-    cleanRecipe: true
-  }).catch(e => {
-    console.error(`Error loading oakfile in oak_print:`, e);
-  });
-  if (!oakfile) {
-    throw Error("Couldnt parse oakfile correctly");
-  }
-  const { variables } = oakfile;
+  const oakModule = await parseOakfile(args.filename);
+  const libSet = new Set(Object.keys(Library));
   console.log(`Oakfile at ${args.filename}:`);
-  variables.map(target => {
-    console.log(`${styleVariable(target.name)} = ${target.filename}`);
-    console.log(`\trecipe:"${target.recipe}"`);
-    target.deps && console.log(`\t ${target.deps.join(", ")}`);
+  oakModule.cells.map(cell => {
+    // TODO filename and recipe
+    console.log(
+      `${styleVariable(cell.id.name)} ${cell.references
+        .map(ref => ref.name)
+        .filter(refName => !libSet.has(refName))
+        .join(",")}`
+    );
   });
 }
