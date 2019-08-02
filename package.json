@@ -1,4 +1,11 @@
 {
+  "name": "oak",
+  "version": "0.0.1",
+  "description": "Easy, simple, data workflows",
+  "main": "./built/oak.js",
+  "bin": {
+    "oak": "./built/oak.js"
+  },
   "dependencies": {
     "@microsoft/ts-command-line": "^4.2.6",
     "@observablehq/parser": "^1.2.1",

@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { oak_static } from "./oak-static";
 import { oak_print } from "./oak-print";
 

@@ -1,6 +1,7 @@
 import { spawn } from "child_process";
 import { EventEmitter } from "events";
-import { Stats, stat } from "fs";
+import { Stats } from "fs";
+import { getStat } from "./utils";
 
 const executeCommand = (command: string) => {
   const e = new EventEmitter();
@@ -21,19 +22,6 @@ const executeCommand = (command: string) => {
   });
   return e;
 };
-export const getStat = (filename: string): Promise<Stats | null> =>
-  new Promise(function(res, rej) {
-    stat(filename, (err: any, stat: any) => {
-      if (err) {
-        if (err.code === "ENOENT") {
-          res(null);
-          return;
-        }
-        rej(err);
-      }
-      res(stat);
-    });
-  });
 
 export function bash(args = {}) {
   function transform(strings: string[], ...values: any[]): Promise<string> {
@@ -95,24 +83,3 @@ export default {
   bash: () => bash,
   cell: () => cell
 };
-/*
-import { Runtime } from "@observablehq/runtime";
-const rt = new Runtime({ bash });
-const m1 = rt.module();
-
-m1.variable({
-  pending() {
-    console.log("pending...");
-  }
-}).define(
-  "test",
-  ["bash"],
-  async bash => await bash`echo "hello world! inside bash\`\`"`
-);
-m1.variable({
-  pending() {
-    console.log("pendingX...");
-  }
-}).define("asdf", ["test"], () => console.log(`nuthin`));
-
-*/

@@ -3,10 +3,16 @@ import { parseModule } from "@observablehq/parser";
 import { createLogger } from "./logging";
 export const oakLogger = createLogger({ label: "Oak" });
 
-export const getStat = (filename: string): Promise<Stats> =>
+export const getStat = (filename: string): Promise<Stats | null> =>
   new Promise(function(res, rej) {
     stat(filename, (err: any, stat: any) => {
-      if (err) rej(err);
+      if (err) {
+        if (err.code === "ENOENT") {
+          res(null);
+          return;
+        }
+        rej(err);
+      }
       res(stat);
     });
   });

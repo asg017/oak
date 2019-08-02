@@ -1,7 +1,8 @@
 import { parseModule } from "@observablehq/parser";
 import { Runtime } from "@observablehq/runtime";
-import Library, { FileInfo, getStat } from "./Library";
+import Library, { FileInfo } from "./Library";
 import { readFile } from "fs";
+import { getStat } from "./utils";
 
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 const GeneratorFunction = Object.getPrototypeOf(function*() {}).constructor;
