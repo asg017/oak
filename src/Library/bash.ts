@@ -1,12 +1,10 @@
 import { spawn } from "child_process";
 import { EventEmitter } from "events";
-import { Stats } from "fs";
-import { getStat } from "./utils";
 
 const executeCommand = (command: string) => {
   const e = new EventEmitter();
   const process = spawn(command, { shell: true });
-  console.log(`[executeCommand]running command ${command}`);
+  console.log(`[executeCommand] running command ${command}`);
   process.stdout.on("data", chunk => {
     e.emit("stdout", chunk);
   });
@@ -23,9 +21,8 @@ const executeCommand = (command: string) => {
   return e;
 };
 
-export function bash(args = {}) {
+export default function bash(args = {}) {
   function transform(strings: string[], ...values: any[]): Promise<string> {
-    //console.debug(`!! BASH HERE`, strings, values);
     let s = strings[0];
     for (let i = 0, n = values.length; i < n; ++i)
       s +=
@@ -55,31 +52,3 @@ export function bash(args = {}) {
     ? ((args = {}), transform.apply(this, arguments))
     : transform;
 }
-
-export class FileInfo {
-  path: string;
-  stat: Stats | null;
-  recipe: (any) => any;
-  constructor(path: string, stat: Stats | null, recipe: (any) => any) {
-    this.path = path;
-    this.stat = stat;
-    this.recipe = recipe;
-  }
-  async runRecipe() {
-    await this.recipe(this.path);
-  }
-}
-
-async function cell(params: {
-  path: string;
-  recipe: (any) => any;
-}): Promise<FileInfo> {
-  const { path, recipe } = params;
-  const stat = await getStat(path);
-  return new FileInfo(path, stat, recipe);
-}
-
-export default {
-  bash: () => bash,
-  cell: () => cell
-};

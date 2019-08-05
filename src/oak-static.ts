@@ -1,8 +1,7 @@
-import { parseModule } from "@observablehq/parser";
 import { Runtime } from "@observablehq/runtime";
-import Library, { FileInfo } from "./Library";
-import { readFile } from "fs";
-import { getStat } from "./utils";
+import { Library } from "./Library";
+import { getStat, parseOakfile } from "./utils";
+import FileInfo from "./FileInfo";
 
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 const GeneratorFunction = Object.getPrototypeOf(function*() {}).constructor;
@@ -10,7 +9,7 @@ const AsyncGeneratorFunction = Object.getPrototypeOf(async function*() {})
   .constructor;
 
 export async function oak_static(args: { filename: string }) {
-  const runtime = new Runtime(Library, {});
+  const runtime = new Runtime(new Library());
   const inspector = {
     pending() {
       console.log(`pending`);
@@ -23,17 +22,16 @@ export async function oak_static(args: { filename: string }) {
     }
   };
 
-  const oakfileContents: string = await new Promise((resolve, reject) => {
-    readFile(args.filename, "utf8", (err: any, contents: string) => {
-      if (err) reject(err);
-      resolve(contents);
-    });
-  });
-  const parseResults = parseModule(oakfileContents);
+  const parseResults = await parseOakfile(args.filename);
+  const oakfileModule = parseResults.module;
+  const oakfileContents = parseResults.contents;
 
   const m = runtime.module();
 
-  parseResults.cells.map(cell => {
+  const defineCell = (
+    cell: any,
+    source: string
+  ): { cellFunction: any; cellName: string; cellReferences: string[] } => {
     let name = null;
     if (cell.id && cell.id.name) name = cell.id.name;
     if (cell.body.type === "ImportDeclaration") {
@@ -57,7 +55,19 @@ export async function oak_static(args: { filename: string }) {
     else if (cell.async) f = new AsyncFunction(...references, code);
     else if (cell.generator) f = new GeneratorFunction(...references, code);
     else f = new Function(...references, code);
-    m.variable(inspector).define(name, references, async function(
+    return {
+      cellName: name,
+      cellFunction: f,
+      cellReferences: references
+    };
+  };
+  oakfileModule.cells.map(cell => {
+    const { cellName, cellFunction, cellReferences } = defineCell(
+      cell,
+      oakfileContents
+    );
+
+    m.variable(inspector).define(cellName, cellReferences, async function(
       ...dependencies
     ) {
       // dont try and get fileinfo for cell depends like `cell` or `bash`
@@ -67,7 +77,7 @@ export async function oak_static(args: { filename: string }) {
           cellDependents.push(dependency);
         }
       });
-      let currCell = await f(...dependencies);
+      let currCell = await cellFunction(...dependencies);
 
       if (currCell instanceof FileInfo) {
         // run recipe if no file or if it's out of date
