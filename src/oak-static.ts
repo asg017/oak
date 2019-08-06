@@ -23,9 +23,7 @@ const defineCellImport = async (
   const fromModule = await oakDefineFile(path);
   // console.log(`XXXXXXXX`, fromModule);
   const names = cell.body.specifiers.map(specifier => specifier.imported.name);
-  const aliases = cell.body.specifiers.map(
-    specifier => specifier.imported.local
-  );
+  const aliases = cell.body.specifiers.map(specifier => specifier.local.name);
 
   return { names, aliases, from: fromModule };
 };
@@ -78,12 +76,13 @@ const defineCellDefinition = (
     let currCell = await cellFunction(...dependencies);
 
     if (currCell instanceof FileInfo) {
+      await currCell.updateBasePath(baseModuleDir);
       // run recipe if no file or if it's out of date
       if (currCell.stat === null) {
         console.log(
           `Running recipe for ${currCell.path} because it doesnt exist`
         );
-        await currCell.runRecipe(baseModuleDir);
+        await currCell.runRecipe();
         currCell.stat = await getStat(currCell.path);
         return currCell;
       }
@@ -91,17 +90,13 @@ const defineCellDefinition = (
         c => currCell.stat.mtime < c.stat.mtime
       );
       if (deps.length > 0) {
-        console.log(
-          `Re-running recipe for ${currCell.absPath(baseModuleDir)} because:`
-        );
-        deps.map(d => console.log(`\t${d.absPath(baseModuleDir)}`));
-        await currCell.runRecipe(baseModuleDir);
-        currCell.stat = await getStat(currCell.absPath(baseModuleDir));
+        console.log(`Re-running recipe for ${currCell.path} because:`);
+        deps.map(d => console.log(`\t${d.path}`));
+        await currCell.runRecipe();
+        currCell.stat = await getStat(currCell.path);
         return currCell;
       } else {
-        console.log(
-          `no need to re-run recipe for ${currCell.absPath(baseModuleDir)}`
-        );
+        console.log(`no need to re-run recipe for ${currCell.path}`);
       }
     }
     return currCell;
@@ -124,6 +119,7 @@ const oakDefine = (
           baseModuleDir
         );
         const child = runtime.module(from);
+        console.log(names, aliases);
         for (let i = 0; i < names.length; i++) {
           main.variable(observer()).import(names[i], aliases[i], child);
         }
