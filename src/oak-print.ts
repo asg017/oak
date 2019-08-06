@@ -1,5 +1,6 @@
 import { parseOakfile } from "./utils";
 import { Library } from "./Library";
+import { join } from "path";
 
 type OakPrintArgumentsType = {
   filename: string;
@@ -16,16 +17,20 @@ const styleVariable = (v: string) =>
   }${styles.black.close}${styles.bold.close}`;
 
 export async function oak_print(args: OakPrintArgumentsType): Promise<void> {
-  const oakfile = await parseOakfile(args.filename);
+  const oakfile = await parseOakfile(join(process.cwd(), args.filename));
   const libSet = new Set(Object.keys(Library));
   console.log(`Oakfile at ${args.filename}:`);
   oakfile.module.cells.map(cell => {
     // TODO filename and recipe
-    console.log(
-      `${styleVariable(cell.id.name)} ${cell.references
-        .map(ref => ref.name)
-        .filter(refName => !libSet.has(refName))
-        .join(",")}`
-    );
+    if (cell.body.type === "ImportDeclaration") {
+      console.warn("WARNING oak print cant print import statements yet");
+    } else {
+      console.log(
+        `${styleVariable(cell.id.name)} ${cell.references
+          .map(ref => ref.name)
+          .filter(refName => !libSet.has(refName))
+          .join(",")}`
+      );
+    }
   });
 }

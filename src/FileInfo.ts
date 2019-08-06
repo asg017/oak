@@ -1,4 +1,5 @@
 import { Stats } from "fs";
+import { join } from "path";
 
 export default class FileInfo {
   path: string;
@@ -9,7 +10,10 @@ export default class FileInfo {
     this.stat = stat;
     this.recipe = recipe;
   }
-  async runRecipe() {
+  absPath(basePath: string) {
+    return join(basePath, this.path);
+  }
+  async runRecipe(basePath: string) {
     await this.recipe(this.path);
   }
 }

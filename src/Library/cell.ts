@@ -1,4 +1,3 @@
-import { Stats } from "fs";
 import { getStat } from "../utils";
 import FileInfo from "../FileInfo";
 
