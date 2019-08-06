@@ -91,14 +91,18 @@ const oakDefine = (
     const main = runtime.module();
 
     oakfileModule.cells.map(cell => {
-      const { cellName, cellFunction, cellReferences } = defineCell(
-        cell,
-        source
-      );
+      if (cell.body.type === "ViewEpression") {
+        // const defineImportCell =
+      } else {
+        const { cellName, cellFunction, cellReferences } = defineCell(
+          cell,
+          source
+        );
 
-      main
-        .variable(observer())
-        .define(cellName, cellReferences, defineCellDefinition(cellFunction));
+        main
+          .variable(observer())
+          .define(cellName, cellReferences, defineCellDefinition(cellFunction));
+      }
     });
     return main;
   };
