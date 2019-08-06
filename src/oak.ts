@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { oak_static } from "./oak-static";
 import { oak_print } from "./oak-print";
 
@@ -27,7 +29,8 @@ class PrintAction extends CommandLineAction {
       argumentName: "FILENAME",
       parameterLongName: "--file",
       parameterShortName: "-f",
-      description: "Path to Oakfile."
+      description: "Path to Oakfile.",
+      defaultValue: "./Oakfile"
     });
   }
 }
@@ -45,8 +48,9 @@ class StaticAction extends CommandLineAction {
   }
   protected onExecute(): Promise<void> {
     oak_static({
-      filename: this._filename.value,
-      targets: this._targets.values
+      filename: this._filename.value
+      // TODO add ability to only build provided targets
+      // targets: this._targets.values
     });
     return Promise.resolve();
   }
@@ -56,7 +60,8 @@ class StaticAction extends CommandLineAction {
       argumentName: "FILENAME",
       parameterLongName: "--file",
       parameterShortName: "-f",
-      description: "Path to Oakfile."
+      description: "Path to Oakfile.",
+      defaultValue: "./Oakfile"
     });
     this._targets = this.defineStringListParameter({
       argumentName: "TARGETS",
