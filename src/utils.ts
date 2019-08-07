@@ -1,5 +1,9 @@
 import { readFile, stat, Stats } from "fs";
 import { parseModule } from "@observablehq/parser";
+import chalk from "chalk";
+
+export const formatPath = (s: string) => chalk.black.bgWhiteBright.bold(s);
+export const formatCellName = (s: string) => chalk.black.bgCyanBright.bold(s);
 
 export const getStat = (filename: string): Promise<Stats | null> =>
   new Promise(function(res, rej) {
