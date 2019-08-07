@@ -86,7 +86,6 @@ class OakCommandLine extends CommandLineParser {
   protected onDefineParameters(): void {}
 
   protected onExecute(): Promise<void> {
-    console.log("OakCommandLine executing...");
     return super.onExecute();
   }
 }

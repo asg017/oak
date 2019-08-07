@@ -4,7 +4,7 @@ import { EventEmitter } from "events";
 const executeCommand = (command: string) => {
   const e = new EventEmitter();
   const process = spawn(command, { shell: true });
-  console.log(`[executeCommand] running command ${command}`);
+  // console.log(`[executeCommand] running command ${command}`);
   process.stdout.on("data", chunk => {
     e.emit("stdout", chunk);
   });
@@ -33,7 +33,7 @@ export default function bash(args = {}) {
     return new Promise((resolve, reject) =>
       executeCommand(s)
         .on("stdout", chunk => {
-          process.stdout.write(chunk);
+          // process.stdout.write(chunk);
         })
         .on("stderr", chunk => {
           process.stderr.write(chunk);

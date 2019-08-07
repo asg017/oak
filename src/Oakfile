@@ -1,25 +1,25 @@
 a = cell({
     path: 'temp/a.txt',
-    recipe: a => bash`echo "hello its a! " > ${a}`
+    recipe: a => bash`sleep 1 && echo "hello its a! " > ${a}`
 })
 
 
 b = cell({
     path: 'temp/b.txt',
-    recipe: b => bash`echo "hello now its b! " > ${b}`
+    recipe: b => bash`sleep 1.5 && echo "hello now its b! " > ${b}`
 })
 
 c = cell({
     path: 'temp/c.txt',
-    recipe: c => bash`cat ${a} ${b} > ${c}`
+    recipe: c => bash`sleep 1 && cat ${a} ${b} > ${c}`
 })
 
 d = cell({
     path: 'temp/d.txt',
-    recipe: d=> bash`cat ${c} > ${d}`
+    recipe: d=> bash`sleep 1 && cat ${c} > ${d}`
 })
 
 e = cell({
     path: 'temp/e.txt',
-    recipe: e=> bash`cat ${d} > ${e}`
+    recipe: e=> bash`sleep 1 && cat ${d} > ${e}`
 })

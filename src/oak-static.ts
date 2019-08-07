@@ -3,7 +3,10 @@ import { Library } from "./Library";
 import { getStat, parseOakfile } from "./utils";
 import FileInfo from "./FileInfo";
 import { dirname, join } from "path";
+import { EventEmitter } from "events";
+import chalk from "chalk";
 
+const formatPath = s => chalk.black.bgWhiteBright.bold(s);
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 const GeneratorFunction = Object.getPrototypeOf(function*() {}).constructor;
 const AsyncGeneratorFunction = Object.getPrototypeOf(async function*() {})
@@ -78,7 +81,9 @@ const defineCellDefinition = (
       // run recipe if no file or if it's out of date
       if (currCell.stat === null) {
         console.log(
-          `Running recipe for ${currCell.path} because it doesnt exist`
+          `Running recipe for ${formatPath(
+            currCell.path
+          )} because it doesnt exist`
         );
         await currCell.runRecipe();
         currCell.stat = await getStat(currCell.path);
@@ -88,13 +93,18 @@ const defineCellDefinition = (
         c => currCell.stat.mtime < c.stat.mtime
       );
       if (deps.length > 0) {
-        console.log(`Re-running recipe for ${currCell.path} because:`);
-        deps.map(d => console.log(`\t${d.path}`));
+        console.log(
+          `Re-running recipe for ${formatPath(currCell.path)} because:`
+        );
+        deps.map(d => console.log(`\t${formatPath(d.path)}`));
         await currCell.runRecipe();
         currCell.stat = await getStat(currCell.path);
         return currCell;
       } else {
-        console.log(`no need to re-run recipe for ${currCell.path}`);
+        console.log(
+          `no need to re-run recipe for ${formatPath(currCell.path)}`
+        );
+        return currCell;
       }
     }
     return currCell;
@@ -118,15 +128,23 @@ const oakDefine = (
         );
         const child = runtime.module(from);
         for (let i = 0; i < names.length; i++) {
-          main.variable(observer()).import(names[i], aliases[i], child);
+          console.log(
+            `oakDefine import name=${names[i]} aliases=${aliases[i]}`
+          );
+
+          main.import(names[i], aliases[i], child);
         }
       } else {
         const { cellName, cellFunction, cellReferences } = defineCell(
           cell,
           source
         );
+        console.log(
+          `oakDefine cell=${cellName} refs=${cellReferences.join(",")}`
+        );
+
         main
-          .variable(observer())
+          .variable(observer(cellName))
           .define(
             cellName,
             cellReferences,
@@ -151,7 +169,23 @@ export async function oak_static(args: { filename: string }) {
 
   const runtime = new Runtime(new Library());
   const define = await oakDefineFile(oakfilePath);
+  const ee = new EventEmitter();
+  const taskDefs = [];
+
+  console.log(`Executing Oakfile found at ${formatPath(oakfilePath)}`);
   runtime.module(define, (name: string) => {
-    return true;
+    const inspector = {
+      pending() {
+        ee.emit(name, "pending");
+      },
+      fulfilled(value) {
+        ee.emit(name, "fulfilled", value);
+      },
+      rejected(error) {
+        ee.emit(name, "rejected", error);
+      }
+    };
+
+    return inspector;
   });
 }
