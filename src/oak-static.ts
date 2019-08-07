@@ -19,9 +19,7 @@ const defineCellImport = async (
   from: () => void;
 }> => {
   const path = join(baseModuleDir, cell.body.source.value);
-  // console.log(`XXXX`, path);
   const fromModule = await oakDefineFile(path);
-  // console.log(`XXXXXXXX`, fromModule);
   const names = cell.body.specifiers.map(specifier => specifier.imported.name);
   const aliases = cell.body.specifiers.map(specifier => specifier.local.name);
 
@@ -119,7 +117,6 @@ const oakDefine = (
           baseModuleDir
         );
         const child = runtime.module(from);
-        console.log(names, aliases);
         for (let i = 0; i < names.length; i++) {
           main.variable(observer()).import(names[i], aliases[i], child);
         }

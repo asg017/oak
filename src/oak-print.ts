@@ -18,7 +18,7 @@ const styleVariable = (v: string) =>
 
 export async function oak_print(args: OakPrintArgumentsType): Promise<void> {
   const oakfile = await parseOakfile(join(process.cwd(), args.filename));
-  const libSet = new Set(Object.keys(Library));
+  const libSet = new Set(Object.keys(new Library()));
   console.log(`Oakfile at ${args.filename}:`);
   oakfile.module.cells.map(cell => {
     // TODO filename and recipe
@@ -28,7 +28,7 @@ export async function oak_print(args: OakPrintArgumentsType): Promise<void> {
       console.log(
         `${styleVariable(cell.id.name)} ${cell.references
           .map(ref => ref.name)
-          .filter(refName => !libSet.has(refName))
+          .filter((refName: string) => !libSet.has(refName))
           .join(",")}`
       );
     }
