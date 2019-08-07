@@ -23,3 +23,13 @@ e = cell({
     path: 'temp/e.txt',
     recipe: e=> bash`sleep 1 && cat ${d} > ${e}`
 })
+
+f = cell({
+    path: 'temp/f.txt',
+    recipe: f=> bash`sleep 1 && cat ${e} > ${f}`
+})
+
+g = cell({
+    path: 'temp/g.txt',
+    recipe: g=> bash`sleep 1 && cat ${e} ${f} > ${g}`
+})

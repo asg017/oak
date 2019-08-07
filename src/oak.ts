@@ -48,9 +48,8 @@ class StaticAction extends CommandLineAction {
   }
   protected onExecute(): Promise<void> {
     oak_static({
-      filename: this._filename.value
-      // TODO add ability to only build provided targets
-      // targets: this._targets.values
+      filename: this._filename.value,
+      targets: this._targets.values
     });
     return Promise.resolve();
   }

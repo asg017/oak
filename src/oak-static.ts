@@ -6,7 +6,9 @@ import { dirname, join } from "path";
 import { EventEmitter } from "events";
 import chalk from "chalk";
 
-const formatPath = s => chalk.black.bgWhiteBright.bold(s);
+const formatPath = (s: string) => chalk.black.bgWhiteBright.bold(s);
+const formatCellName = (s: string) => chalk.black.bgCyanBright.bold(s);
+
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 const GeneratorFunction = Object.getPrototypeOf(function*() {}).constructor;
 const AsyncGeneratorFunction = Object.getPrototypeOf(async function*() {})
@@ -14,7 +16,6 @@ const AsyncGeneratorFunction = Object.getPrototypeOf(async function*() {})
 
 const defineCellImport = async (
   cell: any,
-  source: string,
   baseModuleDir: string
 ): Promise<{
   names: string[];
@@ -123,7 +124,6 @@ const oakDefine = (
       if (cell.body.type === "ImportDeclaration") {
         const { names, aliases, from } = await defineCellImport(
           cell,
-          source,
           baseModuleDir
         );
         const child = runtime.module(from);
@@ -140,9 +140,11 @@ const oakDefine = (
           source
         );
         console.log(
-          `oakDefine cell=${cellName} refs=${cellReferences.join(",")}`
+          `oakDefine cell=${formatCellName(
+            cellName
+          )} refs=${cellReferences.join(",")}`
         );
-
+        console.log(cellReferences);
         main
           .variable(observer(cellName))
           .define(
@@ -164,7 +166,11 @@ const oakDefineFile = async (path: string): Promise<any> => {
   return oakDefine(oakfileModule, oakfileContents, baseModuleDir);
 };
 
-export async function oak_static(args: { filename: string }) {
+export async function oak_static(args: {
+  filename: string;
+  targets: readonly string[];
+}) {
+  const targetSet = new Set(args.targets);
   const oakfilePath = join(process.cwd(), args.filename);
 
   const runtime = new Runtime(new Library());
@@ -172,20 +178,29 @@ export async function oak_static(args: { filename: string }) {
   const ee = new EventEmitter();
   const taskDefs = [];
 
-  console.log(`Executing Oakfile found at ${formatPath(oakfilePath)}`);
+  console.log(
+    `Oak: ${formatPath(oakfilePath)}${
+      targetSet.size > 0
+        ? ` - targets: ${Array.from(targetSet)
+            .map(formatCellName)
+            .join(",")}`
+        : ""
+    }`
+  );
   runtime.module(define, (name: string) => {
-    const inspector = {
-      pending() {
-        ee.emit(name, "pending");
-      },
-      fulfilled(value) {
-        ee.emit(name, "fulfilled", value);
-      },
-      rejected(error) {
-        ee.emit(name, "rejected", error);
-      }
-    };
-
-    return inspector;
+    console.log(targetSet.size === 0 || targetSet.has(name));
+    return targetSet.size === 0 || targetSet.has(name)
+      ? {
+          pending() {
+            ee.emit(name, "pending");
+          },
+          fulfilled(value) {
+            ee.emit(name, "fulfilled", value);
+          },
+          rejected(error) {
+            ee.emit(name, "rejected", error);
+          }
+        }
+      : null;
   });
 }
