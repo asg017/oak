@@ -21,13 +21,25 @@ const fileInfo = async (
 };
 
 const file = {
-  hello: (path: string) => `${__dirname}/input/hello/${path}`
+  hello: (path: string) => `${__dirname}/input/hello/${path}`,
+  simple_import: (path: string) => `${__dirname}/input/simple-import/${path}`
+};
+const outputs = {
+  hello: ["a", "b", "c"].map(file.hello),
+  simple_import: ["sub/a", "sub/b", "sub/c", "d", "f"].map(file.simple_import)
 };
 
+function cleanUp() {
+  Object.keys(outputs).map(name => {
+    console.log(`Deleting for ${name}...`);
+    outputs[name].map(f => {
+      console.log(`\t${f}`);
+      fs.unlinkSync(f);
+    });
+  });
+}
 test.onFinish(() => {
-  fs.unlinkSync(file.hello("a"));
-  fs.unlinkSync(file.hello("b"));
-  fs.unlinkSync(file.hello("c"));
+  cleanUp();
 });
 
 test("integration", t => {
@@ -43,4 +55,22 @@ test("integration", t => {
     st.true(b_file.stat.mtime < c_file.stat.mtime);
     st.end();
   });
+  t.test("Oakfile.simple-import", async st => {
+    await oak_static({ filename: file.simple_import("Oakfile"), targets: [] });
+    const a_file = await fileInfo(file.simple_import("sub/a"));
+    const b_file = await fileInfo(file.simple_import("sub/b"));
+    const c_file = await fileInfo(file.simple_import("sub/c"));
+    const d_file = await fileInfo(file.simple_import("d"));
+    const f_file = await fileInfo(file.simple_import("f"));
+    st.equal(a_file.content, "a");
+    st.equal(b_file.content, "b");
+    st.equal(c_file.content, "ab");
+    st.equal(d_file.content, "ab");
+    st.equal(f_file.content, "fff");
+    st.true(a_file.stat.mtime < c_file.stat.mtime);
+    st.true(b_file.stat.mtime < c_file.stat.mtime);
+    st.true(d_file.stat.mtime < c_file.stat.mtime);
+    st.end();
+  });
+  t.end();
 });

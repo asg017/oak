@@ -162,8 +162,16 @@ export const oakDefine = (
         const { names, aliases, from } = await defineCellImport(
           cell,
           baseModuleDir
-        );
-        const child = runtime.module(from);
+        ).catch(err => {
+          throw Error("Error defining import cell");
+        });
+        const childNames = [];
+        const child = runtime.module(from, name => {
+          childNames.push(name);
+          return true;
+        });
+        await Promise.all(childNames.map(n => child.value(n)));
+        console.log(childNames);
         for (let i = 0; i < names.length; i++) {
           console.log(
             `oakDefine import name=${names[i]} aliases=${aliases[i]}`
@@ -195,9 +203,17 @@ export const oakDefine = (
 };
 
 export const oakDefineFile = async (path: string): Promise<any> => {
-  const parseResults = await parseOakfile(path);
+  const parseResults = await parseOakfile(path).catch(err => {
+    throw Error("Error parsing Oakfile");
+  });
   const oakfileModule = parseResults.module;
   const oakfileContents = parseResults.contents;
   const baseModuleDir = dirname(path);
   return oakDefine(oakfileModule, oakfileContents, baseModuleDir);
 };
+
+process.on("unhandledRejection", (reason, p) => {
+  console.log("Unhandled Rejection at: Promise", p, "reason:", reason);
+  // application specific logging, throwing an error, or other logic here
+  console.error(reason);
+});
