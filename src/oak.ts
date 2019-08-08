@@ -2,6 +2,7 @@
 
 import { oak_static } from "./oak-static";
 import { oak_print } from "./oak-print";
+import oak_dash from "./oak-dash";
 
 import {
   CommandLineStringParameter,
@@ -9,6 +10,39 @@ import {
   CommandLineAction,
   CommandLineParser
 } from "@microsoft/ts-command-line";
+
+class DashAction extends CommandLineAction {
+  private _port: CommandLineStringParameter;
+  private _filename: CommandLineStringParameter;
+  public constructor() {
+    super({
+      actionName: "dash",
+      summary: "Start a dashboard server to interact with an Oakfile.",
+      documentation: "TODO"
+    });
+  }
+  protected onExecute(): Promise<void> {
+    oak_dash({ filename: this._filename.value, port: this._port.value });
+    return Promise.resolve();
+  }
+
+  protected onDefineParameters(): void {
+    this._filename = this.defineStringParameter({
+      argumentName: "FILENAME",
+      parameterLongName: "--file",
+      parameterShortName: "-f",
+      description: "Path to Oakfile.",
+      defaultValue: "./Oakfile"
+    });
+    this._port = this.defineStringParameter({
+      argumentName: "PORT",
+      parameterLongName: "--port",
+      parameterShortName: "-p",
+      description: "Port to start the server.",
+      defaultValue: "8888"
+    });
+  }
+}
 
 class PrintAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
@@ -78,6 +112,7 @@ class OakCommandLine extends CommandLineParser {
       toolDescription: "CLI for oak."
     });
 
+    this.addAction(new DashAction());
     this.addAction(new PrintAction());
     this.addAction(new StaticAction());
   }
