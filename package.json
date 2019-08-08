@@ -12,11 +12,12 @@
   "dependencies": {
     "@microsoft/ts-command-line": "^4.2.6",
     "@observablehq/parser": "^1.2.1",
-    "@observablehq/runtime": "^4.0.1",
+    "@observablehq/runtime": "^4.3",
     "@observablehq/stdlib": "^3.0.2",
     "@types/node": "^12.6.8",
     "@types/tape": "^4.2.33",
     "chalk": "^2.4.2",
+    "mock-fs": "^4.10.1",
     "rollup-plugin-commonjs": "^10.0.1"
   },
   "devDependencies": {

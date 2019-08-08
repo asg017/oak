@@ -1,0 +1,12 @@
+a = cell({
+    path: "a",
+    recipe: a => bash`echo -n "a" > ${a}`
+}) 
+b = cell({
+    path: "b",
+    recipe: b => bash`echo -n "b" > ${b}`
+}) 
+c = cell({
+    path: "c",
+    recipe: c => bash`cat ${a} ${b} > ${c}`
+}) 

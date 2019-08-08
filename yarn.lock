@@ -12,10 +12,10 @@
     argparse "~1.0.9"
     colors "~1.2.1"
 
-"@observablehq/inspector@^3.0.0":
-  version "3.0.4"
-  resolved "https://registry.yarnpkg.com/@observablehq/inspector/-/inspector-3.0.4.tgz#9a0c8bb6631aa51c2f3806275efa69f073c13192"
-  integrity sha512-Ik/j1bfGPRdOItN21NYIfEJd9EMB0oY/a2w6C4BXJsbGC5gPZwkvYbkX4AM5u12/emSNN1tH1uvNjz5vsZ4GKw==
+"@observablehq/inspector@^3.1.0":
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@observablehq/inspector/-/inspector-3.1.0.tgz#4726f9aabc58aa410a4ba27adf89b180fa9a302b"
+  integrity sha512-DOx40q05QZdQnYpUsKch+8raWGmKSBh5DIAinQRoK+ij7Eq/PKpHJvNrrhThF4+2b/qViUhZGOwMLPhlC2qMzg==
   dependencies:
     esm "^3.0.84"
 
@@ -28,12 +28,12 @@
     acorn-bigint "^0.3.1"
     acorn-walk "^6.1.1"
 
-"@observablehq/runtime@^4.0.1":
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/@observablehq/runtime/-/runtime-4.0.1.tgz#fa7bbb45bf45d7d89bdab1449e1606c0a46b3331"
-  integrity sha512-kiR25nLppBuO53Fc4BBwwVJJ7+ePnQSN8sswBz+0amWCO9wrOvsdr3bye7eU5Axjx3zmWT+Y2n2EPrpFOIHDiw==
+"@observablehq/runtime@^4.3":
+  version "4.3.0"
+  resolved "https://registry.yarnpkg.com/@observablehq/runtime/-/runtime-4.3.0.tgz#a7716bfff360bef22fb4574d7805f99bc7f5cd1c"
+  integrity sha512-AS6v/DY9b7RXrH0QpptbLLz508aYZzygAX9cUPZRfq4vwlUTGOyFffpv2ODSZCC6HNwcnEur9syJsNSVBl9H8A==
   dependencies:
-    "@observablehq/inspector" "^3.0.0"
+    "@observablehq/inspector" "^3.1.0"
     "@observablehq/stdlib" "^3.0.0"
     esm "^3.0.84"
 
@@ -764,6 +764,11 @@ minimist@~1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.0.tgz#a35008b20f41383eec1fb914f4cd5df79a264284"
   integrity sha1-o1AIsg9BOD7sH7kU9M1d95omQoQ=
+
+mock-fs@^4.10.1:
+  version "4.10.1"
+  resolved "https://registry.yarnpkg.com/mock-fs/-/mock-fs-4.10.1.tgz#50a07a20114a6cdb119f35762f61f46266a1e323"
+  integrity sha512-w22rOL5ZYu6HbUehB5deurghGM0hS/xBVyHMGKOuQctkk93J9z9VEOhDsiWrXOprVNQpP9uzGKdl8v9mFspKuw==
 
 object-inspect@~1.6.0:
   version "1.6.0"

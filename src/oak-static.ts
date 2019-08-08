@@ -3,14 +3,16 @@ import { Library } from "./Library";
 import { EventEmitter } from "events";
 import { oakDefineFile } from "./oak-compile";
 import { formatCellName, formatPath } from "./utils";
-import { join } from "path";
+import { isAbsolute, join } from "path";
 
 export async function oak_static(args: {
   filename: string;
   targets: readonly string[];
 }) {
   const targetSet = new Set(args.targets);
-  const oakfilePath = join(process.cwd(), args.filename);
+  const oakfilePath = isAbsolute(args.filename)
+    ? args.filename
+    : join(process.cwd(), args.filename);
 
   const runtime = new Runtime(new Library());
   const define = await oakDefineFile(oakfilePath);
@@ -26,7 +28,9 @@ export async function oak_static(args: {
         : ""
     }`
   );
-  runtime.module(define, (name: string) => {
+  const names = [];
+  const m1 = runtime.module(define, (name: string) => {
+    names.push(name);
     return targetSet.size === 0 || targetSet.has(name)
       ? {
           pending() {
@@ -41,4 +45,5 @@ export async function oak_static(args: {
         }
       : null;
   });
+  const vals = await Promise.all(names.map(name => m1.value(name)));
 }
