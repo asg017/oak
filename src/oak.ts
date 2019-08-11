@@ -19,8 +19,8 @@ class PrintAction extends CommandLineAction {
       documentation: "TODO"
     });
   }
-  protected onExecute(): Promise<void> {
-    oak_print({ filename: this._filename.value });
+  protected async onExecute(): Promise<void> {
+    await oak_print({ filename: this._filename.value });
     return Promise.resolve();
   }
 
@@ -46,12 +46,12 @@ class StaticAction extends CommandLineAction {
       documentation: "TODO"
     });
   }
-  protected onExecute(): Promise<void> {
-    oak_static({
+  protected async onExecute(): Promise<void> {
+    await oak_static({
       filename: this._filename.value,
       targets: this._targets.values
     });
-    return Promise.resolve();
+    return;
   }
 
   protected onDefineParameters(): void {
@@ -84,10 +84,19 @@ class OakCommandLine extends CommandLineParser {
 
   protected onDefineParameters(): void {}
 
-  protected onExecute(): Promise<void> {
-    return super.onExecute();
+  protected async onExecute(): Promise<void> {
+    await super.onExecute();
+    return;
   }
 }
+console.log("before main");
+(async function main(): Promise<void> {
+  const cli: OakCommandLine = new OakCommandLine();
+  console.log("executing...");
+  await cli.execute();
+  console.log("done done");
+  return;
+})();
+// process.stdin.resume();
 
-const cli: OakCommandLine = new OakCommandLine();
-cli.execute();
+console.log("after main");

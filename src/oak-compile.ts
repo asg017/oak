@@ -220,6 +220,6 @@ export const oakDefineFile = async (path: string): Promise<any> => {
   return oakDefine(oakfileModule, oakfileContents, baseModuleDir);
 };
 
-//process.on("unhandledRejection", (reason, p) => {
-// console.log("Unhandled Rejection at: Promise", p, "reason:", reason);
-//});
+process.on("unhandledRejection", (reason, p) => {
+  console.log("Unhandled Rejection at: Promise", p, "reason:", reason);
+});

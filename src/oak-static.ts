@@ -8,7 +8,7 @@ import { isAbsolute, join } from "path";
 export async function oak_static(args: {
   filename: string;
   targets: readonly string[];
-}) {
+}): Promise<void> {
   const targetSet = new Set(args.targets);
   const oakfilePath = isAbsolute(args.filename)
     ? args.filename
@@ -48,10 +48,12 @@ export async function oak_static(args: {
   });
   await new Promise((resolve, reject) => {
     ee.on("fulfilled", (name, val) => {
+      console.log(name, cells.keys(), cells.size);
       cells.delete(name);
       if (cells.size === 0) {
         resolve();
       }
     });
   });
+  console.log("done what");
 }
