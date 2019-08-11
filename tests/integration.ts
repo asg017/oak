@@ -34,14 +34,16 @@ function cleanUp() {
     console.log(`Deleting for ${name}...`);
     outputs[name].map(f => {
       console.log(`\t${f}`);
-      fs.unlinkSync(f);
+      try {
+        fs.unlinkSync(f);
+      } catch {} // o no
     });
   });
 }
 test.onFinish(() => {
   cleanUp();
 });
-
+cleanUp();
 test("integration", t => {
   t.test("Oakfile.hello", async st => {
     await oak_static({ filename: file.hello("Oakfile"), targets: [] });
@@ -69,7 +71,7 @@ test("integration", t => {
     st.equal(f_file.content, "fff");
     st.true(a_file.stat.mtime < c_file.stat.mtime);
     st.true(b_file.stat.mtime < c_file.stat.mtime);
-    st.true(d_file.stat.mtime < c_file.stat.mtime);
+    st.true(c_file.stat.mtime < d_file.stat.mtime);
     st.end();
   });
   t.end();

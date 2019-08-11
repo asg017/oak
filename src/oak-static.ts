@@ -28,22 +28,30 @@ export async function oak_static(args: {
         : ""
     }`
   );
-  const names = [];
+  const cells: Set<string> = new Set();
   const m1 = runtime.module(define, (name: string) => {
-    names.push(name);
-    return targetSet.size === 0 || targetSet.has(name)
-      ? {
-          pending() {
-            ee.emit(name, "pending");
-          },
-          fulfilled(value) {
-            ee.emit(name, "fulfilled", value);
-          },
-          rejected(error) {
-            ee.emit(name, "rejected", error);
-          }
+    if (targetSet.size === 0 || targetSet.has(name)) {
+      cells.add(name);
+      return {
+        pending() {
+          ee.emit("pending", name);
+        },
+        fulfilled(value) {
+          ee.emit("fulfilled", name, value);
+        },
+        rejected(error) {
+          ee.emit("rejected", name, error);
         }
-      : null;
+      };
+    }
+    return null;
   });
-  const vals = await Promise.all(names.map(name => m1.value(name)));
+  await new Promise((resolve, reject) => {
+    ee.on("fulfilled", (name, val) => {
+      cells.delete(name);
+      if (cells.size === 0) {
+        resolve();
+      }
+    });
+  });
 }

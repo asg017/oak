@@ -154,11 +154,17 @@ export const oakDefine = (
   source: string,
   baseModuleDir: string
 ): DefineFunctionType => {
-  return function define(runtime, observer) {
+  return async function define(runtime, observer) {
     const main = runtime.module();
-
-    oakfileModule.cells.map(async (cell: ObservableCell) => {
-      if (cell.body.type === "ImportDeclaration") {
+    const importCells = oakfileModule.cells.filter(
+      cell => cell.body.type === "ImportDeclaration"
+    );
+    const regularCells = oakfileModule.cells.filter(
+      cell => cell.body.type !== "ImportDeclaration"
+    );
+    // import all needed cells first.
+    await Promise.all(
+      importCells.map(async cell => {
         const { names, aliases, from } = await defineCellImport(
           cell,
           baseModuleDir
@@ -179,24 +185,26 @@ export const oakDefine = (
 
           main.import(names[i], aliases[i], child);
         }
-      } else {
-        const { cellName, cellFunction, cellReferences } = defineCell(
-          cell,
-          source
+        return;
+      })
+    );
+    regularCells.map(async cell => {
+      const { cellName, cellFunction, cellReferences } = defineCell(
+        cell,
+        source
+      );
+      console.log(
+        `oakDefine cell=${formatCellName(cellName)} refs=${cellReferences.join(
+          ","
+        )}`
+      );
+      main
+        .variable(observer(cellName))
+        .define(
+          cellName,
+          cellReferences,
+          defineCellDefinition(cellFunction, baseModuleDir)
         );
-        console.log(
-          `oakDefine cell=${formatCellName(
-            cellName
-          )} refs=${cellReferences.join(",")}`
-        );
-        main
-          .variable(observer(cellName))
-          .define(
-            cellName,
-            cellReferences,
-            defineCellDefinition(cellFunction, baseModuleDir)
-          );
-      }
     });
     return main;
   };
@@ -204,7 +212,7 @@ export const oakDefine = (
 
 export const oakDefineFile = async (path: string): Promise<any> => {
   const parseResults = await parseOakfile(path).catch(err => {
-    throw Error("Error parsing Oakfile");
+    throw Error(`Error parsing Oakfile at ${path} ${err}`);
   });
   const oakfileModule = parseResults.module;
   const oakfileContents = parseResults.contents;
@@ -212,8 +220,6 @@ export const oakDefineFile = async (path: string): Promise<any> => {
   return oakDefine(oakfileModule, oakfileContents, baseModuleDir);
 };
 
-process.on("unhandledRejection", (reason, p) => {
-  console.log("Unhandled Rejection at: Promise", p, "reason:", reason);
-  // application specific logging, throwing an error, or other logic here
-  console.error(reason);
-});
+//process.on("unhandledRejection", (reason, p) => {
+// console.log("Unhandled Rejection at: Promise", p, "reason:", reason);
+//});
