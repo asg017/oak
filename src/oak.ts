@@ -89,14 +89,8 @@ class OakCommandLine extends CommandLineParser {
     return;
   }
 }
-console.log("before main");
 (async function main(): Promise<void> {
   const cli: OakCommandLine = new OakCommandLine();
-  console.log("executing...");
   await cli.execute();
-  console.log("done done");
   return;
 })();
-// process.stdin.resume();
-
-console.log("after main");

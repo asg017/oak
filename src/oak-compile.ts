@@ -132,7 +132,7 @@ export const defineCellDefinition = (
         return currCell;
       }
       const deps = cellDependents.filter(
-        c => currCell.stat.mtime < c.stat.mtime
+        c => currCell.stat.mtime <= c.stat.mtime
       );
       if (deps.length > 0) {
         console.log(`${formatPath(currCell.path)} - out of date:`);

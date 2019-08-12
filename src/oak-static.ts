@@ -48,12 +48,10 @@ export async function oak_static(args: {
   });
   await new Promise((resolve, reject) => {
     ee.on("fulfilled", (name, val) => {
-      console.log(name, cells.keys(), cells.size);
       cells.delete(name);
       if (cells.size === 0) {
         resolve();
       }
     });
   });
-  console.log("done what");
 }

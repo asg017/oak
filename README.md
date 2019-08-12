@@ -5,5 +5,11 @@ A CLI progams for reproducible, customizable data workflows.
 ## Installing
 
 ```
-npm i -g TODOOMG
+npm install -g @alex.garcia/oak
+```
+
+## Usage
+
+```
+oak
 ```

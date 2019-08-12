@@ -1,26 +1,17 @@
 import { Library } from "../src/Library";
 import * as test from "tape";
-import * as mock from "mock-fs";
+import { input_file, open } from "./utils";
 import cell from "../src/Library/cell";
 import bash from "../src/Library/bash";
 
 // const { bash, cell } = new Library();
 
-test.onFinish(() => {
-  mock.restore();
-});
-
-mock({
-  "test.txt": mock.file({
-    content: "test",
-    ctime: new Date(1),
-    mtime: new Date(2)
-  })
-});
-
 test("Library.ts", async t => {
   t.test("cell", async st => {
-    const c1 = await cell({ path: "test.txt", recipe: c => 4 });
+    const c1 = await cell({
+      path: input_file.library("test.txt"),
+      recipe: c => 4
+    });
     st.equals(c1.stat.mtime.getTime(), new Date(2).getTime());
     st.end();
   });
