@@ -6,6 +6,7 @@ import * as socketioJwt from "socketio-jwt";
 import * as jwt from "jsonwebtoken";
 import { watch } from "fs";
 import { parseOakfile } from "../utils";
+import { join } from "path";
 
 const SECRET = randomatic("Aa0", 24);
 
@@ -35,10 +36,7 @@ export default function oak_dash(args: { filename: string; port: string }) {
   console.log(
     `Listening at http://localhost:${args.port}?token=${encodedToken}`
   );
-
-  app.get("/", function(req, res) {
-    res.sendFile(__dirname + "/static/index.html");
-  });
+  app.use(express.static(join(__dirname, "dash-frontend", "build")));
 
   io.on(
     "connection",
