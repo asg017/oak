@@ -23,8 +23,9 @@
     "preact-cli": "^2.0.0"
   },
   "dependencies": {
-    "preact": "^8.2.1",
+    "preact": "10.0.0-beta.3",
     "preact-compat": "^3.17.0",
-    "preact-render-to-string": "^4.1.0"
+    "preact-render-to-string": "^4.1.0",
+    "socket.io-client": "^2.2.0"
   }
 }
