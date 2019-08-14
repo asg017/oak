@@ -2,6 +2,7 @@
 
 import { oak_static } from "./oak-static";
 import { oak_print } from "./oak-print";
+import { oak_init } from './oak-init';
 
 import {
   CommandLineStringParameter,
@@ -9,6 +10,20 @@ import {
   CommandLineAction,
   CommandLineParser
 } from "@microsoft/ts-command-line";
+
+class InitAction extends CommandLineAction {
+  public constructor() {
+    super({
+      actionName: "init",
+      summary: "Initialize an Oakfile in the current directory..",
+      documentation: "TODO"
+    });
+  }
+  protected async onExecute(): Promise<void> {
+    await oak_init();
+  }
+  protected onDefineParameters(): void { }
+}
 
 class PrintAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
@@ -80,9 +95,10 @@ class OakCommandLine extends CommandLineParser {
 
     this.addAction(new PrintAction());
     this.addAction(new StaticAction());
+    this.addAction(new InitAction())
   }
 
-  protected onDefineParameters(): void {}
+  protected onDefineParameters(): void { }
 
   protected async onExecute(): Promise<void> {
     await super.onExecute();

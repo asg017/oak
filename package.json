@@ -6,6 +6,7 @@
   "bin": {
     "oak": "./built/oak.js"
   },
+  "license": "MIT",
   "publishConfig": {
     "access": "public"
   },
