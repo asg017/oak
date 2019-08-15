@@ -12,13 +12,13 @@ export const input_file = {
 };
 export const touch = async (
   path: string,
-  atime: Date | number,
-  mtime: Date | number
+  atime: Date,
+  mtime: Date
 ): Promise<OpenFileType> => {
   await utimes(
     path,
-    atime,
-    mtime,
+    atime.getTime() / 1000,
+    mtime.getTime() / 1000,
     err => new Promise((resolve, reject) => (err ? reject(err) : resolve()))
   );
   return open(path);
