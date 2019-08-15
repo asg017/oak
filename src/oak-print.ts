@@ -8,7 +8,7 @@ type OakPrintArgumentsType = {
 const styles = {
   bgWhite: { open: "\u001b[47m", close: "\u001b[49m" },
   bold: { open: "\u001b[1m", close: "\u001b[22m" },
-  black: { open: "\u001b[30m", close: "\u001b[39m" }
+  black: { open: "\u001b[30m", close: "\u001b[39m" },
 };
 
 const styleVariable = (v: string) =>
