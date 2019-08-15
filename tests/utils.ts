@@ -8,6 +8,7 @@ type OpenFileType = {
 export const input_file = {
   hello: (path: string) => `${__dirname}/input/hello/${path}`,
   simple_import: (path: string) => `${__dirname}/input/simple-import/${path}`,
+  simple_inject: (path: string) => `${__dirname}/input/simple-inject/${path}`,
   library: (path: string) => `${__dirname}/input/Library/${path}`
 };
 export const touch = async (

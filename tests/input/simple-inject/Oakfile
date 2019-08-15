@@ -1,0 +1,5 @@
+localA = cell({path: 'a', a=> bash`echo "@" > ${a}`})
+
+import {c as localC} with {localA as a} from "./simple/Oakfile"
+
+d = cell({path: 'd', recipe: d => bash`cat ${localC} > ${d}`})
