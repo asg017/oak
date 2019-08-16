@@ -51,6 +51,11 @@
   resolved "https://registry.yarnpkg.com/@types/argparse/-/argparse-1.0.33.tgz#2728669427cdd74a99e53c9f457ca2866a37c52d"
   integrity sha512-VQgHxyPMTj3hIlq9SY1mctqx+Jj8kpQfoLvDlVSDNOyuYs8JYfkuY3OW/4+dO657yPmNhHpePRx0/Tje5ImNVQ==
 
+"@types/graphviz@^0.0.30":
+  version "0.0.30"
+  resolved "https://registry.yarnpkg.com/@types/graphviz/-/graphviz-0.0.30.tgz#8bf8ea2588d5fcc726ced49dae664d96d07a7b48"
+  integrity sha512-FnrEgMSamHBlUJJiKnlXqlHC/xca3LCf8LVqYp15/vqPbcL1X1XXNLOSjRu3beJEhj/tjDNclTHiW4Qy3Y6eHg==
+
 "@types/node@*", "@types/node@^12.6.8":
   version "12.6.8"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-12.6.8.tgz#e469b4bf9d1c9832aee4907ba8a051494357c12c"
@@ -151,6 +156,11 @@ concat-map@0.0.1:
   resolved "https://registry.yarnpkg.com/concat-map/-/concat-map-0.0.1.tgz#d8a96bd77fd68df7793a73036a3ba0d5405d477b"
   integrity sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=
 
+d3-array@^2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/d3-array/-/d3-array-2.2.0.tgz#a9e966b8f8d78f0888d98db1fb840fc8da8ac5c7"
+  integrity sha512-eE0QmSh6xToqM3sxHiJYg/QFdNn52ZEgmFE8A8abU8GsHvsIOolqH8B70/8+VGAKm5MlwaExhqR3DLIjOJMLPA==
+
 d3-require@^1.2.0:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/d3-require/-/d3-require-1.2.2.tgz#1f7a3f8846ae3496140e0350299db0905cbeed35"
@@ -237,6 +247,13 @@ glob@~7.1.4:
     minimatch "^3.0.4"
     once "^1.3.0"
     path-is-absolute "^1.0.0"
+
+graphviz@^0.0.9:
+  version "0.0.9"
+  resolved "https://registry.yarnpkg.com/graphviz/-/graphviz-0.0.9.tgz#0bbf1df588c6a92259282da35323622528c4bbc4"
+  integrity sha512-SmoY2pOtcikmMCqCSy2NO1YsRfu9OO0wpTlOYW++giGjfX1a6gax/m1Fo8IdUd0/3H15cTOfR1SMKwohj4LKsg==
+  dependencies:
+    temp "~0.4.0"
 
 has-flag@^3.0.0:
   version "3.0.0"
@@ -411,6 +428,11 @@ tape@^4.11.0:
     resumer "~0.0.0"
     string.prototype.trim "~1.1.2"
     through "~2.3.8"
+
+temp@~0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/temp/-/temp-0.4.0.tgz#671ad63d57be0fe9d7294664b3fc400636678a60"
+  integrity sha1-ZxrWPVe+D+nXKUZks/xABjZnimA=
 
 through@~2.3.4, through@~2.3.8:
   version "2.3.8"

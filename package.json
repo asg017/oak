@@ -24,9 +24,12 @@
     "@observablehq/stdlib": "^3.0.2",
     "@types/node": "^12.6.8",
     "@types/tape": "^4.2.33",
-    "chalk": "^2.4.2"
+    "chalk": "^2.4.2",
+    "d3-array": "^2.2.0",
+    "graphviz": "^0.0.9"
   },
   "devDependencies": {
+    "@types/graphviz": "^0.0.30",
     "mock-fs": "^4.10.1",
     "tape": "^4.11.0",
     "ts-node": "^8.3.0",

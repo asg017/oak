@@ -1,0 +1,23 @@
+a = cell({
+    path: 'a',
+    recipe: a => bash`${a}`
+})
+
+b = cell({
+    path: 'b',
+    recipe: b => bash`${b}`
+})
+
+c = cell({
+    path: 'c',
+    recipe: c => bash`${c}`
+})
+
+d = cell({
+    path: 'd',
+    recipe: d => bash`${c} ${d}`
+})
+e = cell({
+    path: 'a',
+    recipe: a => bash`${a} ${d} ${e}`
+})

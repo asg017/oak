@@ -1,0 +1,16 @@
+import {g as importedG} from 'Oakfile.import'
+
+h = cell({
+    path: 'h', 
+    recipe: h => bash`${h}`
+})
+
+i = cell({
+    path: 'i',
+    recipe: i => bash`${g} ${h} ${i}`
+})
+
+j = ({
+    path: j,
+    recipe: j => bash`${j}`
+})
