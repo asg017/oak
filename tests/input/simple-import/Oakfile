@@ -1,4 +1,4 @@
-import {c} from "./sub/Oakfile"
+import {c as c} from "./sub/Oakfile"
 
 d = cell({path: 'd', recipe: d => bash`cat ${c} > ${d}`})
 

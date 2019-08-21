@@ -5,6 +5,7 @@ import { oak_print } from "./oak-print";
 import { oak_init } from "./oak-init";
 
 import {
+  CommandLineChoiceParameter,
   CommandLineStringParameter,
   CommandLineStringListParameter,
   CommandLineAction,
@@ -27,7 +28,7 @@ class InitAction extends CommandLineAction {
 
 class PrintAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
-  private _output: CommandLineStringParameter;
+  private _output: CommandLineChoiceParameter;
   public constructor() {
     super({
       actionName: "print",
@@ -51,12 +52,12 @@ class PrintAction extends CommandLineAction {
       description: "Path to Oakfile.",
       defaultValue: "./Oakfile",
     });
-    this._output = this.defineStringParameter({
-      argumentName: "OUTPUT",
+    this._output = this.defineChoiceParameter({
       parameterLongName: "--output",
       parameterShortName: "-o",
       description: "How to output the Oakfile printing.",
       defaultValue: "stdout",
+      alternatives: ["stdout", "dot"],
     });
   }
 }

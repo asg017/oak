@@ -9,10 +9,6 @@ type OakPrintArgumentsType = {
   output: string;
 };
 
-type OakPrintOutputType = "stdout" | "png" | "svg";
-
-const outputSet = new Set(["stdout", "png", "svg", "dot"]);
-
 const styles = {
   bgWhite: { open: "\u001b[47m", close: "\u001b[49m" },
   bold: { open: "\u001b[1m", close: "\u001b[22m" },
@@ -24,20 +20,17 @@ const styleVariable = (v: string) =>
     styles.bgWhite.close
   }${styles.black.close}${styles.bold.close}`;
 
-const print_dot = (modules, libSet) => {
+const getDot = (modules, libSet) => {
   const g = digraph("G");
-  modules.map(module => {
-    module.cells.map((cell, i) => {
+  modules.map((module, i) => {
+    const cluster = g.addCluster(`cluster_${i}`);
+    module.cells.map(cell => {
       // TODO filename and recipe
       if (cell.body.type === "ImportDeclaration") {
-        console.warn("WARNING oak print cant print import statements yet");
+        cell.body.specifiers.map(spec => {
+          cluster.addEdge(spec.imported.name, spec.local.name);
+        });
       } else {
-        console.log(
-          `${styleVariable(cell.id.name)} ${cell.references
-            .map(ref => ref.name)
-            .join(",")}`
-        );
-        const cluster = g.addCluster(`cluster_${i}`);
         const node = cluster.addNode(cell.id.name);
         cell.references
           .filter(ref => !libSet.has(ref.name))
@@ -46,13 +39,18 @@ const print_dot = (modules, libSet) => {
     });
   });
 
-  console.log(g.to_dot());
   return g;
+};
+
+const print_dot = (modules, libSet) => {
+  const g = getDot(modules, libSet);
+  console.log(g.to_dot());
+  return;
 };
 
 const print_stdout = (filename, modules: any[], libSet) => {
   console.log(`Oakfile at ${filename}:`);
-  console.log(modules);
+  console.log("----");
   modules.map(module => {
     module.cells.map(cell => {
       if (cell.body.type === "ImportDeclaration") {
@@ -70,6 +68,7 @@ const print_stdout = (filename, modules: any[], libSet) => {
           .join(",")}`
       );
     });
+    console.log("----");
   });
 };
 
@@ -105,13 +104,6 @@ const parseModules = async (
   return [oakfile.module, ...merge(importedModules)];
 };
 export async function oak_print(args: OakPrintArgumentsType): Promise<void> {
-  if (!outputSet.has(args.output)) {
-    console.error(
-      `Invalid output parameter: ${args.output} not in ${Array.from(
-        outputSet.values()
-      ).join(",")}`
-    );
-  }
   const modules = await parseModules(join(process.cwd(), args.filename));
   const libSet = new Set(Object.keys(new Library()));
   switch (args.output) {
