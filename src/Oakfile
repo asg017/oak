@@ -1,35 +1,35 @@
-a = cell({
+a = recipe({
     path: 'temp/a.txt',
-    recipe: a => bash`sleep 1 && echo "hello its a! " > ${a}`
+    make: a => bash`sleep 1 && echo "hello its a! " > ${a}`
 })
 
 
-b = cell({
+b = recipe({
     path: 'temp/b.txt',
-    recipe: b => bash`sleep 1.5 && echo "hello now its b! " > ${b}`
+    make: b => bash`sleep 1.5 && echo "hello now its b! " > ${b}`
 })
 
-c = cell({
+c = recipe({
     path: 'temp/c.txt',
-    recipe: c => bash`sleep 1 && cat ${a} ${b} > ${c}`
+    make: c => bash`sleep 1 && cat ${a} ${b} > ${c}`
 })
 
-d = cell({
+d = recipe({
     path: 'temp/d.txt',
-    recipe: d=> bash`sleep 1 && cat ${c} > ${d}`
+    make: d=> bash`sleep 1 && cat ${c} > ${d}`
 })
 
-e = cell({
+e = recipe({
     path: 'temp/e.txt',
-    recipe: e=> bash`sleep 1 && cat ${d} > ${e}`
+    make: e=> bash`sleep 1 && cat ${d} > ${e}`
 })
 
-f = cell({
+f = recipe({
     path: 'temp/f.txt',
-    recipe: f=> bash`sleep 1 && cat ${e} > ${f}`
+    make: f=> bash`sleep 1 && cat ${e} > ${f}`
 })
 
-g = cell({
+g = recipe({
     path: 'temp/g.txt',
-    recipe: g=> bash`sleep 1 && cat ${e} ${f} > ${g}`
+    make: g=> bash`sleep 1 && cat ${e} ${f} > ${g}`
 })

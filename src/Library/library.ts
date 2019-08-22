@@ -5,11 +5,11 @@ const constant = function(x: any) {
 };
 
 import bash from "./bash";
-import cell from "./cell";
+import recipe from "./recipe";
 
 export default function Library() {
   Object.defineProperties(this, {
     bash: { value: constant(bash), writable: true, enumerable: true },
-    cell: { value: constant(cell), writable: true, enumerable: true }
+    recipe: { value: constant(recipe), writable: true, enumerable: true },
   });
 }

@@ -1,11 +1,11 @@
 import { getStat } from "../utils";
 import FileInfo from "../FileInfo";
 
-export default async function cell(params: {
+export default async function recipe(params: {
   path: string;
-  recipe: (any) => any;
+  make: (any) => any;
 }): Promise<FileInfo> {
-  const { path, recipe } = params;
+  const { path, make } = params;
   const stat = await getStat(path);
-  return new FileInfo(path, stat, recipe);
+  return new FileInfo(path, stat, make);
 }

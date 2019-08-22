@@ -1,5 +1,5 @@
 import {c as c} from "./sub/Oakfile"
 
-d = cell({path: 'd', recipe: d => bash`cat ${c} > ${d}`})
+d = recipe({path: 'd', make: d => bash`cat ${c} > ${d}`})
 
-f = cell({path: 'f', recipe: f => bash`echo -n "fff" > ${f}`})
+f = recipe({path: 'f', make: f => bash`echo -n "fff" > ${f}`})

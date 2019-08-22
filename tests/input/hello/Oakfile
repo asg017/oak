@@ -1,12 +1,12 @@
-a = cell({
+a = recipe({
     path: "a",
-    recipe: a => bash`echo -n "a" > ${a}`
+    make: a => bash`echo -n "a" > ${a}`
 }) 
-b = cell({
+b = recipe({
     path: "b",
-    recipe: b => bash`echo -n "b" > ${b}`
+    make: b => bash`echo -n "b" > ${b}`
 }) 
-c = cell({
+c = recipe({
     path: "c",
-    recipe: c => bash`cat ${a} ${b} > ${c}`
+    make: c => bash`cat ${a} ${b} > ${c}`
 }) 
