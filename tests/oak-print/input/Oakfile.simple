@@ -1,23 +1,23 @@
-a = cell({
+a = recipe({
     path: 'a',
-    recipe: a => bash`${a}`
+    make: a => bash`${a}`
 })
 
-b = cell({
+b = recipe({
     path: 'b',
-    recipe: b => bash`${b}`
+    make: b => bash`${b}`
 })
 
-c = cell({
+c = recipe({
     path: 'c',
-    recipe: c => bash`${c}`
+    make: c => bash`${c}`
 })
 
-d = cell({
+d = recipe({
     path: 'd',
-    recipe: d => bash`${c} ${d}`
+    make: d => bash`${c} ${d}`
 })
-e = cell({
+e = recipe({
     path: 'a',
-    recipe: a => bash`${a} ${d} ${e}`
+    make: a => bash`${a} ${d} ${e}`
 })

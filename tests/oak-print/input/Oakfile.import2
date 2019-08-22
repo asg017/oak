@@ -1,16 +1,16 @@
 import {g as importedG} from 'Oakfile.import'
 
-h = cell({
+h = recipe({
     path: 'h', 
-    recipe: h => bash`${h}`
+    make: h => bash`${h}`
 })
 
-i = cell({
+i = recipe({
     path: 'i',
-    recipe: i => bash`${g} ${h} ${i}`
+    make: i => bash`${g} ${h} ${i}`
 })
 
-j = ({
+j = recipe({
     path: j,
-    recipe: j => bash`${j}`
+    make: j => bash`${j}`
 })

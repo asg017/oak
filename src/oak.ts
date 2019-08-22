@@ -57,7 +57,7 @@ class PrintAction extends CommandLineAction {
       parameterShortName: "-o",
       description: "How to output the Oakfile printing.",
       defaultValue: "stdout",
-      alternatives: ["stdout", "dot"],
+      alternatives: ["stdout", "dot", "png"],
     });
   }
 }

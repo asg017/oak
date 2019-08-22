@@ -48,6 +48,16 @@ const print_dot = (modules, libSet) => {
   return;
 };
 
+const print_png = (modules, libSet) => {
+  const g = getDot(modules, libSet);
+  console.log('Printing "oak.png"...');
+  // TODO warn if overwriting previous png
+  // TODO probably wont work on windows
+  g.setGraphVizPath("/usr/local/bin");
+  g.output("png", "oak.png");
+  return;
+};
+
 const print_stdout = (filename, modules: any[], libSet) => {
   console.log(`Oakfile at ${filename}:`);
   console.log("----");
@@ -113,5 +123,7 @@ export async function oak_print(args: OakPrintArgumentsType): Promise<void> {
     case "dot":
       print_dot(modules, libSet);
       break;
+    case "png":
+      print_png(modules, libSet);
   }
 }
