@@ -1,0 +1,39 @@
+@min-width: 500px;
+
+.global {
+  border: 1px solid black;
+  margin: 20px;
+  padding: 20px;
+  min-width: @min-width;
+  img {
+    max-width: 100%;
+    min-width: @min-width;
+    height: auto;
+    margin: 0 auto;
+    display: block;
+  }
+}
+
+.main {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 13rem auto;
+  max-width: 1024px;
+  margin: 0 auto;
+  border: 1px solid green;
+}
+
+.container {
+  border: 1px solid red;
+}
+.sidebar {
+  font-size: 20px;
+}
+.sidebaritem {
+  font-size: 200px;
+}
+@media only screen and (max-width: 650px) {
+  .main {
+    display: block;
+  }
+}
