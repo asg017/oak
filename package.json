@@ -26,7 +26,12 @@
     "@types/tape": "^4.2.33",
     "chalk": "^2.4.2",
     "d3-array": "^2.2.0",
-    "graphviz": "^0.0.9"
+    "express": "^4.17.1",
+    "graphviz": "^0.0.9",
+    "jsonwebtoken": "^8.5.1",
+    "randomatic": "^3.1.1",
+    "socket.io": "^2.2.0",
+    "socketio-jwt": "^4.5.0"
   },
   "devDependencies": {
     "@types/graphviz": "^0.0.30",

@@ -3,13 +3,23 @@ body {
   font: 14px/1.21 "Helvetica Neue", arial, sans-serif;
   font-weight: 400;
 }
-
 h1 {
   text-align: center;
 }
-
 .OakfileCode {
   background-color: #aaa;
   padding: 1rem 2rem;
   border-radius: 0.25rem;
 }
+.socket-status {
+  position: fixed;
+  background-color: white;
+  bottom: 0;
+  right: 0;
+  width: 100px;
+  height: 24px;
+  border: 1px solid black;
+}
+
+
+/*# sourceMappingURL=/main.1f19ae8e.css.map */

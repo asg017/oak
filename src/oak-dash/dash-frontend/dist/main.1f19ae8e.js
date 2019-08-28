@@ -10185,7 +10185,7 @@ module.hot.accept(reloadCSS);
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.OakfileContext = void 0;
+exports.SocketContext = exports.OakfileContext = void 0;
 
 var _preact = require("preact");
 
@@ -10219,6 +10219,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 var OakfileContext = (0, _preactContext.createContext)();
 exports.OakfileContext = OakfileContext;
+var SocketContext = (0, _preactContext.createContext)();
+exports.SocketContext = SocketContext;
 
 function OakfileCode() {
   return (0, _preact.h)(OakfileContext.Consumer, {
@@ -10230,6 +10232,16 @@ function OakfileCode() {
       }, (0, _preact.h)("pre", null, (0, _preact.h)("code", null, oakfile.contents)));
     }
   });
+}
+
+function SocketStatus() {
+  return (0, _preact.h)("div", {
+    className: "socket-status"
+  }, (0, _preact.h)(SocketContext.Consumer, {
+    render: function render(status) {
+      return (0, _preact.h)("div", null, status);
+    }
+  }));
 }
 
 function OakfileGraph() {
@@ -10262,6 +10274,10 @@ function (_Component) {
     _defineProperty(_assertThisInitialized(_this), "_onAuth", function () {
       console.log("auth please");
 
+      _this.setState({
+        status: "auth"
+      });
+
       _this.socket.on("Oakfile", function (data) {
         console.log("new oakfile:", data);
 
@@ -10272,23 +10288,36 @@ function (_Component) {
     });
 
     _defineProperty(_assertThisInitialized(_this), "_onUnAuth", function (err) {
+      _this.setState({
+        stats: "unauth"
+      });
+
       console.error("unauthorized: ", err.data);
       throw new Error(err && err.data && err.data.type);
     });
 
     _defineProperty(_assertThisInitialized(_this), "_onConnect", function () {
       console.log("connected");
+
+      _this.setState({
+        status: "connected"
+      });
+
       var params = new URL(document.baseURI).searchParams;
       var encodedToken = params.get("token");
 
       if (!encodedToken) {
         console.error("need token");
+
+        _this.setState({
+          status: "unauth"
+        });
+
         throw Error("needs token");
       }
 
       var token = atob(encodedToken);
-
-      _this.socket.emit("pls");
+      console.log(encodedToken, encodedToken.length, token);
 
       _this.socket.emit("authenticate", {
         token: token
@@ -10296,7 +10325,8 @@ function (_Component) {
     });
 
     _this.state = {
-      oakfile: null
+      oakfile: null,
+      status: "disconnected"
     };
     _this.socket = null;
     return _this;
@@ -10305,23 +10335,31 @@ function (_Component) {
   _createClass(SocketProviders, [{
     key: "componentDidMount",
     value: function componentDidMount() {
+      var _this2 = this;
+
       this.socket = _socket.default.connect("");
       this.socket.on("connect", this._onConnect);
       this.socket.on("disconnect", function () {
-        return console.log("socket disconnected");
+        _this2.setState({
+          status: "disconnected"
+        });
       });
       this.socket.on("error", function () {
-        return console.log("socket error");
+        return console.log("soe socket error");
       });
     }
   }, {
     key: "render",
     value: function render() {
       console.log(this.state);
-      var oakfile = this.state.oakfile;
-      return (0, _preact.h)("div", null, (0, _preact.h)(OakfileContext.Provider, {
+      var _this$state = this.state,
+          oakfile = _this$state.oakfile,
+          status = _this$state.status;
+      return (0, _preact.h)("div", null, (0, _preact.h)(SocketContext.Provider, {
+        value: status
+      }, (0, _preact.h)(OakfileContext.Provider, {
         value: oakfile
-      }, this.props.children));
+      }, this.props.children)));
     }
   }]);
 
@@ -10342,7 +10380,7 @@ function (_Component2) {
   _createClass(App, [{
     key: "render",
     value: function render() {
-      return (0, _preact.h)("div", null, (0, _preact.h)("h1", null, "Hello"), (0, _preact.h)(SocketProviders, null, (0, _preact.h)(OakfileCode, null), (0, _preact.h)(OakfileGraph, null)));
+      return (0, _preact.h)("div", null, (0, _preact.h)("h1", null, "Hello"), (0, _preact.h)(SocketProviders, null, (0, _preact.h)(OakfileCode, null), (0, _preact.h)(OakfileGraph, null), (0, _preact.h)(SocketStatus, null)));
     }
   }]);
 
@@ -10378,7 +10416,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "44241" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "42901" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

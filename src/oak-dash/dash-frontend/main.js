@@ -5,6 +5,8 @@ import "./style";
 
 export const OakfileContext = createContext();
 
+export const SocketContext = createContext();
+
 function OakfileCode() {
   return (
     <OakfileContext.Consumer
@@ -23,6 +25,17 @@ function OakfileCode() {
   );
 }
 
+function SocketStatus() {
+  return (
+    <div className="socket-status">
+      <SocketContext.Consumer
+        render={status => {
+          return <div>{status}</div>;
+        }}
+      />
+    </div>
+  );
+}
 function OakfileGraph() {
   return (
     <OakfileContext.Consumer
@@ -52,31 +65,36 @@ class SocketProviders extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      oakfile: null
+      oakfile: null,
+      status: "disconnected",
     };
     this.socket = null;
   }
   _onAuth = () => {
     console.log("auth please");
+    this.setState({ status: "auth" });
     this.socket.on("Oakfile", data => {
       console.log("new oakfile:", data);
       this.setState({ oakfile: data });
     });
   };
   _onUnAuth = err => {
+    this.setState({ stats: "unauth" });
     console.error("unauthorized: ", err.data);
     throw new Error(err && err.data && err.data.type);
   };
   _onConnect = () => {
     console.log("connected");
+    this.setState({ status: "connected" });
     const params = new URL(document.baseURI).searchParams;
-    const encodedToken = params.get("token");
+    let encodedToken = params.get("token");
     if (!encodedToken) {
       console.error(`need token`);
+      this.setState({ status: "unauth" });
       throw Error(`needs token`);
     }
     const token = atob(encodedToken);
-    this.socket.emit("pls");
+    console.log(encodedToken, encodedToken.length, token);
     this.socket
       .emit("authenticate", { token })
       .on("authenticated", this._onAuth)
@@ -85,17 +103,21 @@ class SocketProviders extends Component {
   componentDidMount() {
     this.socket = io.connect("");
     this.socket.on("connect", this._onConnect);
-    this.socket.on("disconnect", () => console.log("socket disconnected"));
-    this.socket.on("error", () => console.log("socket error"));
+    this.socket.on("disconnect", () => {
+      this.setState({ status: "disconnected" });
+    });
+    this.socket.on("error", () => console.log("soe socket error"));
   }
   render() {
     console.log(this.state);
-    const { oakfile } = this.state;
+    const { oakfile, status } = this.state;
     return (
       <div>
-        <OakfileContext.Provider value={oakfile}>
-          {this.props.children}
-        </OakfileContext.Provider>
+        <SocketContext.Provider value={status}>
+          <OakfileContext.Provider value={oakfile}>
+            {this.props.children}
+          </OakfileContext.Provider>
+        </SocketContext.Provider>
       </div>
     );
   }
@@ -109,6 +131,7 @@ class App extends Component {
         <SocketProviders>
           <OakfileCode />
           <OakfileGraph />
+          <SocketStatus />
         </SocketProviders>
       </div>
     );
