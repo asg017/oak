@@ -2,3 +2,23 @@ import Layout from '../components/DocsLayout.jsx'
 export default Layout
 
 # Samples
+
+
+## Python
+
+```
+import argparse
+from os import path
+
+parser = argparse.ArgumentParser(description='Process CLI arguments...')
+parser.add_argument('-i', '--input')
+parser.add_argument('-o', '--output')
+args = parser.parse_args()
+
+dir_path = path.dirname(path.realpath(__file__))
+
+INPUT_FILE = path.join(dir_path, args.input)
+OUTPUT_FILE = path.join(dir_path, args.output)
+
+
+```
