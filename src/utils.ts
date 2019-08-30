@@ -20,7 +20,7 @@ export const getStat = (filename: string): Promise<Stats | null> =>
   });
 ``;
 
-type ParseOakfileResults = {
+export type ParseOakfileResults = {
   module: any;
   contents: string;
 };

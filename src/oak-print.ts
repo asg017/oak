@@ -9,6 +9,8 @@ type OakPrintArgumentsType = {
   output: string;
 };
 
+const defaultLibSet = new Set(Object.keys(new Library()));
+
 const styles = {
   bgWhite: { open: "\u001b[47m", close: "\u001b[49m" },
   bold: { open: "\u001b[1m", close: "\u001b[22m" },
@@ -16,11 +18,9 @@ const styles = {
 };
 
 const styleVariable = (v: string) =>
-  `${styles.bold.open}${styles.black.open}${styles.bgWhite.open}${v}${
-    styles.bgWhite.close
-  }${styles.black.close}${styles.bold.close}`;
+  `${styles.bold.open}${styles.black.open}${styles.bgWhite.open}${v}${styles.bgWhite.close}${styles.black.close}${styles.bold.close}`;
 
-const getDot = (modules, libSet) => {
+export const getDot = (modules, libSet = defaultLibSet) => {
   const g = digraph("G");
   modules.map((module, i) => {
     const cluster = g.addCluster(`cluster_${i}`);
@@ -38,17 +38,16 @@ const getDot = (modules, libSet) => {
       }
     });
   });
-
   return g;
 };
 
-const print_dot = (modules, libSet) => {
+const print_dot = (modules, libSet = defaultLibSet) => {
   const g = getDot(modules, libSet);
   console.log(g.to_dot());
   return;
 };
 
-const print_png = (modules, libSet) => {
+const print_png = (modules, libSet = defaultLibSet) => {
   const g = getDot(modules, libSet);
   console.log('Printing "oak.png"...');
   // TODO warn if overwriting previous png
@@ -58,7 +57,7 @@ const print_png = (modules, libSet) => {
   return;
 };
 
-const print_stdout = (filename, modules: any[], libSet) => {
+const print_stdout = (filename, modules: any[], libSet = defaultLibSet) => {
   console.log(`Oakfile at ${filename}:`);
   console.log("----");
   modules.map(module => {
@@ -113,17 +112,17 @@ const parseModules = async (
   );
   return [oakfile.module, ...merge(importedModules)];
 };
+
 export async function oak_print(args: OakPrintArgumentsType): Promise<void> {
   const modules = await parseModules(join(process.cwd(), args.filename));
-  const libSet = new Set(Object.keys(new Library()));
   switch (args.output) {
     case "stdout":
-      print_stdout(args.filename, modules, libSet);
+      print_stdout(args.filename, modules);
       break;
     case "dot":
-      print_dot(modules, libSet);
+      print_dot(modules);
       break;
     case "png":
-      print_png(modules, libSet);
+      print_png(modules);
   }
 }

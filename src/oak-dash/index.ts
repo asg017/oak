@@ -5,17 +5,30 @@ import * as randomatic from "randomatic";
 import * as socketioJwt from "socketio-jwt";
 import * as jwt from "jsonwebtoken";
 import { watch } from "fs";
-import { parseOakfile } from "../utils";
+import { parseOakfile, ParseOakfileResults } from "../utils";
 import { join } from "path";
+import { getDot } from "../oak-print";
 
 const SECRET = randomatic("Aa0", 24);
 
+type SocketOakfileType = {
+  oakfile: ParseOakfileResults;
+  dot: string;
+};
+
+const emitOakfile = (socket: any, socketOakfile: SocketOakfileType) => {
+  socket.emit("Oakfile", socketOakfile);
+};
+
 const watchOakfile = async (socket: socketio.Socket, path: string) => {
-  socket.emit("Oakfile", await parseOakfile(path));
+  const initialOakfile = await parseOakfile(path);
+  const dot = getDot(initialOakfile);
+  emitOakfile(socket, { oakfile: initialOakfile, dot: dot.to_dot() });
   watch(path, async (event, filename) => {
     console.log(event);
     const oakfile = await parseOakfile(path);
-    socket.emit("Oakfile", oakfile);
+    const dot = getDot(initialOakfile);
+    emitOakfile(socket, { oakfile, dot: dot.to_dot() });
   });
 };
 

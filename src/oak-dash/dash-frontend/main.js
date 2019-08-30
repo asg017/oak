@@ -2,6 +2,8 @@ import { h, render, Component } from "preact";
 import { createContext } from "preact-context";
 import io from "socket.io-client";
 import "./style";
+import { Runtime, Inspector } from "@observablehq/runtime";
+import notebook from "@mbostock/graph-o-matic";
 
 export const OakfileContext = createContext();
 
@@ -36,27 +38,28 @@ function SocketStatus() {
     </div>
   );
 }
-function OakfileGraph() {
+
+class OakfileGraph extends Component {
+  componentDidMount() {
+    const { oakfile } = this.props;
+    const runtime = new Runtime();
+    const module = runtime.module(notebook, name => {
+      if (name === "chart") {
+        return new Inspector(this.base);
+      }
+    });
+    module.redefine("source", () => oakfile.dot);
+  }
+  render() {
+    return <div className="OakfileGraph" />;
+  }
+}
+function OakfileGraphConsume() {
   return (
     <OakfileContext.Consumer
       render={oakfile => {
         if (!oakfile) return <div>No Oakfile...</div>;
-        return (
-          <div className="OakfileGraph">
-            <pre>
-              <code>
-                {oakfile.module.cells.map(cell => (
-                  <span>
-                    {cell.id.name}
-                    {cell.references.map(ref => (
-                      <span>{ref.name}</span>
-                    ))}
-                  </span>
-                ))}
-              </code>
-            </pre>
-          </div>
-        );
+        return <OakfileGraph oakfile={oakfile} />;
       }}
     />
   );
@@ -130,7 +133,7 @@ class App extends Component {
         <h1>Hello</h1>
         <SocketProviders>
           <OakfileCode />
-          <OakfileGraph />
+          <OakfileGraphConsume />
           <SocketStatus />
         </SocketProviders>
       </div>

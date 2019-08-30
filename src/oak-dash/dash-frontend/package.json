@@ -7,6 +7,7 @@
     "start": "parcel index.html"
   },
   "dependencies": {
+    "@mbostock/graph-o-matic": "https://api.observablehq.com/@mbostock/graph-o-matic.tgz?v=3",
     "@observablehq/runtime": "^4.4.1",
     "preact": "^8.5.2",
     "preact-context": "^1.1.3",
