@@ -13,6 +13,9 @@ export default function DocsLayout(props) {
     <div className={css.global}>
       <div className={css.main}>
         <div className={css.sidebar}>
+          <h2>
+            <Link href="/">Oak</Link>
+          </h2>
           <ul>
             <SidebarItem label="Introduction" href="/introduction" />
             <SidebarItem label="Samples" href="/samples" />
