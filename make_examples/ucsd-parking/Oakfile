@@ -1,20 +1,20 @@
 parking_html = recipe({
     path: 'quarterly_tables.html',
-    make: parking_html => bash`wget -O ${parking_html} http://rmp-wapps.ucsd.edu/TS/Survey/Parking%20Space%20Inventory/Quarterly%20Tables/Contents.html`
+    make: parking_html => shell`wget -O ${parking_html} http://rmp-wapps.ucsd.edu/TS/Survey/Parking%20Space%20Inventory/Quarterly%20Tables/Contents.html`
 })
 
 wb_dir = recipe({
     path: 'quarterly_workbooks', 
-    make: wb_dir => bash`mkdir -p ${wb_dir}`
+    make: wb_dir => shell`mkdir -p ${wb_dir}`
 })
 
 wbs_list = recipe({
     path: 'workbooks_list.txt', 
-    make: wbs_list => bash`pipenv run python extract_list.py --input-html=${parking_html} --output-dir=${wb_dir} --output-list=${wbs_list}`
+    make: wbs_list => shell`pipenv run python extract_list.py --input-html=${parking_html} --output-dir=${wb_dir} --output-list=${wbs_list}`
 })
 
 raw_lots_csv = recipe({
     path: 'raw_lots.csv',
-    make: raw_lots_csv => bash`pipenv run python aggregate_lots.py --workbooks=${wbs_list} --output-csv=${raw_lots_csv}`
+    make: raw_lots_csv => shell`pipenv run python aggregate_lots.py --workbooks=${wbs_list} --output-csv=${raw_lots_csv}`
 })
 

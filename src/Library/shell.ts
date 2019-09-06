@@ -47,7 +47,7 @@ function transform(strings: string[], ...values: any[]): Promise<string> {
   );
 }
 
-export default function bash(args = {}) {
+export default function shell(args = {}) {
   return Array.isArray(args)
     ? ((args = {}), transform.apply(this, arguments))
     : transform;

@@ -2,15 +2,15 @@ import {g as importedG} from 'Oakfile.import'
 
 h = recipe({
     path: 'h', 
-    make: h => bash`${h}`
+    make: h => shell`${h}`
 })
 
 i = recipe({
     path: 'i',
-    make: i => bash`${g} ${h} ${i}`
+    make: i => shell`${g} ${h} ${i}`
 })
 
 j = recipe({
     path: j,
-    make: j => bash`${j}`
+    make: j => shell`${j}`
 })

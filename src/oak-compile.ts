@@ -4,9 +4,9 @@ import { dirname, join } from "path";
 import { formatCellName, formatPath } from "./utils";
 import { brotliDecompressSync } from "zlib";
 
-const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
-const GeneratorFunction = Object.getPrototypeOf(function*() {}).constructor;
-const AsyncGeneratorFunction = Object.getPrototypeOf(async function*() {})
+const AsyncFunction = Object.getPrototypeOf(async function () { }).constructor;
+const GeneratorFunction = Object.getPrototypeOf(function* () { }).constructor;
+const AsyncGeneratorFunction = Object.getPrototypeOf(async function* () { })
   .constructor;
 
 type Inspector = {
@@ -54,8 +54,8 @@ type ObservableCell = {
   generator: boolean;
   references: { type: string; name: string }[];
   body: ObservableLiteral &
-    ObservableImportDeclaration &
-    ObservableBlockStatement;
+  ObservableImportDeclaration &
+  ObservableBlockStatement;
 };
 export const defineCellImport = async (
   cell: ObservableCell,
@@ -110,8 +110,8 @@ export const defineCellDefinition = (
   cellFunction: (...any) => any,
   baseModuleDir: string
 ): ((...any) => any) => {
-  return async function(...dependencies) {
-    // dont try and get fileinfo for cell depends like `cell` or `bash`
+  return async function (...dependencies) {
+    // dont try and get fileinfo for cell depends like `cell` or `shell`
     let cellDependents = [];
     dependencies.map(dependency => {
       if (dependency instanceof FileInfo) {

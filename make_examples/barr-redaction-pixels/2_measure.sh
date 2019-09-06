@@ -1,4 +1,4 @@
-#!/usr/env bash
+#!/usr/env shell
 mkdir -p histograms
 rm histograms/*
 

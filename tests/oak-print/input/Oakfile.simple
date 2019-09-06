@@ -1,23 +1,23 @@
 a = recipe({
     path: 'a',
-    make: a => bash`${a}`
+    make: a => shell`${a}`
 })
 
 b = recipe({
     path: 'b',
-    make: b => bash`${b}`
+    make: b => shell`${b}`
 })
 
 c = recipe({
     path: 'c',
-    make: c => bash`${c}`
+    make: c => shell`${c}`
 })
 
 d = recipe({
     path: 'd',
-    make: d => bash`${c} ${d}`
+    make: d => shell`${c} ${d}`
 })
 e = recipe({
     path: 'a',
-    make: a => bash`${a} ${d} ${e}`
+    make: a => shell`${a} ${d} ${e}`
 })

@@ -1,12 +1,12 @@
 a = recipe({
     path: "a",
-    make: a => bash`echo -n "a" > ${a}`
-}) 
+    make: a => shell`echo -n "a" > ${a}`
+})
 b = recipe({
     path: "b",
-    make: b => bash`echo -n "b" > ${b}`
-}) 
+    make: b => shell`echo -n "b" > ${b}`
+})
 c = recipe({
     path: "c",
-    make: c => bash`cat ${a} ${b} > ${c}`
+    make: c => shell`cat ${a} ${b} > ${c}`
 }) 
