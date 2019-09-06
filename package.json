@@ -17,10 +17,20 @@
     "type": "git",
     "url": "https://github.com/asg017/oak.git"
   },
+  "keywords": [
+    "etl",
+    "pipeline",
+    "workflow",
+    "cli",
+    "dag",
+    "task",
+    "oak"
+  ],
   "scripts": {
     "build": "tsc",
-    "prepare": "npm run build",
-    "postpublish": "git push && git push --tags",
+    "preversion": "npm test",
+    "version": "npm run build",
+    "postversion": "git push && git push --tags && rm -rf build/temp",
     "test": "ts-node ./node_modules/tape/bin/tape tests/**/*.ts"
   },
   "dependencies": {
