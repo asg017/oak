@@ -28,6 +28,7 @@
   ],
   "scripts": {
     "build": "tsc",
+    "prepare": "npm run build",
     "preversion": "npm test",
     "version": "npm run build",
     "postversion": "git push && git push --tags && rm -rf build/temp",
