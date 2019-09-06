@@ -1,0 +1,92 @@
+{
+  "name": "starter",
+  "version": "3.0.0",
+  "description": "Starter template for Pudding stories",
+  "author": "Russell Goldenberg",
+  "license": "MIT",
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
+    "d3": "^5.9.1",
+    "fs": "0.0.1-security",
+    "lodash": "^4.17.11",
+    "lodash.debounce": "^4.0.8",
+    "nouislider": "^12.1.0",
+    "promise-polyfill": "^8.1.0",
+    "superagent": "^4.1.0",
+    "whatwg-fetch": "3.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "7.2.2",
+    "@babel/plugin-proposal-object-rest-spread": "7.2.0",
+    "@babel/preset-env": "7.2.3",
+    "@babel/register": "7.0.0",
+    "archieml": "^0.4.2",
+    "babel-loader": "8.0.5",
+    "browser-sync": "^2.26.3",
+    "d3-dsv": "1.0.10",
+    "del": "^3.0.0",
+    "eslint": "^5.12.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-config-prettier": "^3.4.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-prettier": "^3.0.1",
+    "gulp": "^3.9.1",
+    "gulp-autoprefixer": "^6.0.0",
+    "gulp-clean-css": "^4.0.0",
+    "gulp-combine-mq": "^0.4.0",
+    "gulp-file-include": "^2.0.1",
+    "gulp-hb": "^7.0.1",
+    "gulp-htmlmin": "^5.0.1",
+    "gulp-notify": "^3.2.0",
+    "gulp-plumber": "^1.2.1",
+    "gulp-rename": "^1.4.0",
+    "gulp-replace": "^1.0.0",
+    "gulp-smoosher": "^0.0.9",
+    "gulp-sourcemaps": "^2.6.4",
+    "gulp-stylus": "^2.7.0",
+    "gulp-util": "^3.0.7",
+    "prettier": "^1.15.3",
+    "request": "^2.88.0",
+    "require-dir": "^1.2.0",
+    "run-sequence": "^2.2.0",
+    "source-map": "^0.7.3",
+    "webpack": "^4.28.4",
+    "webpack-stream": "^5.2.1"
+  },
+  "main": "gulpfile.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "wnba-get-names-html": "node process/wnba/s1_get-names-html.js",
+    "wnba-get-names-list": "node process/wnba/s2_get-names-list.js",
+    "nba-get-names-html": "node process/nba/s1_get-names-html.js",
+    "nba-get-names-list": "node process/nba/s2_get-names-list.js",
+    "nfl-get-names-html": "node process/nfl/s1_get-names-html.js",
+    "nfl-get-names-list": "node process/nfl/s2_get-names-list.js",
+    "mlb-get-names-html": "node process/mlb/s1_get-names-html.js",
+    "mlb-get-names-list": "node process/mlb/s2_get-names-list.js",
+    "nhl-get-names-html": "node process/nhl/s1_get-names-html.js",
+    "nhl-get-names-list": "node process/nhl/s2_get-names-list.js",
+    "mls-get-names-list": "node process/mls/s1_get-names-list.js",
+    "mls-format-years": "node process/mls/s2_format-years.js",
+    "nwsl-get-names-html": "node process/nwsl/s1_get-names-html.js",
+    "nwsl-get-names-list": "node process/nwsl/s2_get-names-list.js",
+    "nwsl-format-years": "node process/nwsl/s3_format-years.js",
+    "congress-get-names-html": "node process/congress/s1_get-names-html.js",
+    "congress-get-names-list": "node process/congress/s2_get-names-list.js",
+    "combine-all-names": "node process/combine-all-names.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/polygraph-cool/starter.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/polygraph-cool/starter/issues"
+  },
+  "homepage": "https://github.com/polygraph-cool/starter#readme"
+}
