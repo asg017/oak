@@ -6,6 +6,9 @@
   "bin": {
     "oak": "./built/oak.js"
   },
+  "files": [
+    "built/**/*"
+  ],
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -15,6 +18,9 @@
     "url": "https://github.com/asg017/oak.git"
   },
   "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "postpublish": "git push && git push --tags",
     "test": "ts-node ./node_modules/tape/bin/tape tests/**/*.ts"
   },
   "dependencies": {
