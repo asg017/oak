@@ -4,6 +4,7 @@ import { oak_static } from "./oak-static";
 import { oak_print } from "./oak-print";
 import { oak_init } from "./oak-init";
 import oak_dash from "./oak-dash";
+import oak_version from "./oak-version";
 
 import {
   CommandLineChoiceParameter,
@@ -11,6 +12,7 @@ import {
   CommandLineStringListParameter,
   CommandLineAction,
   CommandLineParser,
+  CommandLineFlagParameter,
 } from "@microsoft/ts-command-line";
 
 class DashAction extends CommandLineAction {
@@ -20,7 +22,7 @@ class DashAction extends CommandLineAction {
     super({
       actionName: "dash",
       summary: "Start a dashboard server to interact with an Oakfile.",
-      documentation: "TODO"
+      documentation: "TODO",
     });
   }
   protected onExecute(): Promise<void> {
@@ -34,14 +36,14 @@ class DashAction extends CommandLineAction {
       parameterLongName: "--file",
       parameterShortName: "-f",
       description: "Path to Oakfile.",
-      defaultValue: "./Oakfile"
+      defaultValue: "./Oakfile",
     });
     this._port = this.defineStringParameter({
       argumentName: "PORT",
       parameterLongName: "--port",
       parameterShortName: "-p",
       description: "Port to start the server.",
-      defaultValue: "8888"
+      defaultValue: "8888",
     });
   }
 }
@@ -132,6 +134,20 @@ class StaticAction extends CommandLineAction {
   }
 }
 
+class OakVersionAction extends CommandLineAction {
+  public constructor() {
+    super({
+      actionName: "version",
+      summary: "Print version of oak.",
+      documentation: "TODO",
+    });
+  }
+  protected onDefineParameters(): void {}
+  protected async onExecute(): Promise<void> {
+    await oak_version();
+    return;
+  }
+}
 class OakCommandLine extends CommandLineParser {
   public constructor() {
     super({
@@ -143,6 +159,7 @@ class OakCommandLine extends CommandLineParser {
     this.addAction(new PrintAction());
     this.addAction(new StaticAction());
     this.addAction(new InitAction());
+    this.addAction(new OakVersionAction());
   }
 
   protected onDefineParameters(): void {}

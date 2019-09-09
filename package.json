@@ -47,6 +47,7 @@
     "graphviz": "^0.0.9",
     "jsonwebtoken": "^8.5.1",
     "randomatic": "^3.1.1",
+    "read-package-json": "^2.1.0",
     "socket.io": "^2.2.0",
     "socketio-jwt": "^4.5.0"
   },
