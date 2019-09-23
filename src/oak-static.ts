@@ -41,7 +41,7 @@ export async function oak_static(args: {
         ee.emit("fulfilled", name, value);
       },
       rejected(error) {
-        ee.emit("error", name, error);
+        ee.emit("rejected", name, error);
       },
     };
   });

@@ -150,13 +150,25 @@ export const decorateCellDefintion = (
   };
 };
 
-export const oakDefine = (
+export const oakDefine = async (
   oakfileModule: any,
   source: string,
   baseModuleDir: string
-): DefineFunctionType => {
+): Promise<DefineFunctionType> => {
+  const depMap: Map<string, (runtime: any, observer: any) => void> = new Map();
+
+  const importCells = oakfileModule.cells.filter(
+    cell => cell.body.type === "ImportDeclaration"
+  );
+
+  await Promise.all(
+    importCells.map(async cell => {
+      const path = join(baseModuleDir, cell.body.source.value);
+      const fromModule = await oakDefineFile(path);
+      depMap.set(path, fromModule);
+    })
+  );
   return async function define(runtime, observer) {
-    console.log("define");
     const main = runtime.module();
     const importCells = oakfileModule.cells.filter(
       cell => cell.body.type === "ImportDeclaration"
@@ -164,36 +176,35 @@ export const oakDefine = (
     const regularCells = oakfileModule.cells.filter(
       cell => cell.body.type !== "ImportDeclaration"
     );
-    // import all needed cells first.
-    await Promise.all(
-      importCells.map(async (cell, i) => {
-        console.log("importCells", i);
-        const { names, aliases, from } = await createImportCellDefintion(
-          cell,
-          baseModuleDir
-        ).catch(err => {
-          throw Error("Error defining import cell");
-        });
-        const childNames = [];
-        const child = runtime.module(from, name => {
-          childNames.push(name);
-          return true;
-        });
-        await runtime._compute();
-        console.log("a", i, childNames);
-        await Promise.all(childNames.map(n => child.value(n)));
-        console.log("b", i, childNames);
-        for (let i = 0; i < names.length; i++) {
-          console.log(
-            `oakDefine import name=${names[i]} aliases=${aliases[i]}`
-          );
+    importCells.map(async (cell, i) => {
+      const names = cell.body.specifiers.map(
+        specifier => specifier.imported.name
+      );
+      const aliases = cell.body.specifiers.map(
+        specifier => specifier.local.name
+      );
+      const path = join(baseModuleDir, cell.body.source.value);
 
-          main.import(names[i], aliases[i], child);
-        }
-        return;
-      })
-    );
-    console.log("after import");
+      const child = runtime.module(depMap.get(path), name => {
+        return {
+          pending() {
+            console.log(`import pending`, name);
+          },
+          fulfilled(value) {
+            console.log(`import fulfilled`, name);
+          },
+          rejected(error) {
+            console.log(`import rejected`, name);
+          },
+        };
+      });
+      for (let i = 0; i < names.length; i++) {
+        console.log(`oakDefine import name=${names[i]} aliases=${aliases[i]}`);
+        main.import(names[i], aliases[i], child);
+      }
+      return;
+    });
+
     regularCells.map(cell => {
       const {
         cellName,
