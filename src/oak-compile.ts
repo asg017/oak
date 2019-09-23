@@ -51,6 +51,9 @@ type ObservableCell = {
   id: {
     type: "Identifier";
     name: string;
+    id: {
+      name: string;
+    };
   } | null;
   async: boolean;
   generator: boolean;
@@ -80,7 +83,7 @@ export const createRegularCellDefintion = (
   source: string
 ): { cellFunction: any; cellName: string; cellReferences: string[] } => {
   let name = null;
-  if (cell.id && cell.id.name) name = cell.id.name;
+  if (cell.id && cell.id.id && cell.id.id.name) name = cell.id.id.name;
   const bodyText = source.substring(cell.body.start, cell.body.end);
   let code;
   if (cell.body.type !== "BlockStatement") {
@@ -110,7 +113,8 @@ export const createRegularCellDefintion = (
 // acts as a man-in-the-middle compiler/runtime decorator thingy
 export const decorateCellDefintion = (
   cellFunction: (...any) => any,
-  baseModuleDir: string
+  baseModuleDir: string,
+  isRecipe: boolean
 ): ((...any) => any) => {
   return async function(...dependencies) {
     // dont try and get fileinfo for cell depends like `cell` or `shell`
@@ -122,7 +126,7 @@ export const decorateCellDefintion = (
     });
     let currCell = await cellFunction(...dependencies);
 
-    if (currCell instanceof FileInfo) {
+    if (isRecipe) {
       await currCell.updateBasePath(baseModuleDir);
       // run recipe if no file or if it's out of date
       if (currCell.stat === null) {
@@ -212,6 +216,9 @@ export const oakDefine = async (
         cellFunction,
         cellReferences,
       } = createRegularCellDefintion(cell, source);
+      const isRecipe = cell.id && cell.id.type === "RecipeExpression";
+      console.log(isRecipe, cell.id);
+      console.log(cell.body);
       console.log(
         `oakDefine cell=${formatCellName(cellName)} refs=${cellReferences.join(
           ","
@@ -222,7 +229,7 @@ export const oakDefine = async (
         .define(
           cellName,
           cellReferences,
-          decorateCellDefintion(cellFunction, baseModuleDir)
+          decorateCellDefintion(cellFunction, baseModuleDir, isRecipe)
         );
     });
     return main;

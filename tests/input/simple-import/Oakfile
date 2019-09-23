@@ -1,5 +1,5 @@
 import { c } from "./sub/Oakfile";
 
-d = task({ path: "d", make: d => shell`cat ${c} > ${d}` });
+recipe d = task({ path: "d", make: d => shell`cat ${c} > ${d}` });
 
-f = task({ path: "f", make: f => shell`echo -n "fff" > ${f}` });
+recipe f = task({ path: "f", make: f => shell`echo -n "fff" > ${f}` });

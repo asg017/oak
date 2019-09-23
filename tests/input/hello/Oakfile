@@ -1,12 +1,12 @@
-a = task({
+recipe a = task({
   path: "a",
   make: a => shell`echo -n "a" > ${a}`
 });
-b = task({
+recipe b = task({
   path: "b",
   make: b => shell`echo -n "b" > ${b}`
 });
-c = task({
+recipe c = task({
   path: "c",
   make: c => shell`cat ${a} ${b} > ${c}`
 });
