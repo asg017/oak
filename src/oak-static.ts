@@ -29,7 +29,6 @@ export async function oak_static(args: {
   const ee = new EventEmitter();
   const cells: Set<string> = new Set();
   const m1 = runtime.module(define, name => {
-    console.log("in", name);
     if (targetSet.size === 0 || targetSet.has(name)) {
       cells.add(name);
     }
@@ -48,5 +47,4 @@ export async function oak_static(args: {
   await runtime._compute();
   await Promise.all(Array.from(cells).map(cell => m1.value(cell)));
   runtime.dispose();
-  console.log(Array.from(cells));
 }

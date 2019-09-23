@@ -4,6 +4,7 @@ import { getStat, parseOakfile } from "./utils";
 import FileInfo from "./FileInfo";
 import { dirname, join } from "path";
 import { formatCellName, formatPath } from "./utils";
+import { EventEmitter } from "events";
 
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 const GeneratorFunction = Object.getPrototypeOf(function*() {}).constructor;
@@ -184,17 +185,17 @@ export const oakDefine = async (
         specifier => specifier.local.name
       );
       const path = join(baseModuleDir, cell.body.source.value);
-
+      const ee = new EventEmitter();
       const child = runtime.module(depMap.get(path), name => {
         return {
           pending() {
-            console.log(`import pending`, name);
+            ee.emit(`import pending`, name);
           },
           fulfilled(value) {
-            console.log(`import fulfilled`, name);
+            ee.emit(`import fulfilled`, name, value);
           },
           rejected(error) {
-            console.log(`import rejected`, name);
+            ee.emit(`import rejected`, name, error);
           },
         };
       });
