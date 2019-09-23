@@ -1,3 +1,4 @@
-a = task({ path: "a", make: a => shell`echo -n "a" > ${a}` });
+import { a } from "./subsub/Oakfile";
+
 b = task({ path: "b", make: b => shell`echo -n "b" > ${b}` });
 c = task({ path: "c", make: c => shell`cat ${a} ${b} > ${c}` });

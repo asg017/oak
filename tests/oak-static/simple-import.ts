@@ -2,7 +2,7 @@ import * as test from "tape";
 import { oak_static } from "../../src/oak-static";
 import { cleanUp, input_file, open } from "../utils";
 
-const outs = ["sub/a", "sub/b", "sub/c", "d", "f"];
+const outs = ["sub/subsub/a", "sub/b", "sub/c", "d", "f"];
 
 test.onFinish(() => {
   cleanUp(input_file.simple_import, outs);
@@ -15,7 +15,7 @@ test("oak-static simple-import", async t => {
     targets: []
   });
   console.log("static complete???");
-  const a_file = await open(input_file.simple_import("sub/a"));
+  const a_file = await open(input_file.simple_import("sub/subsub/a"));
   const b_file = await open(input_file.simple_import("sub/b"));
   const c_file = await open(input_file.simple_import("sub/c"));
   const d_file = await open(input_file.simple_import("d"));
