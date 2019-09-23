@@ -14,6 +14,7 @@ test("oak-static simple-import", async t => {
     filename: input_file.simple_import("Oakfile"),
     targets: []
   });
+  console.log("static complete???");
   const a_file = await open(input_file.simple_import("sub/a"));
   const b_file = await open(input_file.simple_import("sub/b"));
   const c_file = await open(input_file.simple_import("sub/c"));

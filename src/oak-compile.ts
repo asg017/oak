@@ -1,12 +1,13 @@
+// Modified https://github.com/asg017/unofficial-observablehq-compiler/blob/master/src/compiler.js
+
 import { getStat, parseOakfile } from "./utils";
 import FileInfo from "./FileInfo";
 import { dirname, join } from "path";
 import { formatCellName, formatPath } from "./utils";
-import { brotliDecompressSync } from "zlib";
 
-const AsyncFunction = Object.getPrototypeOf(async function () { }).constructor;
-const GeneratorFunction = Object.getPrototypeOf(function* () { }).constructor;
-const AsyncGeneratorFunction = Object.getPrototypeOf(async function* () { })
+const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
+const GeneratorFunction = Object.getPrototypeOf(function*() {}).constructor;
+const AsyncGeneratorFunction = Object.getPrototypeOf(async function*() {})
   .constructor;
 
 type Inspector = {
@@ -54,10 +55,10 @@ type ObservableCell = {
   generator: boolean;
   references: { type: string; name: string }[];
   body: ObservableLiteral &
-  ObservableImportDeclaration &
-  ObservableBlockStatement;
+    ObservableImportDeclaration &
+    ObservableBlockStatement;
 };
-export const defineCellImport = async (
+export const createImportCellDefintion = async (
   cell: ObservableCell,
   baseModuleDir: string
 ): Promise<{
@@ -73,7 +74,7 @@ export const defineCellImport = async (
   return { names, aliases, from: fromModule };
 };
 
-export const defineCell = (
+export const createRegularCellDefintion = (
   cell: ObservableCell,
   source: string
 ): { cellFunction: any; cellName: string; cellReferences: string[] } => {
@@ -101,16 +102,16 @@ export const defineCell = (
   return {
     cellName: name,
     cellFunction: f,
-    cellReferences: references
+    cellReferences: references,
   };
 };
 
 // acts as a man-in-the-middle compiler/runtime decorator thingy
-export const defineCellDefinition = (
+export const decorateCellDefintion = (
   cellFunction: (...any) => any,
   baseModuleDir: string
 ): ((...any) => any) => {
-  return async function (...dependencies) {
+  return async function(...dependencies) {
     // dont try and get fileinfo for cell depends like `cell` or `shell`
     let cellDependents = [];
     dependencies.map(dependency => {
@@ -155,6 +156,7 @@ export const oakDefine = (
   baseModuleDir: string
 ): DefineFunctionType => {
   return async function define(runtime, observer) {
+    console.log("define");
     const main = runtime.module();
     const importCells = oakfileModule.cells.filter(
       cell => cell.body.type === "ImportDeclaration"
@@ -164,8 +166,9 @@ export const oakDefine = (
     );
     // import all needed cells first.
     await Promise.all(
-      importCells.map(async cell => {
-        const { names, aliases, from } = await defineCellImport(
+      importCells.map(async (cell, i) => {
+        console.log("importCells", i);
+        const { names, aliases, from } = await createImportCellDefintion(
           cell,
           baseModuleDir
         ).catch(err => {
@@ -176,8 +179,10 @@ export const oakDefine = (
           childNames.push(name);
           return true;
         });
+        await runtime._compute();
+        console.log("a", i, childNames);
         await Promise.all(childNames.map(n => child.value(n)));
-        console.log(childNames);
+        console.log("b", i, childNames);
         for (let i = 0; i < names.length; i++) {
           console.log(
             `oakDefine import name=${names[i]} aliases=${aliases[i]}`
@@ -188,11 +193,13 @@ export const oakDefine = (
         return;
       })
     );
-    regularCells.map(async cell => {
-      const { cellName, cellFunction, cellReferences } = defineCell(
-        cell,
-        source
-      );
+    console.log("after import");
+    regularCells.map(cell => {
+      const {
+        cellName,
+        cellFunction,
+        cellReferences,
+      } = createRegularCellDefintion(cell, source);
       console.log(
         `oakDefine cell=${formatCellName(cellName)} refs=${cellReferences.join(
           ","
@@ -203,7 +210,7 @@ export const oakDefine = (
         .define(
           cellName,
           cellReferences,
-          defineCellDefinition(cellFunction, baseModuleDir)
+          decorateCellDefintion(cellFunction, baseModuleDir)
         );
     });
     return main;

@@ -1,5 +1,5 @@
 import { readFile, stat, Stats } from "fs";
-import { parseModule } from "@observablehq/parser";
+import { parseModule } from "@alex.garcia/oak-parser";
 import chalk from "chalk";
 
 export const formatPath = (s: string) => chalk.black.bgWhiteBright.bold(s);

@@ -35,8 +35,8 @@
     "test": "ts-node ./node_modules/tape/bin/tape tests/**/*.ts"
   },
   "dependencies": {
+    "@alex.garcia/oak-parser": "^0.1.1",
     "@microsoft/ts-command-line": "^4.2.6",
-    "@observablehq/parser": "^1.2.1",
     "@observablehq/runtime": "^4.3",
     "@observablehq/stdlib": "^3.0.2",
     "@types/node": "^12.6.8",

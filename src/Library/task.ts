@@ -1,7 +1,7 @@
 import { getStat } from "../utils";
 import FileInfo from "../FileInfo";
 
-export default async function recipe(params: {
+export default async function task(params: {
   path: string;
   make: (any) => any;
 }): Promise<FileInfo> {

@@ -1,5 +1,5 @@
-import { c as c } from "./sub/Oakfile"
+import { c } from "./sub/Oakfile";
 
-d = recipe({ path: 'd', make: d => shell`cat ${c} > ${d}` })
+d = task({ path: "d", make: d => shell`cat ${c} > ${d}` });
 
-f = recipe({ path: 'f', make: f => shell`echo -n "fff" > ${f}` })
+f = task({ path: "f", make: f => shell`echo -n "fff" > ${f}` });
