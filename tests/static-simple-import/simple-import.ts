@@ -1,24 +1,26 @@
 import * as test from "tape";
 import { oak_static } from "../../src/oak-static";
-import { cleanUp, input_file, open } from "../utils";
+import { cleanUp, envFile, open } from "../utils";
 
 const outs = ["sub/subsub/a", "sub/b", "sub/c", "d", "f"];
+const env = envFile(__dirname);
 
 test.onFinish(() => {
-  cleanUp(input_file.simple_import, outs);
+  cleanUp(env, outs);
 });
 
-cleanUp(input_file.simple_import, outs);
+cleanUp(env, outs);
+
 test("oak-static simple-import", async t => {
   await oak_static({
-    filename: input_file.simple_import("Oakfile"),
+    filename: env("Oakfile"),
     targets: []
   });
-  const a_file = await open(input_file.simple_import("sub/subsub/a"));
-  const b_file = await open(input_file.simple_import("sub/b"));
-  const c_file = await open(input_file.simple_import("sub/c"));
-  const d_file = await open(input_file.simple_import("d"));
-  const f_file = await open(input_file.simple_import("f"));
+  const a_file = await open(env("sub/subsub/a"));
+  const b_file = await open(env("sub/b"));
+  const c_file = await open(env("sub/c"));
+  const d_file = await open(env("d"));
+  const f_file = await open(env("f"));
   t.equal(a_file.content, "a");
   t.equal(b_file.content, "b");
   t.equal(c_file.content, "ab");

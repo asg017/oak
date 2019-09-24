@@ -5,11 +5,10 @@ type OpenFileType = {
   content: string;
   stat: Stats;
 };
-export const input_file = {
-  hello: (path: string) => `${__dirname}/input/hello/${path}`,
-  simple_import: (path: string) => `${__dirname}/input/simple-import/${path}`,
-  library: (path: string) => `${__dirname}/input/Library/${path}`
-};
+
+export const envFile = (dirname: string) => (path: string) =>
+  join(dirname, "env", path);
+
 export const touch = async (
   path: string,
   atime: Date,
@@ -46,6 +45,8 @@ export function cleanUp(
   fileNames.map(name => {
     try {
       unlinkSync(join(filepath(name)));
-    } catch {} // o no
+    } catch (err) {
+      console.error("cleanUp error: ", err);
+    }
   });
 }

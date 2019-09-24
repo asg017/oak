@@ -32,7 +32,8 @@
     "preversion": "npm test",
     "version": "npm run build",
     "postversion": "git push && git push --tags && rm -rf build/temp",
-    "test": "ts-node ./node_modules/tape/bin/tape tests/**/*.ts"
+    "test": "ts-node ./node_modules/tape/bin/tape tests/**/*.ts",
+    "t": "ts-node ./node_modules/tape/bin/tape"
   },
   "dependencies": {
     "@alex.garcia/oak-parser": "^0.1.1",
