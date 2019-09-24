@@ -1,6 +1,8 @@
 import { readFile, stat, Stats } from "fs";
 import { parseModule } from "@alex.garcia/oak-parser";
 import chalk from "chalk";
+import { dirname, join } from "path";
+import { merge } from "d3-array";
 
 export const formatPath = (s: string) => chalk.black.bgWhiteBright.bold(s);
 export const formatCellName = (s: string) => chalk.black.bgCyanBright.bold(s);
@@ -38,3 +40,35 @@ export function parseOakfile(path: string): Promise<ParseOakfileResults> {
     });
   });
 }
+
+export const parseModules = async (
+  filename: string,
+  parsedOakfileSet?: Set<string>
+): Promise<any[]> => {
+  if (!parsedOakfileSet) {
+    parsedOakfileSet = new Set([]);
+  }
+  if (parsedOakfileSet.has(filename)) {
+    throw Error(
+      `Circular imports. repeated Oakfile: "${filename}". Visited: ${Array.from(
+        parsedOakfileSet
+      )
+        .map(f => `"${f}"`)
+        .join(",")}`
+    );
+  }
+  parsedOakfileSet.add(filename);
+
+  const oakfile = await parseOakfile(filename);
+  const dir = dirname(filename);
+  const importCells = oakfile.module.cells.filter(
+    cell => cell.body.type === "ImportDeclaration"
+  );
+  const importedModules = await Promise.all(
+    importCells.map(importCell => {
+      const path = join(dir, importCell.body.source.value);
+      return parseModules(path, parsedOakfileSet);
+    })
+  );
+  return [oakfile.module, ...merge(importedModules)];
+};
