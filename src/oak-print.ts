@@ -71,7 +71,7 @@ const print_stdout = (filename, modules: any[], libSet = defaultLibSet) => {
         return;
       }
       console.log(
-        `${styleVariable(cell.id.name)} ${cell.references
+        `${styleVariable(cell.id.id.name)} ${cell.references
           .map(ref => ref.name)
           .filter((refName: string) => !libSet.has(refName))
           .join(",")}`

@@ -5,11 +5,10 @@ type OpenFileType = {
   content: string;
   stat: Stats;
 };
-export const input_file = {
-  hello: (path: string) => `${__dirname}/input/hello/${path}`,
-  simple_import: (path: string) => `${__dirname}/input/simple-import/${path}`,
-  library: (path: string) => `${__dirname}/input/Library/${path}`
-};
+
+export const envFile = (dirname: string) => (path: string) =>
+  join(dirname, "env", path);
+
 export const touch = async (
   path: string,
   atime: Date,
@@ -25,14 +24,20 @@ export const touch = async (
 };
 export const open = async (path: string): Promise<OpenFileType> => {
   const content: string = await new Promise((resolve, reject) => {
-    readFile(path, "utf8", (err: any, data: string) => {
-      if (err) reject(err);
+    readFile(path, "utf8", (err: NodeJS.ErrnoException, data: string) => {
+      if (err) {
+        if (err.code === "ENOENT") resolve(null);
+        else reject(err);
+      }
       resolve(data);
     });
   });
   const s: Stats = await new Promise((resolve, reject) => {
-    stat(path, (err: any, s: Stats) => {
-      if (err) reject(err);
+    stat(path, (err: NodeJS.ErrnoException, s: Stats) => {
+      if (err) {
+        if (err.code === "ENOENT") resolve(null);
+        else reject(err);
+      }
       resolve(s);
     });
   });
@@ -46,6 +51,8 @@ export function cleanUp(
   fileNames.map(name => {
     try {
       unlinkSync(join(filepath(name)));
-    } catch {} // o no
+    } catch (err) {
+      // console.error("cleanUp error: ", err);
+    }
   });
 }

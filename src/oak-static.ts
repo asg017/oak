@@ -1,9 +1,9 @@
 import { Runtime } from "@observablehq/runtime";
 import { Library } from "./Library";
-import { EventEmitter } from "events";
 import { oakDefineFile } from "./oak-compile";
 import { formatCellName, formatPath } from "./utils";
 import { isAbsolute, join } from "path";
+import { EventEmitter } from "events";
 
 export async function oak_static(args: {
   filename: string;
@@ -16,8 +16,6 @@ export async function oak_static(args: {
 
   const runtime = new Runtime(new Library());
   const define = await oakDefineFile(oakfilePath);
-  const ee = new EventEmitter();
-  const taskDefs = [];
 
   console.log(
     `Oak: ${formatPath(oakfilePath)}${
@@ -28,8 +26,9 @@ export async function oak_static(args: {
         : ""
     }`
   );
+  const ee = new EventEmitter();
   const cells: Set<string> = new Set();
-  const m1 = runtime.module(define, (name: string) => {
+  const m1 = runtime.module(define, name => {
     if (targetSet.size === 0 || targetSet.has(name)) {
       cells.add(name);
       return {
@@ -41,17 +40,11 @@ export async function oak_static(args: {
         },
         rejected(error) {
           ee.emit("rejected", name, error);
-        }
+        },
       };
     }
-    return null;
   });
-  await new Promise((resolve, reject) => {
-    ee.on("fulfilled", (name, val) => {
-      cells.delete(name);
-      if (cells.size === 0) {
-        resolve();
-      }
-    });
-  });
+  await runtime._compute();
+  await Promise.all(Array.from(cells).map(cell => m1.value(cell)));
+  runtime.dispose();
 }

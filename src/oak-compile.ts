@@ -1,12 +1,14 @@
+// Modified https://github.com/asg017/unofficial-observablehq-compiler/blob/master/src/compiler.js
+
 import { getStat, parseOakfile } from "./utils";
 import FileInfo from "./FileInfo";
 import { dirname, join } from "path";
 import { formatCellName, formatPath } from "./utils";
-import { brotliDecompressSync } from "zlib";
+import { EventEmitter } from "events";
 
-const AsyncFunction = Object.getPrototypeOf(async function () { }).constructor;
-const GeneratorFunction = Object.getPrototypeOf(function* () { }).constructor;
-const AsyncGeneratorFunction = Object.getPrototypeOf(async function* () { })
+const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
+const GeneratorFunction = Object.getPrototypeOf(function*() {}).constructor;
+const AsyncGeneratorFunction = Object.getPrototypeOf(async function*() {})
   .constructor;
 
 type Inspector = {
@@ -49,15 +51,18 @@ type ObservableCell = {
   id: {
     type: "Identifier";
     name: string;
+    id: {
+      name: string;
+    };
   } | null;
   async: boolean;
   generator: boolean;
   references: { type: string; name: string }[];
   body: ObservableLiteral &
-  ObservableImportDeclaration &
-  ObservableBlockStatement;
+    ObservableImportDeclaration &
+    ObservableBlockStatement;
 };
-export const defineCellImport = async (
+export const createImportCellDefintion = async (
   cell: ObservableCell,
   baseModuleDir: string
 ): Promise<{
@@ -73,12 +78,12 @@ export const defineCellImport = async (
   return { names, aliases, from: fromModule };
 };
 
-export const defineCell = (
+export const createRegularCellDefintion = (
   cell: ObservableCell,
   source: string
 ): { cellFunction: any; cellName: string; cellReferences: string[] } => {
   let name = null;
-  if (cell.id && cell.id.name) name = cell.id.name;
+  if (cell.id && cell.id.id && cell.id.id.name) name = cell.id.id.name;
   const bodyText = source.substring(cell.body.start, cell.body.end);
   let code;
   if (cell.body.type !== "BlockStatement") {
@@ -101,16 +106,17 @@ export const defineCell = (
   return {
     cellName: name,
     cellFunction: f,
-    cellReferences: references
+    cellReferences: references,
   };
 };
 
 // acts as a man-in-the-middle compiler/runtime decorator thingy
-export const defineCellDefinition = (
+export const decorateCellDefintion = (
   cellFunction: (...any) => any,
-  baseModuleDir: string
+  baseModuleDir: string,
+  isRecipe: boolean
 ): ((...any) => any) => {
-  return async function (...dependencies) {
+  return async function(...dependencies) {
     // dont try and get fileinfo for cell depends like `cell` or `shell`
     let cellDependents = [];
     dependencies.map(dependency => {
@@ -120,7 +126,7 @@ export const defineCellDefinition = (
     });
     let currCell = await cellFunction(...dependencies);
 
-    if (currCell instanceof FileInfo) {
+    if (isRecipe) {
       await currCell.updateBasePath(baseModuleDir);
       // run recipe if no file or if it's out of date
       if (currCell.stat === null) {
@@ -149,11 +155,24 @@ export const defineCellDefinition = (
   };
 };
 
-export const oakDefine = (
+export const oakDefine = async (
   oakfileModule: any,
   source: string,
   baseModuleDir: string
-): DefineFunctionType => {
+): Promise<DefineFunctionType> => {
+  const depMap: Map<string, (runtime: any, observer: any) => void> = new Map();
+
+  const importCells = oakfileModule.cells.filter(
+    cell => cell.body.type === "ImportDeclaration"
+  );
+
+  await Promise.all(
+    importCells.map(async cell => {
+      const path = join(baseModuleDir, cell.body.source.value);
+      const fromModule = await oakDefineFile(path);
+      depMap.set(path, fromModule);
+    })
+  );
   return async function define(runtime, observer) {
     const main = runtime.module();
     const importCells = oakfileModule.cells.filter(
@@ -162,37 +181,42 @@ export const oakDefine = (
     const regularCells = oakfileModule.cells.filter(
       cell => cell.body.type !== "ImportDeclaration"
     );
-    // import all needed cells first.
-    await Promise.all(
-      importCells.map(async cell => {
-        const { names, aliases, from } = await defineCellImport(
-          cell,
-          baseModuleDir
-        ).catch(err => {
-          throw Error("Error defining import cell");
-        });
-        const childNames = [];
-        const child = runtime.module(from, name => {
-          childNames.push(name);
-          return true;
-        });
-        await Promise.all(childNames.map(n => child.value(n)));
-        console.log(childNames);
-        for (let i = 0; i < names.length; i++) {
-          console.log(
-            `oakDefine import name=${names[i]} aliases=${aliases[i]}`
-          );
-
-          main.import(names[i], aliases[i], child);
-        }
-        return;
-      })
-    );
-    regularCells.map(async cell => {
-      const { cellName, cellFunction, cellReferences } = defineCell(
-        cell,
-        source
+    importCells.map(async (cell, i) => {
+      const names = cell.body.specifiers.map(
+        specifier => specifier.imported.name
       );
+      const aliases = cell.body.specifiers.map(
+        specifier => specifier.local.name
+      );
+      const path = join(baseModuleDir, cell.body.source.value);
+      const ee = new EventEmitter();
+      const child = runtime.module(depMap.get(path), name => {
+        return {
+          pending() {
+            ee.emit(`import pending`, name);
+          },
+          fulfilled(value) {
+            ee.emit(`import fulfilled`, name, value);
+          },
+          rejected(error) {
+            ee.emit(`import rejected`, name, error);
+          },
+        };
+      });
+      for (let i = 0; i < names.length; i++) {
+        console.log(`oakDefine import name=${names[i]} aliases=${aliases[i]}`);
+        main.import(names[i], aliases[i], child);
+      }
+      return;
+    });
+
+    regularCells.map(cell => {
+      const {
+        cellName,
+        cellFunction,
+        cellReferences,
+      } = createRegularCellDefintion(cell, source);
+      const isRecipe = cell.id && cell.id.type === "RecipeExpression";
       console.log(
         `oakDefine cell=${formatCellName(cellName)} refs=${cellReferences.join(
           ","
@@ -203,7 +227,7 @@ export const oakDefine = (
         .define(
           cellName,
           cellReferences,
-          defineCellDefinition(cellFunction, baseModuleDir)
+          decorateCellDefintion(cellFunction, baseModuleDir, isRecipe)
         );
     });
     return main;
