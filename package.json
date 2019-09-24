@@ -38,7 +38,7 @@
   "dependencies": {
     "@alex.garcia/oak-parser": "^0.1.1",
     "@microsoft/ts-command-line": "^4.2.6",
-    "@observablehq/runtime": "^4.3",
+    "@observablehq/runtime": "4.4.4",
     "@observablehq/stdlib": "^3.0.2",
     "@types/node": "^12.6.8",
     "@types/tape": "^4.2.33",
@@ -46,6 +46,7 @@
     "d3-array": "^2.2.0",
     "express": "^4.17.1",
     "graphviz": "^0.0.9",
+    "immutable": "^4.0.0-rc.12",
     "jsonwebtoken": "^8.5.1",
     "randomatic": "^3.1.1",
     "read-package-json": "^2.1.0",

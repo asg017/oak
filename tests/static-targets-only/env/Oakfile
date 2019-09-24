@@ -1,0 +1,69 @@
+/*
+a  b c   x y  m
+|  |/    |/      
+d  e     z
+|  |
+f  g
+| /
+h
+*/
+
+recipe a = task({
+    path: 'a',
+    make: a => shell`echo -n "a" > ${a}`
+})
+
+recipe b = task({
+    path: 'b',
+    make: b => shell`echo -n "b" > ${b}`
+})
+
+recipe c = task({
+    path: 'c',
+    make: c => shell`echo -n "c" > ${c}`
+})
+
+recipe x = task({
+    path: 'x',
+    make: x => shell`echo -n "x" > ${x}`
+})
+
+recipe y = task({
+    path: 'y',
+    make: y => shell`echo -n "y" > ${y}`
+})
+
+recipe m = task({
+    path: 'm',
+    make: m => shell`echo -n "m" > ${m}`
+})
+
+recipe d = task({
+    path: 'd',
+    make: d => shell`cat ${a} > ${d}`
+})
+
+recipe e = task({
+    path: 'e',
+    make: e => shell`cat ${b} ${c} > ${e}`
+})
+
+recipe z = task({
+    path: 'z',
+    make: z => shell`cat ${x} ${y} > ${z}`
+})
+
+recipe f = task({
+    path: 'f',
+    make: f => shell`cat ${d} > ${f}`
+})
+
+recipe g = task({
+    path: 'g',
+    make: g => shell`cat ${e} > ${g}`
+})
+
+recipe h = task({
+    path: 'h',
+    make: h => shell`cat ${f} ${g} > ${h}`
+})

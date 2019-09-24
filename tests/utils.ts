@@ -24,14 +24,20 @@ export const touch = async (
 };
 export const open = async (path: string): Promise<OpenFileType> => {
   const content: string = await new Promise((resolve, reject) => {
-    readFile(path, "utf8", (err: any, data: string) => {
-      if (err) reject(err);
+    readFile(path, "utf8", (err: NodeJS.ErrnoException, data: string) => {
+      if (err) {
+        if (err.code === "ENOENT") resolve(null);
+        else reject(err);
+      }
       resolve(data);
     });
   });
   const s: Stats = await new Promise((resolve, reject) => {
-    stat(path, (err: any, s: Stats) => {
-      if (err) reject(err);
+    stat(path, (err: NodeJS.ErrnoException, s: Stats) => {
+      if (err) {
+        if (err.code === "ENOENT") resolve(null);
+        else reject(err);
+      }
       resolve(s);
     });
   });
@@ -46,7 +52,7 @@ export function cleanUp(
     try {
       unlinkSync(join(filepath(name)));
     } catch (err) {
-      console.error("cleanUp error: ", err);
+      // console.error("cleanUp error: ", err);
     }
   });
 }

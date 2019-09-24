@@ -217,8 +217,6 @@ export const oakDefine = async (
         cellReferences,
       } = createRegularCellDefintion(cell, source);
       const isRecipe = cell.id && cell.id.type === "RecipeExpression";
-      console.log(isRecipe, cell.id);
-      console.log(cell.body);
       console.log(
         `oakDefine cell=${formatCellName(cellName)} refs=${cellReferences.join(
           ","

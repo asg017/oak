@@ -28,19 +28,19 @@
   dependencies:
     esm "^3.0.84"
 
-"@observablehq/runtime@^4.3":
-  version "4.3.3"
-  resolved "https://registry.yarnpkg.com/@observablehq/runtime/-/runtime-4.3.3.tgz#5970c79b26adb2f6806e0c3a322e3af009b86844"
-  integrity sha512-g8z6bGNJLgnhiN3sgDcG5/+MkyDtncLuoCyXR9DqIPIb3cOQq/5fD3KGAZ2/Glu4uCsYykBdBuXL2RF6rJLRuA==
+"@observablehq/runtime@4.4.4":
+  version "4.4.4"
+  resolved "https://registry.yarnpkg.com/@observablehq/runtime/-/runtime-4.4.4.tgz#e799204fe04ae0eaf40fe7a65dde47f31e10c578"
+  integrity sha512-lHfXGlNfbd/kYV8weO4r4O7jTlmEWFmYgYEGmktiMkcWlvOHdGRmXUf6NxmdbJbZFbGVwxvcV2cQgpUwz/3xBg==
   dependencies:
     "@observablehq/inspector" "^3.1.0"
     "@observablehq/stdlib" "^3.0.0"
     esm "^3.0.84"
 
 "@observablehq/stdlib@^3.0.0":
-  version "3.0.4"
-  resolved "https://registry.yarnpkg.com/@observablehq/stdlib/-/stdlib-3.0.4.tgz#12be3fa9ffc611608e85f39d04f920ed1d119acd"
-  integrity sha512-5550y5NFIZMnXoq1s9hdE8rEN7cn55TrZoGABCxmL/N9sHwHlmw/CPDWTb60NzBcQpNfL1lYlCIAZryal8rfrg==
+  version "3.1.1"
+  resolved "https://registry.yarnpkg.com/@observablehq/stdlib/-/stdlib-3.1.1.tgz#65e4368cba5920aa649c8c2a0c9d8f23bb51150f"
+  integrity sha512-lwt+ThlV5QIFg7WCIKn7IvCnGpEsGw8BkASPd5yyNZ7hU8gxubE7jOChVte8Lf+yMQmZsju55bCsk813+u4GxQ==
   dependencies:
     d3-require "^1.2.0"
     esm "^3.0.84"
@@ -616,6 +616,11 @@ iconv-lite@0.4.24:
   integrity sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==
   dependencies:
     safer-buffer ">= 2.1.2 < 3"
+
+immutable@^4.0.0-rc.12:
+  version "4.0.0-rc.12"
+  resolved "https://registry.yarnpkg.com/immutable/-/immutable-4.0.0-rc.12.tgz#ca59a7e4c19ae8d9bf74a97bdf0f6e2f2a5d0217"
+  integrity sha512-0M2XxkZLx/mi3t8NVwIm1g8nHoEmM9p9UBl/G9k4+hm0kBgOVdMV/B3CY5dQ8qG8qc80NN4gDV4HQv6FTJ5q7A==
 
 indexof@0.0.1:
   version "0.0.1"

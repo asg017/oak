@@ -31,18 +31,18 @@ export async function oak_static(args: {
   const m1 = runtime.module(define, name => {
     if (targetSet.size === 0 || targetSet.has(name)) {
       cells.add(name);
+      return {
+        pending() {
+          ee.emit("pending", name);
+        },
+        fulfilled(value) {
+          ee.emit("fulfilled", name, value);
+        },
+        rejected(error) {
+          ee.emit("rejected", name, error);
+        },
+      };
     }
-    return {
-      pending() {
-        ee.emit("pending", name);
-      },
-      fulfilled(value) {
-        ee.emit("fulfilled", name, value);
-      },
-      rejected(error) {
-        ee.emit("rejected", name, error);
-      },
-    };
   });
   await runtime._compute();
   await Promise.all(Array.from(cells).map(cell => m1.value(cell)));
