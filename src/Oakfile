@@ -1,35 +1,35 @@
-a = recipe({
+recipe a = task({
     path: 'temp/a.txt',
     make: a => shell`sleep 1 && echo "hello its a! " > ${a}`
 })
 
 
-b = recipe({
+recipe b = task({
     path: 'temp/b.txt',
     make: b => shell`sleep 1.5 && echo "hello now its b! " > ${b}`
 })
 
-c = recipe({
+recipe c = task({
     path: 'temp/c.txt',
     make: c => shell`sleep 1 && cat ${a} ${b} > ${c}`
 })
 
-d = recipe({
+recipe d = task({
     path: 'temp/d.txt',
     make: d=> shell`sleep 1 && cat ${c} > ${d}`
 })
 
-e = recipe({
+recipe e = task({
     path: 'temp/e.txt',
     make: e=> shell`sleep 1 && cat ${d} > ${e}`
 })
 
-f = recipe({
+recipe f = task({
     path: 'temp/f.txt',
     make: f=> shell`sleep 1 && cat ${e} > ${f}`
 })
 
-g = recipe({
+recipe g = task({
     path: 'temp/g.txt',
     make: g=> shell`sleep 1 && cat ${e} ${f} > ${g}`
 })

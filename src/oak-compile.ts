@@ -158,7 +158,8 @@ export const decorateCellDefintion = (
 export const oakDefine = async (
   oakfileModule: any,
   source: string,
-  baseModuleDir: string
+  baseModuleDir: string,
+  decorate: boolean
 ): Promise<DefineFunctionType> => {
   const depMap: Map<string, (runtime: any, observer: any) => void> = new Map();
 
@@ -216,19 +217,24 @@ export const oakDefine = async (
         .define(
           cellName,
           cellReferences,
-          decorateCellDefintion(cellFunction, baseModuleDir, isRecipe)
+          decorate
+            ? decorateCellDefintion(cellFunction, baseModuleDir, isRecipe)
+            : cellFunction
         );
     });
     return main;
   };
 };
 
-export const oakDefineFile = async (path: string): Promise<any> => {
+export const oakDefineFile = async (
+  path: string,
+  decorate: boolean = true
+): Promise<any> => {
   const parseResults = await parseOakfile(path).catch(err => {
     throw Error(`Error parsing Oakfile at ${path} ${err}`);
   });
   const oakfileModule = parseResults.module;
   const oakfileContents = parseResults.contents;
   const baseModuleDir = dirname(path);
-  return oakDefine(oakfileModule, oakfileContents, baseModuleDir);
+  return oakDefine(oakfileModule, oakfileContents, baseModuleDir, decorate);
 };

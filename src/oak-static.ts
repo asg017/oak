@@ -27,6 +27,10 @@ export async function oak_static(args: {
     }`
   );
   const ee = new EventEmitter();
+  ee.on("pending", name => console.log("pending", name));
+  ee.on("fulfilled", name => console.log("fulfilled", name));
+  ee.on("rejected", name => console.log("rejected", name));
+
   const cells: Set<string> = new Set();
   const m1 = runtime.module(define, name => {
     if (targetSet.size === 0 || targetSet.has(name)) {
