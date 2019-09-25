@@ -26,9 +26,18 @@ test("static-import-aliases", async t => {
     targets: ["x"]
   });
   const x = await open(env("x"));
-  const y = await open(env("y"));
+  let y = await open(env("y"));
   t.equal(x.content, "x");
   t.equal(y.stat, null);
+
+  await oak_static({
+    filename: env("Oakfile"),
+    targets: ["y"]
+  });
+  const b = await open(env("sub/b"));
+  y = await open(env("y"));
+  t.equal(b.content, "a");
+  t.equal(y.content, "xa");
 
   t.end();
 });

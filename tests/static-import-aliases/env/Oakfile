@@ -1,4 +1,4 @@
-// import {b} from './sub/Oakfile';
+import {b as myB} from './sub/Oakfile';
 
 recipe x = task({
     path: 'x',
