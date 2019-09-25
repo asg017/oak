@@ -190,19 +190,8 @@ export const oakDefine = async (
       );
       const path = join(baseModuleDir, cell.body.source.value);
       const ee = new EventEmitter();
-      const child = runtime.module(depMap.get(path), name => {
-        return {
-          pending() {
-            ee.emit(`import pending`, name);
-          },
-          fulfilled(value) {
-            ee.emit(`import fulfilled`, name, value);
-          },
-          rejected(error) {
-            ee.emit(`import rejected`, name, error);
-          },
-        };
-      });
+      const child = runtime.module(depMap.get(path));
+
       for (let i = 0; i < names.length; i++) {
         console.log(`oakDefine import name=${names[i]} aliases=${aliases[i]}`);
         main.import(names[i], aliases[i], child);
