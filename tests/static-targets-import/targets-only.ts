@@ -34,5 +34,16 @@ test("static-targets-only", async t => {
   t.equal(x.content, "x");
   t.equal(y.content, null);
 
+  await oak_static({ filename: env("Oakfile"), targets: [] });
+  a = await open(env("sub/a"));
+  b = await open(env("sub/b"));
+  x = await open(env("x"));
+  y = await open(env("y"));
+
+  t.equal(a.content, "a");
+  t.equal(b.content, "a");
+  t.equal(x.content, "x");
+  t.equal(y.content, "xa");
+
   t.end();
 });
