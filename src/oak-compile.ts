@@ -62,21 +62,6 @@ type ObservableCell = {
     ObservableImportDeclaration &
     ObservableBlockStatement;
 };
-export const createImportCellDefintion = async (
-  cell: ObservableCell,
-  baseModuleDir: string
-): Promise<{
-  names: string[];
-  aliases: string[];
-  from: () => void;
-}> => {
-  const path = join(baseModuleDir, cell.body.source.value);
-  const fromModule = await oakDefineFile(path);
-  const names = cell.body.specifiers.map(specifier => specifier.imported.name);
-  const aliases = cell.body.specifiers.map(specifier => specifier.local.name);
-
-  return { names, aliases, from: fromModule };
-};
 
 export const createRegularCellDefintion = (
   cell: ObservableCell,
@@ -170,10 +155,11 @@ export const oakDefine = async (
   await Promise.all(
     importCells.map(async cell => {
       const path = join(baseModuleDir, cell.body.source.value);
-      const fromModule = await oakDefineFile(path);
+      const fromModule = await oakDefineFile(path, decorate);
       depMap.set(path, fromModule);
     })
   );
+
   return async function define(runtime, observer) {
     const main = runtime.module();
     const importCells = oakfileModule.cells.filter(
