@@ -1,0 +1,11 @@
+import {b as myB} from './sub/Oakfile';
+
+recipe x = task({
+    path: 'x',
+    make: x=> shell`echo -n "x" > ${x}`
+})
+
+recipe y = task({
+    path: 'y',
+    make: y=> shell`cat ${x} ${myB} > ${y}`
+})
