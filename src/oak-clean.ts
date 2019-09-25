@@ -45,7 +45,6 @@ export default async function oak_clean(args: {
   const runtime = new Runtime(
     Object.assign(new Library(), {
       task: () => async params => {
-        console.log("task", params.path);
         const path = join(dirname(oakfilePath), params.path);
         const exists = Boolean(await getStat(path));
         return { path, exists };
@@ -56,10 +55,6 @@ export default async function oak_clean(args: {
 
   const ee = new EventEmitter();
   const cells: Set<string> = new Set();
-
-  ee.on("pending", name => console.log("pending", name));
-  ee.on("fulfilled", name => console.log("fulfilled", name));
-  ee.on("rejected", name => console.log("rejected", name));
 
   const m1 = runtime.module(define, name => {
     if (targetSet.size === 0 || targetSet.has(name)) {
@@ -78,12 +73,10 @@ export default async function oak_clean(args: {
     }
   });
   await runtime._compute();
-  console.log(Array.from(m1._runtime._variables).map((d: any) => d._name));
   const map: Map<string, { path: string; exists: boolean }> = new Map();
   await Promise.all(
     Array.from(cells).map(async cell => map.set(cell, await m1.value(cell)))
   );
-  console.log("qwer");
   runtime.dispose();
 
   const existsCount = Array.from(map).reduce(
