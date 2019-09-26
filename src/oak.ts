@@ -19,6 +19,8 @@ import oak_clean from "./oak-clean";
 class CleanAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
   private _targets: CommandLineStringListParameter;
+  private _force: CommandLineFlagParameter;
+
   public constructor() {
     super({
       actionName: "clean",
@@ -26,12 +28,15 @@ class CleanAction extends CommandLineAction {
       documentation: "TODO",
     });
   }
+
   protected onExecute(): Promise<void> {
     return oak_clean({
       targets: this._targets.values,
       filename: this._filename.value,
+      force: this._force.value,
     });
   }
+
   protected onDefineParameters(): void {
     this._filename = this.defineStringParameter({
       argumentName: "FILENAME",
@@ -39,6 +44,10 @@ class CleanAction extends CommandLineAction {
       parameterShortName: "-f",
       description: "Path to Oakfile.",
       defaultValue: "./Oakfile",
+    });
+    this._force = this.defineFlagParameter({
+      parameterLongName: "--force",
+      description: "Force deletion of files with no prompt.",
     });
     this._targets = this.defineStringListParameter({
       argumentName: "TARGETS",

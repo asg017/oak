@@ -33,8 +33,19 @@ const getYN = (): Promise<boolean> => {
   });
 };
 
+function removeFiles(map: Map<string, { path: string; exists: boolean }>) {
+  Array.from(map).map(a => {
+    if (a[1].exists) {
+      console.log(`Removing ${a[0]} at ${a[1].path}...`);
+      unlinkSync(a[1].path);
+    }
+  });
+  return;
+}
+
 export default async function oak_clean(args: {
   filename: string;
+  force: boolean;
   targets: readonly string[];
 }) {
   const targetSet = new Set(args.targets);
@@ -90,6 +101,10 @@ export default async function oak_clean(args: {
     );
     return;
   }
+  if (args.force) {
+    removeFiles(map);
+    return;
+  }
 
   console.log(`Do you want to remove the following files from these recipes?`);
   console.log(``);
@@ -112,10 +127,5 @@ export default async function oak_clean(args: {
     console.log(`Not removing any files, exiting...`);
     return;
   }
-  Array.from(map).map(a => {
-    if (a[1].exists) {
-      console.log(`Removing ${a[0]} at ${a[1].path}...`);
-      unlinkSync(a[1].path);
-    }
-  });
+  removeFiles(map);
 }
