@@ -28,7 +28,6 @@ class CleanAction extends CommandLineAction {
       documentation: "TODO",
     });
   }
-
   protected onExecute(): Promise<void> {
     return oak_clean({
       targets: this._targets.values,
