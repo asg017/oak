@@ -14,7 +14,48 @@ import {
   CommandLineParser,
   CommandLineFlagParameter,
 } from "@microsoft/ts-command-line";
+import oak_clean from "./oak-clean";
 
+class CleanAction extends CommandLineAction {
+  private _filename: CommandLineStringParameter;
+  private _targets: CommandLineStringListParameter;
+  private _force: CommandLineFlagParameter;
+
+  public constructor() {
+    super({
+      actionName: "clean",
+      summary: "Remove recipe target files.",
+      documentation: "TODO",
+    });
+  }
+  protected onExecute(): Promise<void> {
+    return oak_clean({
+      targets: this._targets.values,
+      filename: this._filename.value,
+      force: this._force.value,
+    });
+  }
+
+  protected onDefineParameters(): void {
+    this._filename = this.defineStringParameter({
+      argumentName: "FILENAME",
+      parameterLongName: "--file",
+      parameterShortName: "-f",
+      description: "Path to Oakfile.",
+      defaultValue: "./Oakfile",
+    });
+    this._force = this.defineFlagParameter({
+      parameterLongName: "--force",
+      description: "Force deletion of files with no prompt.",
+    });
+    this._targets = this.defineStringListParameter({
+      argumentName: "TARGETS",
+      parameterLongName: "--targets",
+      parameterShortName: "-t",
+      description: "List of target names to resolve.",
+    });
+  }
+}
 class DashAction extends CommandLineAction {
   private _port: CommandLineStringParameter;
   private _filename: CommandLineStringParameter;
@@ -155,6 +196,7 @@ class OakCommandLine extends CommandLineParser {
       toolDescription: "CLI for oak.",
     });
 
+    this.addAction(new CleanAction());
     this.addAction(new DashAction());
     this.addAction(new PrintAction());
     this.addAction(new StaticAction());

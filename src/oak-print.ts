@@ -1,8 +1,7 @@
-import { parseOakfile } from "./utils";
 import { Library } from "./Library";
-import { join, dirname } from "path";
+import { join } from "path";
 import { digraph } from "graphviz";
-import { merge } from "d3-array";
+import { parseModules } from "./utils";
 
 type OakPrintArgumentsType = {
   filename: string;
@@ -79,38 +78,6 @@ const print_stdout = (filename, modules: any[], libSet = defaultLibSet) => {
     });
     console.log("----");
   });
-};
-
-const parseModules = async (
-  filename: string,
-  parsedOakfileSet?: Set<string>
-): Promise<any[]> => {
-  if (!parsedOakfileSet) {
-    parsedOakfileSet = new Set([]);
-  }
-  if (parsedOakfileSet.has(filename)) {
-    throw Error(
-      `Circular imports. repeated Oakfile: "${filename}". Visited: ${Array.from(
-        parsedOakfileSet
-      )
-        .map(f => `"${f}"`)
-        .join(",")}`
-    );
-  }
-  parsedOakfileSet.add(filename);
-
-  const oakfile = await parseOakfile(filename);
-  const dir = dirname(filename);
-  const importCells = oakfile.module.cells.filter(
-    cell => cell.body.type === "ImportDeclaration"
-  );
-  const importedModules = await Promise.all(
-    importCells.map(importCell => {
-      const path = join(dir, importCell.body.source.value);
-      return parseModules(path, parsedOakfileSet);
-    })
-  );
-  return [oakfile.module, ...merge(importedModules)];
 };
 
 export async function oak_print(args: OakPrintArgumentsType): Promise<void> {

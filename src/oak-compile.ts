@@ -62,21 +62,6 @@ type ObservableCell = {
     ObservableImportDeclaration &
     ObservableBlockStatement;
 };
-export const createImportCellDefintion = async (
-  cell: ObservableCell,
-  baseModuleDir: string
-): Promise<{
-  names: string[];
-  aliases: string[];
-  from: () => void;
-}> => {
-  const path = join(baseModuleDir, cell.body.source.value);
-  const fromModule = await oakDefineFile(path);
-  const names = cell.body.specifiers.map(specifier => specifier.imported.name);
-  const aliases = cell.body.specifiers.map(specifier => specifier.local.name);
-
-  return { names, aliases, from: fromModule };
-};
 
 export const createRegularCellDefintion = (
   cell: ObservableCell,
@@ -158,7 +143,8 @@ export const decorateCellDefintion = (
 export const oakDefine = async (
   oakfileModule: any,
   source: string,
-  baseModuleDir: string
+  baseModuleDir: string,
+  decorate: boolean
 ): Promise<DefineFunctionType> => {
   const depMap: Map<string, (runtime: any, observer: any) => void> = new Map();
 
@@ -169,10 +155,11 @@ export const oakDefine = async (
   await Promise.all(
     importCells.map(async cell => {
       const path = join(baseModuleDir, cell.body.source.value);
-      const fromModule = await oakDefineFile(path);
+      const fromModule = await oakDefineFile(path, decorate);
       depMap.set(path, fromModule);
     })
   );
+
   return async function define(runtime, observer) {
     const main = runtime.module();
     const importCells = oakfileModule.cells.filter(
@@ -216,19 +203,24 @@ export const oakDefine = async (
         .define(
           cellName,
           cellReferences,
-          decorateCellDefintion(cellFunction, baseModuleDir, isRecipe)
+          decorate
+            ? decorateCellDefintion(cellFunction, baseModuleDir, isRecipe)
+            : cellFunction
         );
     });
     return main;
   };
 };
 
-export const oakDefineFile = async (path: string): Promise<any> => {
+export const oakDefineFile = async (
+  path: string,
+  decorate: boolean = true
+): Promise<any> => {
   const parseResults = await parseOakfile(path).catch(err => {
     throw Error(`Error parsing Oakfile at ${path} ${err}`);
   });
   const oakfileModule = parseResults.module;
   const oakfileContents = parseResults.contents;
   const baseModuleDir = dirname(path);
-  return oakDefine(oakfileModule, oakfileContents, baseModuleDir);
+  return oakDefine(oakfileModule, oakfileContents, baseModuleDir, decorate);
 };
