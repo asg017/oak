@@ -69,6 +69,7 @@ export const createRegularCellDefintion = (
 ): { cellFunction: any; cellName: string; cellReferences: string[] } => {
   let name = null;
   if (cell.id && cell.id.id && cell.id.id.name) name = cell.id.id.name;
+  else if (cell.id && cell.id.name) name = cell.id.name;
   const bodyText = source.substring(cell.body.start, cell.body.end);
   let code;
   if (cell.body.type !== "BlockStatement") {
