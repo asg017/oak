@@ -53,12 +53,13 @@ export default async function oak_clean(args: {
     ? args.filename
     : join(process.cwd(), args.filename);
 
+  const overriddenTaskSymbol = Symbol("task");
   const runtime = new Runtime(
     Object.assign(new Library(), {
       task: () => async params => {
         const path = join(dirname(oakfilePath), params.path);
         const exists = Boolean(await getStat(path));
-        return { path, exists };
+        return { path, exists, __type: overriddenTaskSymbol };
       },
     })
   );
@@ -86,7 +87,11 @@ export default async function oak_clean(args: {
   await runtime._compute();
   const map: Map<string, { path: string; exists: boolean }> = new Map();
   await Promise.all(
-    Array.from(cells).map(async cell => map.set(cell, await m1.value(cell)))
+    Array.from(cells).map(async cell => {
+      // only try and clean cells that are defined with the "task" override above
+      const value = await m1.value(cell);
+      if (value.__type === overriddenTaskSymbol) map.set(cell, value);
+    })
   );
   runtime.dispose();
 
