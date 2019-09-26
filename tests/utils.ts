@@ -56,3 +56,17 @@ export function cleanUp(
     }
   });
 }
+
+export const getTree = async (
+  outFiles: string[],
+  env: (string) => string
+): Promise<Map<string, any>> => {
+  const files = await Promise.all(
+    outFiles.map(async out => [out, await open(env(out))])
+  );
+  const map = new Map();
+  files.map(file => {
+    map.set(file[0], file[1]);
+  });
+  return map;
+};
