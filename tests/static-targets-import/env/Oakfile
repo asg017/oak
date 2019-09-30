@@ -1,11 +1,11 @@
 import  {b} from "sub/Oakfile";
 
-recipe x = task({
+x = task({
     path: 'x',
     make: x => shell`echo -n "x" > ${x}`
 })
 
-recipe y = task({
+y = task({
     path: 'y',
     make: y => shell`cat ${x} ${b} > ${y}`
 })

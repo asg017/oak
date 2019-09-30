@@ -1,11 +1,11 @@
 getName = name => `${name}.txt`
 
-recipe a = task({
+a = task({
     path: getName("a"),
     make: a => shell`echo -n "a" > ${a}`
 })
 
-recipe b = task({
+b = task({
     path: getName("b"),
     make: b => shell`cat ${a} > ${b}`
 })

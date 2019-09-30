@@ -1,5 +1,5 @@
 import { readFile, stat, Stats } from "fs";
-import { parseModule } from "@alex.garcia/oak-parser";
+import { parseModule } from "@observablehq/parser";
 import chalk from "chalk";
 import { dirname, join } from "path";
 import { merge } from "d3-array";

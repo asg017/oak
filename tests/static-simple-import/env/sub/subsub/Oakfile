@@ -1,1 +1,1 @@
-recipe a = task({ path: "a", make: a => shell`echo -n "a" > ${a}` });
+a = task({ path: "a", make: a => shell`echo -n "a" > ${a}` });

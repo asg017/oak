@@ -24,7 +24,7 @@ class CleanAction extends CommandLineAction {
   public constructor() {
     super({
       actionName: "clean",
-      summary: "Remove recipe target files.",
+      summary: "Remove task target files.",
       documentation: "TODO",
     });
   }

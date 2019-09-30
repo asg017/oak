@@ -99,8 +99,7 @@ export const createRegularCellDefintion = (
 // acts as a man-in-the-middle compiler/runtime decorator thingy
 export const decorateCellDefintion = (
   cellFunction: (...any) => any,
-  baseModuleDir: string,
-  isRecipe: boolean
+  baseModuleDir: string
 ): ((...any) => any) => {
   return async function(...dependencies) {
     // dont try and get fileinfo for cell depends like `cell` or `shell`
@@ -112,7 +111,7 @@ export const decorateCellDefintion = (
     });
     let currCell = await cellFunction(...dependencies);
 
-    if (isRecipe) {
+    if (currCell instanceof FileInfo) {
       await currCell.updateBasePath(baseModuleDir);
       // run recipe if no file or if it's out of date
       if (currCell.stat === null) {
@@ -193,7 +192,6 @@ export const oakDefine = async (
         cellFunction,
         cellReferences,
       } = createRegularCellDefintion(cell, source);
-      const isRecipe = cell.id && cell.id.type === "RecipeExpression";
       console.log(
         `oakDefine cell=${formatCellName(cellName)} refs=${cellReferences.join(
           ","
@@ -205,7 +203,7 @@ export const oakDefine = async (
           cellName,
           cellReferences,
           decorate
-            ? decorateCellDefintion(cellFunction, baseModuleDir, isRecipe)
+            ? decorateCellDefintion(cellFunction, baseModuleDir)
             : cellFunction
         );
     });
