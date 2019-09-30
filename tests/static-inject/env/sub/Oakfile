@@ -1,0 +1,7 @@
+STATE = 'NY'
+
+a = task({path: 'a', make: a => shell`cat data/${STATE}/a > ${a}` })
+
+b = task({path: 'b', make: b => shell`cat data/${STATE}/b > ${b}` })
+
+c = task({path: 'c', make: c => shell`cat ${a} ${b} > ${c}` })
