@@ -25,9 +25,10 @@ function transform(strings: string[], ...values: any[]): Promise<string> {
   for (let i = 0, n = values.length; i < n; ++i)
     s +=
       typeof values[i] === "string"
-        ? `"${values[i].replace(`"`, `"`)}"${strings[i + 1]}`
+        ? `${values[i]}${strings[i + 1]}`
         : `"${values[i].path.replace(`"`, `"`)}"${strings[i + 1]}`;
   console.log(s);
+  console.log(process.cwd());
   return new Promise((resolve, reject) =>
     executeCommand(s)
       .on("stdout", chunk => {

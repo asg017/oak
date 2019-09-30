@@ -2,7 +2,7 @@ import { Runtime } from "@observablehq/runtime";
 import { Library } from "./Library";
 import { oakDefineFile } from "./oak-compile";
 import { formatCellName, formatPath } from "./utils";
-import { isAbsolute, join } from "path";
+import { isAbsolute, join, dirname } from "path";
 import { EventEmitter } from "events";
 
 export async function oak_static(args: {
@@ -16,6 +16,9 @@ export async function oak_static(args: {
 
   const runtime = new Runtime(new Library());
   const define = await oakDefineFile(oakfilePath);
+
+  const origDir = process.cwd();
+  process.chdir(dirname(oakfilePath));
 
   console.log(
     `Oak: ${formatPath(oakfilePath)}${
@@ -51,4 +54,5 @@ export async function oak_static(args: {
   await runtime._compute();
   await Promise.all(Array.from(cells).map(cell => m1.value(cell)));
   runtime.dispose();
+  process.chdir(origDir);
 }
