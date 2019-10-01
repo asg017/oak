@@ -1,7 +1,7 @@
 STATE = 'NY'
 
-a = task({path: 'a', make: a => shell`cat data/${STATE}/a > ${a}` })
+a = task({path: 'a', make: a => shell`wget -O ${a} --quiet http://oak-test.surge.sh/data/${STATE}/a` })
 
-b = task({path: 'b', make: b => shell`cat data/${STATE}/b > ${b}` })
+b = task({path: 'b', make: b => shell`wget -O ${b} --quiet http://oak-test.surge.sh/data/${STATE}/b` })
 
 c = task({path: 'c', make: c => shell`cat ${a} ${b} > ${c}` })
