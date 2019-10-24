@@ -4,8 +4,7 @@ import { getStat, parseOakfile, getInjectHash } from "./utils";
 import FileInfo from "./FileInfo";
 import { dirname, join, resolve } from "path";
 import { formatCellName, formatPath } from "./utils";
-import { existsSync, mkdirSync, readFileSync, promises } from "fs";
-import * as hasha from "hasha";
+import { existsSync, mkdirSync } from "fs";
 
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 const GeneratorFunction = Object.getPrototypeOf(function*() {}).constructor;
@@ -177,6 +176,9 @@ export const oakDefine = async (
     if (!existsSync(oakDir)) {
       mkdirSync(oakDir, { recursive: true });
     }
+    console.log(
+      `injecting ${injectingSource} from ${oakfilePath} with hash=${hash}`
+    );
   }
   return async function define(runtime, observer) {
     const main = runtime.module();

@@ -33,7 +33,8 @@
     "version": "npm run build",
     "postversion": "git push && git push --tags && rm -rf build/temp",
     "test": "ts-node ./node_modules/tape/bin/tape tests/**/*.ts",
-    "t": "ts-node ./node_modules/tape/bin/tape"
+    "t": "ts-node ./node_modules/tape/bin/tape",
+    "o": "ts-node ./src/oak.ts"
   },
   "dependencies": {
     "@microsoft/ts-command-line": "^4.2.6",

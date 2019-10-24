@@ -1,0 +1,8 @@
+wrap = s => `B ${s}`
+
+import {x} with {wrap} from "./subsub/Oakfile";
+
+y = task({
+    path: "y", 
+    make: y => shell`cat ${x} > ${y}`
+})

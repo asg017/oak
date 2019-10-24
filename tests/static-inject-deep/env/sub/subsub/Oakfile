@@ -1,0 +1,6 @@
+wrap = s => `A ${s}`
+
+x = task({
+    path: "x", 
+    make: x => shell`echo -n "${wrap("x")}" > ${x}`
+})
