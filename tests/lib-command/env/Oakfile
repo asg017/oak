@@ -1,0 +1,17 @@
+echo = async (path, content) => command("echo", ["-n", content], path);
+
+cat = async (path, files) => command("cat", files, path);
+
+a = task({
+  path: "a",
+  make: a => echo(a, "a")
+});
+
+b = task({
+  path: "b",
+  make: a => echo(a, "b")
+});
+c = task({
+  path: "c",
+  make: c => cat(c, [a, b])
+});
