@@ -1,10 +1,10 @@
 // Modified https://github.com/asg017/unofficial-observablehq-compiler/blob/master/src/compiler.js
 
-import { getStat, parseOakfile } from "./utils";
+import { getStat, parseOakfile, getInjectHash } from "./utils";
 import FileInfo from "./FileInfo";
-import { dirname, join } from "path";
+import { dirname, join, resolve } from "path";
 import { formatCellName, formatPath } from "./utils";
-import { EventEmitter } from "events";
+import { existsSync, mkdirSync } from "fs";
 
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 const GeneratorFunction = Object.getPrototypeOf(function*() {}).constructor;
@@ -113,6 +113,7 @@ export const decorateCellDefintion = (
 
     if (currCell instanceof FileInfo) {
       await currCell.updateBasePath(baseModuleDir);
+
       // run recipe if no file or if it's out of date
       if (currCell.stat === null) {
         console.log(
@@ -140,11 +141,25 @@ export const decorateCellDefintion = (
   };
 };
 
+/*
+Given the parsed result of an Oakfile, create an define function 
+with the results.
+
+oakfilePath: Path to the Oakfile for the define function
+oakfileModule: The parsed results of the Oakfile.
+source: The source string of the original Oakfile. 
+baseModuleDir: The path to the directory that oakfilePath is inside.
+decorate: Whether to decorate the cell definitions wtih the default decorator.
+injectingSource?: If this oakDefine is being injected from somewhere, then 
+this is the path to the Oakfile that's doing the original injecting.
+*/
 export const oakDefine = async (
+  oakfilePath: string,
   oakfileModule: any,
   source: string,
   baseModuleDir: string,
-  decorate: boolean
+  decorate: boolean,
+  injectingSource?: string
 ): Promise<DefineFunctionType> => {
   const depMap: Map<string, (runtime: any, observer: any) => void> = new Map();
 
@@ -155,11 +170,24 @@ export const oakDefine = async (
   await Promise.all(
     importCells.map(async cell => {
       const path = join(baseModuleDir, cell.body.source.value);
-      const fromModule = await oakDefineFile(path, decorate);
+      const fromModule = await oakDefineFile(
+        path,
+        cell.body.injections !== undefined
+          ? injectingSource || oakfilePath
+          : null,
+        decorate
+      );
       depMap.set(path, fromModule);
     })
   );
-
+  let hash;
+  if (injectingSource) {
+    hash = await getInjectHash(injectingSource, oakfilePath);
+    const oakDir = join(baseModuleDir, ".oak", hash);
+    if (!existsSync(oakDir)) {
+      mkdirSync(oakDir, { recursive: true });
+    }
+  }
   return async function define(runtime, observer) {
     const main = runtime.module();
     const importCells = oakfileModule.cells.filter(
@@ -169,19 +197,34 @@ export const oakDefine = async (
       cell => cell.body.type !== "ImportDeclaration"
     );
     importCells.map(async (cell, i) => {
-      const names = cell.body.specifiers.map(
-        specifier => specifier.imported.name
-      );
-      const aliases = cell.body.specifiers.map(
-        specifier => specifier.local.name
-      );
+      const specifiers: { name: string; alias: string }[] = [];
+      if (cell.body.specifiers)
+        for (const specifier of cell.body.specifiers) {
+          specifiers.push({
+            name: specifier.imported.name,
+            alias: specifier.local.name,
+          });
+        }
+      const injections: { name: string; alias: string }[] = [];
+      if (cell.body.injections !== undefined)
+        for (const injection of cell.body.injections) {
+          injections.push({
+            name: injection.imported.name,
+            alias: injection.local.name,
+          });
+        }
       const path = join(baseModuleDir, cell.body.source.value);
-      const ee = new EventEmitter();
-      const child = runtime.module(depMap.get(path));
+      const other = runtime.module(depMap.get(path));
 
-      for (let i = 0; i < names.length; i++) {
-        console.log(`oakDefine import name=${names[i]} aliases=${aliases[i]}`);
-        main.import(names[i], aliases[i], child);
+      if (injections.length > 0) {
+        const child = other.derive(injections, main);
+        specifiers.map(specifier => {
+          main.import(specifier.name, specifier.alias, child);
+        });
+      } else {
+        specifiers.map(specifier => {
+          main.import(specifier.name, specifier.alias, other);
+        });
       }
       return;
     });
@@ -203,7 +246,12 @@ export const oakDefine = async (
           cellName,
           cellReferences,
           decorate
-            ? decorateCellDefintion(cellFunction, baseModuleDir)
+            ? decorateCellDefintion(
+                cellFunction,
+                injectingSource
+                  ? join(baseModuleDir, ".oak", hash)
+                  : baseModuleDir
+              )
             : cellFunction
         );
     });
@@ -211,8 +259,19 @@ export const oakDefine = async (
   };
 };
 
+/*
+
+Given a Oakfile path, get the define function for that module. 
+The define function can be used in the Observable runtime.
+path: Path to the Oakfile
+injectingSource?: If this Oakfile is being imported and the module
+has an injection, this is the path to the file that is doing the injecting.
+decorate: Whether to decorate the cell definintion with the 
+default deorator. 
+*/
 export const oakDefineFile = async (
   path: string,
+  injectingSource?: string,
   decorate: boolean = true
 ): Promise<any> => {
   const parseResults = await parseOakfile(path).catch(err => {
@@ -221,5 +280,12 @@ export const oakDefineFile = async (
   const oakfileModule = parseResults.module;
   const oakfileContents = parseResults.contents;
   const baseModuleDir = dirname(path);
-  return oakDefine(oakfileModule, oakfileContents, baseModuleDir, decorate);
+  return oakDefine(
+    resolve(path),
+    oakfileModule,
+    oakfileContents,
+    baseModuleDir,
+    decorate,
+    injectingSource
+  );
 };

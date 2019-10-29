@@ -1,8 +1,9 @@
-import { readFile, stat, Stats } from "fs";
+import { readFile, readFileSync, stat, Stats } from "fs";
 import { parseModule } from "@observablehq/parser";
 import chalk from "chalk";
 import { dirname, join } from "path";
 import { merge } from "d3-array";
+import * as hasha from "hasha";
 
 export const formatPath = (s: string) => chalk.black.bgWhiteBright.bold(s);
 export const formatCellName = (s: string) => chalk.black.bgCyanBright.bold(s);
@@ -71,4 +72,15 @@ export const parseModules = async (
     })
   );
   return [oakfile.module, ...merge(importedModules)];
+};
+
+export const getInjectHash = async (
+  injectingSourcePath: string,
+  oakfilePath: string
+): Promise<string> => {
+  const contents = [
+    readFileSync(injectingSourcePath),
+    readFileSync(oakfilePath),
+  ];
+  return hasha(contents, { algorithm: "sha1" });
 };

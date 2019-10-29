@@ -63,7 +63,7 @@ export default async function oak_clean(args: {
       },
     })
   );
-  const define = await oakDefineFile(oakfilePath, false);
+  const define = await oakDefineFile(oakfilePath);
 
   const ee = new EventEmitter();
   const cells: Set<string> = new Set();
