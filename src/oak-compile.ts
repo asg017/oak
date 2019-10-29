@@ -1,9 +1,8 @@
 // Modified https://github.com/asg017/unofficial-observablehq-compiler/blob/master/src/compiler.js
 
-import { getStat, parseOakfile, getInjectHash } from "./utils";
-import FileInfo from "./FileInfo";
+import { parseOakfile, getInjectHash } from "./utils";
 import { dirname, join, resolve } from "path";
-import { formatCellName, formatPath } from "./utils";
+import { formatCellName } from "./utils";
 import { existsSync, mkdirSync } from "fs";
 
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
@@ -96,51 +95,6 @@ export const createRegularCellDefintion = (
   };
 };
 
-// acts as a man-in-the-middle compiler/runtime decorator thingy
-export const decorateCellDefintion = (
-  cellFunction: (...any) => any,
-  baseModuleDir: string
-): ((...any) => any) => {
-  return async function(...dependencies) {
-    // dont try and get fileinfo for cell depends like `cell` or `shell`
-    let cellDependents = [];
-    dependencies.map(dependency => {
-      if (dependency instanceof FileInfo) {
-        cellDependents.push(dependency);
-      }
-    });
-    let currCell = await cellFunction(...dependencies);
-
-    if (currCell instanceof FileInfo) {
-      await currCell.updateBasePath(baseModuleDir);
-
-      // run recipe if no file or if it's out of date
-      if (currCell.stat === null) {
-        console.log(
-          `${formatPath(currCell.path)} - Doesn't exist - running recipe...`
-        );
-        await currCell.runRecipe();
-        currCell.stat = await getStat(currCell.path);
-        return currCell;
-      }
-      const deps = cellDependents.filter(
-        c => currCell.stat.mtime <= c.stat.mtime
-      );
-      if (deps.length > 0) {
-        console.log(`${formatPath(currCell.path)} - out of date:`);
-        console.log(deps.map(d => `\t${formatPath(d.path)}`).join(","));
-        await currCell.runRecipe();
-        currCell.stat = await getStat(currCell.path);
-        return currCell;
-      } else {
-        console.log(`${formatPath(currCell.path)} - not out of date `);
-        return currCell;
-      }
-    }
-    return currCell;
-  };
-};
-
 /*
 Given the parsed result of an Oakfile, create an define function 
 with the results.
@@ -158,7 +112,7 @@ export const oakDefine = async (
   oakfileModule: any,
   source: string,
   baseModuleDir: string,
-  decorate: boolean,
+  decorator: Decorator,
   injectingSource?: string
 ): Promise<DefineFunctionType> => {
   const depMap: Map<string, (runtime: any, observer: any) => void> = new Map();
@@ -175,7 +129,7 @@ export const oakDefine = async (
         cell.body.injections !== undefined
           ? injectingSource || oakfilePath
           : null,
-        decorate
+        decorator
       );
       depMap.set(path, fromModule);
     })
@@ -245,8 +199,8 @@ export const oakDefine = async (
         .define(
           cellName,
           cellReferences,
-          decorate
-            ? decorateCellDefintion(
+          decorator
+            ? decorator(
                 cellFunction,
                 injectingSource
                   ? join(baseModuleDir, ".oak", hash)
@@ -259,6 +213,10 @@ export const oakDefine = async (
   };
 };
 
+type Decorator = (
+  cellFunction: (...any) => any,
+  baseModuleDir: string
+) => (...any) => any;
 /*
 
 Given a Oakfile path, get the define function for that module. 
@@ -272,7 +230,7 @@ default deorator.
 export const oakDefineFile = async (
   path: string,
   injectingSource?: string,
-  decorate: boolean = true
+  decorator?: Decorator
 ): Promise<any> => {
   const parseResults = await parseOakfile(path).catch(err => {
     throw Error(`Error parsing Oakfile at ${path} ${err}`);
@@ -285,7 +243,7 @@ export const oakDefineFile = async (
     oakfileModule,
     oakfileContents,
     baseModuleDir,
-    decorate,
+    decorator,
     injectingSource
   );
 };
