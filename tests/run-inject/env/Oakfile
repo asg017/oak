@@ -4,5 +4,5 @@ import {c} with {STATE} from "./sub/Oakfile"
 
 d = task({
     path: "d",
-    make: d => shell`cat ${c} > ${d}`
+    run: d => shell`cat ${c} > ${d}`
 })

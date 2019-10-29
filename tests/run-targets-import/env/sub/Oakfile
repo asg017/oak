@@ -1,9 +1,9 @@
 a = task({
     path: 'a',
-    make: a => shell`echo -n "a" > ${a}`
+    run: a => shell`echo -n "a" > ${a}`
 })
 
 b = task({
     path: 'b',
-    make: b => shell`cat ${a} > ${b}`
+    run: b => shell`cat ${a} > ${b}`
 })

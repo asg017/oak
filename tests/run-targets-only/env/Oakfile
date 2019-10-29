@@ -10,60 +10,60 @@ h
 
 a = task({
     path: 'a',
-    make: a => shell`echo -n "a" > ${a}`
+    run: a => shell`echo -n "a" > ${a}`
 })
 
 b = task({
     path: 'b',
-    make: b => shell`echo -n "b" > ${b}`
+    run: b => shell`echo -n "b" > ${b}`
 })
 
 c = task({
     path: 'c',
-    make: c => shell`echo -n "c" > ${c}`
+    run: c => shell`echo -n "c" > ${c}`
 })
 
 x = task({
     path: 'x',
-    make: x => shell`echo -n "x" > ${x}`
+    run: x => shell`echo -n "x" > ${x}`
 })
 
 y = task({
     path: 'y',
-    make: y => shell`echo -n "y" > ${y}`
+    run: y => shell`echo -n "y" > ${y}`
 })
 
 m = task({
     path: 'm',
-    make: m => shell`echo -n "m" > ${m}`
+    run: m => shell`echo -n "m" > ${m}`
 })
 
 d = task({
     path: 'd',
-    make: d => shell`cat ${a} > ${d}`
+    run: d => shell`cat ${a} > ${d}`
 })
 
 e = task({
     path: 'e',
-    make: e => shell`cat ${b} ${c} > ${e}`
+    run: e => shell`cat ${b} ${c} > ${e}`
 })
 
 z = task({
     path: 'z',
-    make: z => shell`cat ${x} ${y} > ${z}`
+    run: z => shell`cat ${x} ${y} > ${z}`
 })
 
 f = task({
     path: 'f',
-    make: f => shell`cat ${d} > ${f}`
+    run: f => shell`cat ${d} > ${f}`
 })
 
 g = task({
     path: 'g',
-    make: g => shell`cat ${e} > ${g}`
+    run: g => shell`cat ${e} > ${g}`
 })
 
 h = task({
     path: 'h',
-    make: h => shell`cat ${f} ${g} > ${h}`
+    run: h => shell`cat ${f} ${g} > ${h}`
 })

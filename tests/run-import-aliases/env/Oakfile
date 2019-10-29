@@ -2,10 +2,10 @@ import {b as myB} from './sub/Oakfile';
 
 x = task({
     path: 'x',
-    make: x=> shell`echo -n "x" > ${x}`
+    run: x=> shell`echo -n "x" > ${x}`
 })
 
 y = task({
     path: 'y',
-    make: y=> shell`cat ${x} ${myB} > ${y}`
+    run: y=> shell`cat ${x} ${myB} > ${y}`
 })

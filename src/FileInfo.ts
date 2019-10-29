@@ -5,11 +5,11 @@ import { getStat } from "./utils";
 export default class FileInfo {
   path: string;
   stat: Stats | null;
-  make: (any) => any;
-  constructor(path: string, stat: Stats | null, make: (any) => any) {
+  run: (any) => any;
+  constructor(path: string, stat: Stats | null, run: (any) => any) {
     this.path = path;
     this.stat = stat;
-    this.make = make;
+    this.run = run;
   }
   absPath(basePath: string) {
     return join(basePath, this.path);
@@ -19,6 +19,6 @@ export default class FileInfo {
     this.stat = await getStat(this.path);
   }
   async runRecipe() {
-    await this.make(this.path);
+    await this.run(this.path);
   }
 }

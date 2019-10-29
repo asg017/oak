@@ -7,5 +7,5 @@ import {x} with {wrap} from "./sub/Oakfile";
 
 y = task({
     path: "y", 
-    make: y => shell`cat ${x} > ${y}`
+    run: y => shell`cat ${x} > ${y}`
 })

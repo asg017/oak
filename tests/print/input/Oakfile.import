@@ -2,10 +2,10 @@ import {e} from './Oakfile.simple'
 
 f = recipe({
     path: 'f',
-    make: f => shell`${e} ${f}`
+    run: f => shell`${e} ${f}`
 })
 
 g = recipe({
     path: 'g', 
-    make: g => shell`${f} ${g}`
+    run: g => shell`${f} ${g}`
 })

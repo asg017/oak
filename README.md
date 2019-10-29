@@ -27,18 +27,18 @@ While `oak` is written in TypeScript, you can use the tool to kickoff any proces
 ```javascript
 scraped_data = recipe({
   path: "scraped_data.csv",
-  make: scraped_data => shell`python scrape.py > ${scraped_data}`
+ scraped_data => shell`python scrape.py > ${scraped_data}`
 });
 
 analyzed_data = recipe({
   path: "analysis.csv",
-  make: analyzed_data =>
+ analyzed_data =>
     shell`Rscript analysis.R --input=${scraped_data} > ${analyzed_data}`
 });
 
 graphic = recipe({
   path: "graphic.jpg",
-  make: graphic =>
+ graphic =>
     shell`node generate-graphic.js --input=${analyzed_data} > ${graphic}`
 });
 ```

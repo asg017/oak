@@ -4,14 +4,14 @@ cat = async (path, files) => command("cat", files, path);
 
 a = task({
   path: "a",
-  make: a => echo(a, "a")
+  run: a => echo(a, "a")
 });
 
 b = task({
   path: "b",
-  make: a => echo(a, "b")
+  run: a => echo(a, "b")
 });
 c = task({
   path: "c",
-  make: c => cat(c, [a, b])
+  run: c => cat(c, [a, b])
 });
