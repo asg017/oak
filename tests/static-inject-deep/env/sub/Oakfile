@@ -1,4 +1,7 @@
-wrap = s => `B ${s}`
+wrap = s => {
+        console.log('Wow wrap b called');
+return `B ${s}`;
+}
 
 import {x} with {wrap} from "./subsub/Oakfile";
 

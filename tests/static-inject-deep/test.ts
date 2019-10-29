@@ -4,6 +4,32 @@ import { cleanUp, envFile, getTree } from "../utils";
 import { remove } from "fs-extra";
 import { getInjectHash } from "../../src/utils";
 
+/*
+
+subsub:
+
+wrap
+|
+x
+
+sub:
+
+wrap    ~wrap~
+   \\  / 
+     x
+   /
+ y 
+
+
+top:
+            
+wrap    ~wrap~
+   \\  / 
+     x
+   /
+ y
+ 
+*/
 const env = envFile(__dirname);
 
 async function getHashes(): Promise<{ deep: string; shallow: string }> {
@@ -12,7 +38,7 @@ async function getHashes(): Promise<{ deep: string; shallow: string }> {
   const bot = env("sub/subsub/Oakfile");
   return {
     deep: await getInjectHash(mid, bot),
-    shallow: await getInjectHash(top, mid)
+    shallow: await getInjectHash(top, bot)
   };
 }
 
@@ -25,7 +51,7 @@ getHashes()
       `sub/subsub/.oak/${deep}/x`,
 
       `y`,
-      `sub/.oak/${shallow}/x`
+      `sub/subsub/.oak/${shallow}/x`
     ];
 
     test.onFinish(async () => {
@@ -51,7 +77,6 @@ getHashes()
         targets: []
       });
       const t2 = await getTree(outs, env);
-      console.log(t2.keys());
       t.equal(t2.get("sub/y").content, "B x");
       t.equal(t2.get(`sub/subsub/.oak/${deep}/x`).content, "B x");
 
@@ -60,8 +85,9 @@ getHashes()
         targets: []
       });
       const t3 = await getTree(outs, env);
+
       t.equal(t3.get("y").content, "C x");
-      t.equal(t3.get(`sub/.oak/${shallow}/x`).content, "C x");
+      t.equal(t3.get(`sub/subsub/.oak/${shallow}/x`).content, "C x");
 
       t.end();
     });
