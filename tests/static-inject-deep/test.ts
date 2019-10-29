@@ -4,32 +4,6 @@ import { cleanUp, envFile, getTree } from "../utils";
 import { remove } from "fs-extra";
 import { getInjectHash } from "../../src/utils";
 
-/*
-
-subsub:
-
-wrap
-|
-x
-
-sub:
-
-wrap    ~wrap~
-   \\  / 
-     x
-   /
- y 
-
-
-top:
-            
-wrap    ~wrap~
-   \\  / 
-     x
-   /
- y
- 
-*/
 const env = envFile(__dirname);
 
 async function getHashes(): Promise<{ deep: string; shallow: string }> {
