@@ -1,5 +1,6 @@
 import FileInfo from "../FileInfo";
 import { formatPath, getStat } from "../utils";
+import { stat } from "fs";
 
 export default function(
   cellFunction: (...any) => any,
@@ -18,6 +19,14 @@ export default function(
     if (currCell instanceof FileInfo) {
       await currCell.updateBasePath(baseModuleDir);
 
+      const watchFiles = currCell.watch;
+      const watchStats = await Promise.all(
+        watchFiles.map(async watchFile => {
+          const stat = await getStat(watchFile);
+          return { path: watchFile, stat };
+        })
+      );
+
       // run recipe if no file or if it's out of date
       if (currCell.stat === null) {
         console.log(
@@ -27,12 +36,30 @@ export default function(
         currCell.stat = await getStat(currCell.path);
         return currCell;
       }
-      const deps = cellDependents.filter(
+      const outOfDateCellDependencies = cellDependents.filter(
         c => currCell.stat.mtime <= c.stat.mtime
       );
-      if (deps.length > 0) {
+      const outOfDateWatchFiles = watchStats.filter(
+        ({ stat }) => currCell.stat.mtime <= stat.mtime
+      );
+      if (
+        outOfDateCellDependencies.length > 0 ||
+        outOfDateWatchFiles.length > 0
+      ) {
         console.log(`${formatPath(currCell.path)} - out of date:`);
-        console.log(deps.map(d => `\t${formatPath(d.path)}`).join(","));
+        if (outOfDateCellDependencies.length > 0)
+          console.log(
+            "Cell Dependencies: ",
+            outOfDateCellDependencies
+              .map(d => `\t${formatPath(d.path)}`)
+              .join(",")
+          );
+        if (outOfDateWatchFiles.length > 0)
+          console.log(
+            "Watch Files: ",
+            outOfDateWatchFiles.map(d => `\t${formatPath(d.path)}`).join(",")
+          );
+
         await currCell.runRecipe();
         currCell.stat = await getStat(currCell.path);
         return currCell;

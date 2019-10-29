@@ -9,7 +9,7 @@ type CommandConfig = {
 export default function(
   file: string = "",
   args: any[] = [],
-  outPath: string,
+  outPath: string | FileInfo,
   config: CommandConfig = { stdout: true, stderr: true }
 ): Promise<ChildProcess> {
   const cleanedArgs = args.map(arg => {
@@ -18,6 +18,7 @@ export default function(
     }
     return arg;
   });
+  outPath = outPath instanceof FileInfo ? outPath.path : outPath;
   const outStream = createWriteStream(outPath);
 
   const process = execFile(file, cleanedArgs);
