@@ -4,9 +4,9 @@ import { oakDefineFile } from "./oak-compile";
 import { formatCellName, formatPath } from "./utils";
 import { isAbsolute, join, dirname } from "path";
 import { EventEmitter } from "events";
-import { default as staticCellDecorator } from "./decorators/static";
+import { default as runCellDecorator } from "./decorators/run";
 
-export async function oak_static(args: {
+export async function oak_run(args: {
   filename: string;
   targets: readonly string[];
 }): Promise<void> {
@@ -16,7 +16,7 @@ export async function oak_static(args: {
     : join(process.cwd(), args.filename);
 
   const runtime = new Runtime(new Library());
-  const define = await oakDefineFile(oakfilePath, null, staticCellDecorator);
+  const define = await oakDefineFile(oakfilePath, null, runCellDecorator);
 
   const origDir = process.cwd();
   process.chdir(dirname(oakfilePath));

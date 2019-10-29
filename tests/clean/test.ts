@@ -1,5 +1,5 @@
 import * as test from "tape";
-import { oak_static } from "../../src/oak-static";
+import { oak_run } from "../../src/oak-run";
 import oak_clean from "../../src/oak-clean";
 import { cleanUp, envFile, open, getTree } from "../utils";
 
@@ -15,7 +15,7 @@ cleanUp(env, outs);
 
 test("oak-clean", async t => {
   // create all files
-  await oak_static({ filename: env("Oakfile"), targets: [] });
+  await oak_run({ filename: env("Oakfile"), targets: [] });
   const t1 = await getTree(outs, env);
   t.equal(t1.get("a").content, "a");
   t.equal(t1.get("b").content, "b");
@@ -28,7 +28,7 @@ test("oak-clean", async t => {
   t.equal(t2.get("c").stat, null);
 
   // next: only clean  a, not b and c
-  await oak_static({ filename: env("Oakfile"), targets: [] });
+  await oak_run({ filename: env("Oakfile"), targets: [] });
   const t3 = await getTree(outs, env);
   t.equal(t3.get("a").content, "a");
   t.equal(t3.get("b").content, "b");

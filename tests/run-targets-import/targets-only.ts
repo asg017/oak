@@ -1,5 +1,5 @@
 import * as test from "tape";
-import { oak_static } from "../../src/oak-static";
+import { oak_run } from "../../src/oak-run";
 import { cleanUp, envFile, open, touch } from "../utils";
 import { Set } from "immutable";
 
@@ -23,7 +23,7 @@ b ----- b   x
 
 */
 test("static-targets-only", async t => {
-  await oak_static({ filename: env("Oakfile"), targets: ["x"] });
+  await oak_run({ filename: env("Oakfile"), targets: ["x"] });
   let a = await open(env("sub/a"));
   let b = await open(env("sub/b"));
   let x = await open(env("x"));
@@ -34,7 +34,7 @@ test("static-targets-only", async t => {
   t.equal(x.content, "x");
   t.equal(y.content, null);
 
-  await oak_static({ filename: env("Oakfile"), targets: [] });
+  await oak_run({ filename: env("Oakfile"), targets: [] });
   a = await open(env("sub/a"));
   b = await open(env("sub/b"));
   x = await open(env("x"));

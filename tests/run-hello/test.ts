@@ -1,5 +1,5 @@
 import * as test from "tape";
-import { oak_static } from "../../src/oak-static";
+import { oak_run } from "../../src/oak-run";
 import { cleanUp, envFile, open, touch } from "../utils";
 
 const env = envFile(__dirname);
@@ -12,8 +12,8 @@ test.onFinish(() => {
 
 cleanUp(env, outs);
 
-test("oak-static hello", async t => {
-  await oak_static({ filename: env("Oakfile"), targets: [] });
+test("oak-run hello", async t => {
+  await oak_run({ filename: env("Oakfile"), targets: [] });
   const a_file = await open(env("a"));
   const b_file = await open(env("b"));
   const c_file = await open(env("c"));
@@ -25,7 +25,7 @@ test("oak-static hello", async t => {
 
   await touch(env("b"), b_file.stat.atime, c_file.stat.mtime);
 
-  await oak_static({ filename: env("Oakfile"), targets: [] });
+  await oak_run({ filename: env("Oakfile"), targets: [] });
   const new_a_file = await open(env("a"));
   const new_b_file = await open(env("b"));
   const new_c_file = await open(env("c"));

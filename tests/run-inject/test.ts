@@ -1,5 +1,5 @@
 import * as test from "tape";
-import { oak_static } from "../../src/oak-static";
+import { oak_run } from "../../src/oak-run";
 import { cleanUp, envFile, getTree } from "../utils";
 import { remove } from "fs-extra";
 import { getInjectHash } from "../../src/utils";
@@ -32,10 +32,10 @@ getHash()
     cleanUp(env, outs);
     remove(env("sub/.oak"));
 
-    test("static-inject", async t => {
+    test("run-inject", async t => {
       const hash = await getHash();
 
-      await oak_static({
+      await oak_run({
         filename: env("sub/Oakfile"),
         targets: []
       });
@@ -44,7 +44,7 @@ getHash()
       t.equal(t1.get("sub/b").content, "NY b");
       t.equal(t1.get("sub/c").content, "NY aNY b");
 
-      await oak_static({
+      await oak_run({
         filename: env("Oakfile"),
         targets: []
       });

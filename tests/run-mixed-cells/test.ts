@@ -1,5 +1,5 @@
 import * as test from "tape";
-import { oak_static } from "../../src/oak-static";
+import { oak_run } from "../../src/oak-run";
 import { cleanUp, envFile, open, getTree } from "../utils";
 
 const env = envFile(__dirname);
@@ -12,8 +12,8 @@ test.onFinish(() => {
 
 cleanUp(env, outs);
 
-test("oak-static hello", async t => {
-  await oak_static({ filename: env("Oakfile"), targets: [] });
+test("oak-run hello", async t => {
+  await oak_run({ filename: env("Oakfile"), targets: [] });
   const t1 = await getTree(outs, env);
 
   t.equals(t1.get("a.txt").content, "a");

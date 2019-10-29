@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { oak_static } from "./oak-static";
+import { oak_run } from "./oak-run";
 import { oak_print } from "./oak-print";
 import { oak_init } from "./oak-init";
 import oak_dash from "./oak-dash";
@@ -139,19 +139,19 @@ class PrintAction extends CommandLineAction {
   }
 }
 
-class StaticAction extends CommandLineAction {
+class RunAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
   private _targets: CommandLineStringListParameter;
 
   public constructor() {
     super({
-      actionName: "static",
-      summary: "Statically run an Oakfile.",
+      actionName: "run",
+      summary: "Run an Oakfile.",
       documentation: "TODO",
     });
   }
   protected async onExecute(): Promise<void> {
-    await oak_static({
+    await oak_run({
       filename: this._filename.value,
       targets: this._targets.values,
     });
@@ -199,7 +199,7 @@ class OakCommandLine extends CommandLineParser {
     this.addAction(new CleanAction());
     this.addAction(new DashAction());
     this.addAction(new PrintAction());
-    this.addAction(new StaticAction());
+    this.addAction(new RunAction());
     this.addAction(new InitAction());
     this.addAction(new OakVersionAction());
   }

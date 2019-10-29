@@ -1,5 +1,5 @@
 import * as test from "tape";
-import { oak_static } from "../../src/oak-static";
+import { oak_run } from "../../src/oak-run";
 import { cleanUp, envFile, open } from "../utils";
 
 const outs = ["sub/a", "sub/b", "x", "y"];
@@ -20,8 +20,8 @@ b  --- myB  x
        y
 
 */
-test("static-import-aliases", async t => {
-  await oak_static({
+test("run-import-aliases", async t => {
+  await oak_run({
     filename: env("Oakfile"),
     targets: ["x"]
   });
@@ -30,7 +30,7 @@ test("static-import-aliases", async t => {
   t.equal(x.content, "x");
   t.equal(y.stat, null);
 
-  await oak_static({
+  await oak_run({
     filename: env("Oakfile"),
     targets: ["y"]
   });

@@ -1,5 +1,5 @@
 import * as test from "tape";
-import { oak_static } from "../../src/oak-static";
+import { oak_run } from "../../src/oak-run";
 import { cleanUp, envFile, open } from "../utils";
 
 const outs = ["sub/subsub/a", "sub/b", "sub/c", "d", "f"];
@@ -11,8 +11,8 @@ test.onFinish(() => {
 
 cleanUp(env, outs);
 
-test("oak-static simple-import", async t => {
-  await oak_static({
+test("oak-run simple-import", async t => {
+  await oak_run({
     filename: env("Oakfile"),
     targets: []
   });
