@@ -7,7 +7,7 @@ const env = envFile(__dirname);
 const outs = ["a", "b", "c"];
 
 test.onFinish(() => {
-  //cleanUp(env, outs);
+  cleanUp(env, outs);
 });
 
 cleanUp(env, outs);
