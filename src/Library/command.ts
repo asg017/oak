@@ -1,30 +1,6 @@
 import { execFile, ChildProcess } from "child_process";
 import FileInfo from "../FileInfo";
-import { EventEmitter } from "events";
-import { Writable } from "stream";
 import { createWriteStream } from "fs";
-
-const executeCommand = (file: string, args: string[]) => {
-  const e = new EventEmitter();
-  console.log(`execFile(${file}, ${JSON.stringify(args)})`);
-  const process = execFile(file, args);
-
-  // console.log(`[executeCommand] running command ${command}`);
-  process.stdout.on("data", chunk => {
-    e.emit("stdout", chunk);
-  });
-  process.stderr.on("data", chunk => {
-    e.emit("stderr", chunk);
-  });
-
-  process.on("close", async code => {
-    e.emit("close", process, code);
-  });
-  process.on("error", () => {
-    e.emit("error");
-  });
-  return e;
-};
 
 type CommandConfig = {
   stdout: boolean;
