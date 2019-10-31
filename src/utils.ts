@@ -21,7 +21,6 @@ export const getStat = (filename: string): Promise<Stats | null> =>
       res(stat);
     });
   });
-``;
 
 export type ParseOakfileResults = {
   module: any;
