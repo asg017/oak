@@ -1,6 +1,6 @@
 // Modified https://github.com/asg017/unofficial-observablehq-compiler/blob/master/src/compiler.js
 
-import { parseOakfile, getInjectHash } from "./utils";
+import { parseOakfile, getBaseFileHashes } from "./utils";
 import { dirname, join, resolve } from "path";
 import { formatCellName } from "./utils";
 import { existsSync, mkdirSync } from "fs";
@@ -95,6 +95,10 @@ export const createRegularCellDefintion = (
   };
 };
 
+type InjectingSource = {
+  sourcePath: string;
+  cells: string[];
+};
 /*
 Given the parsed result of an Oakfile, create an define function 
 with the results.
@@ -113,7 +117,7 @@ export const oakDefine = async (
   source: string,
   baseModuleDir: string,
   decorator: Decorator,
-  injectingSource?: string
+  injectingSource?: InjectingSource
 ): Promise<DefineFunctionType> => {
   const depMap: Map<string, (runtime: any, observer: any) => void> = new Map();
 
@@ -124,20 +128,25 @@ export const oakDefine = async (
   await Promise.all(
     importCells.map(async cell => {
       const path = join(baseModuleDir, cell.body.source.value);
-      const fromModule = await oakDefineFile(
-        path,
-        cell.body.injections !== undefined
-          ? injectingSource || oakfilePath
-          : null,
-        decorator
+      const localSpecifiers = cell.body.specifiers.map(
+        specifier => specifier.local.name
       );
-      depMap.set(path, fromModule);
+      const is: InjectingSource | null =
+        cell.body.injections !== undefined
+          ? {
+              sourcePath:
+                (injectingSource && injectingSource.sourcePath) || oakfilePath,
+              cells: localSpecifiers,
+            }
+          : null;
+      const fromModule = await oakDefineFile(path, is, decorator);
+      depMap.set([path, ...localSpecifiers].join(","), fromModule);
     })
   );
-  let hash;
+  let hash: (cellNames: string[]) => string | null;
   if (injectingSource) {
-    hash = await getInjectHash(injectingSource, oakfilePath);
-    const oakDir = join(baseModuleDir, ".oak", hash);
+    hash = getBaseFileHashes(injectingSource.sourcePath, oakfilePath);
+    const oakDir = join(baseModuleDir, ".oak", hash(injectingSource.cells));
     if (!existsSync(oakDir)) {
       mkdirSync(oakDir, { recursive: true });
     }
@@ -168,7 +177,12 @@ export const oakDefine = async (
           });
         }
       const path = join(baseModuleDir, cell.body.source.value);
-      const other = runtime.module(depMap.get(path));
+      const localSpecifiers = cell.body.specifiers.map(
+        specifier => specifier.local.name
+      );
+      const other = runtime.module(
+        depMap.get([path, ...localSpecifiers].join(","))
+      );
 
       if (injections.length > 0) {
         const child = other.derive(injections, main);
@@ -203,7 +217,7 @@ export const oakDefine = async (
             ? decorator(
                 cellFunction,
                 injectingSource
-                  ? join(baseModuleDir, ".oak", hash)
+                  ? join(baseModuleDir, ".oak", hash(injectingSource.cells))
                   : baseModuleDir
               )
             : cellFunction
@@ -229,7 +243,7 @@ default deorator.
 */
 export const oakDefineFile = async (
   path: string,
-  injectingSource?: string,
+  injectingSource?: InjectingSource,
   decorator?: Decorator
 ): Promise<any> => {
   const parseResults = await parseOakfile(path).catch(err => {

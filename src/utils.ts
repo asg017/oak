@@ -74,13 +74,15 @@ export const parseModules = async (
   return [oakfile.module, ...merge(importedModules)];
 };
 
-export const getInjectHash = async (
+export const getBaseFileHashes = (
   injectingSourcePath: string,
   oakfilePath: string
-): Promise<string> => {
+): ((cellNames: string[]) => string) => {
   const contents = [
-    readFileSync(injectingSourcePath),
-    readFileSync(oakfilePath),
+    readFileSync(injectingSourcePath, "utf8"),
+    readFileSync(oakfilePath, "utf8"),
   ];
-  return hasha(contents, { algorithm: "sha1" });
+  return (cellNames: string[]) => {
+    return hasha([...contents, ...cellNames], { algorithm: "sha1" });
+  };
 };

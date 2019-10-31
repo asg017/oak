@@ -1,22 +1,21 @@
 import * as test from "tape";
 import { oak_run } from "../../src/oak-run";
 import { cleanUp, envFile, getTree } from "../utils";
-import { remove } from "fs-extra";
 import { getBaseFileHashes } from "../../src/utils";
+import { remove } from "fs-extra";
 
 const env = envFile(__dirname);
 
 const source = env("Oakfile");
 const target = env("sub/Oakfile");
-const hash = getBaseFileHashes(source, target)(["c"]);
+const hash = getBaseFileHashes(source, target);
+
 const outs = [
-  "sub/a",
-  "sub/b",
-  "sub/c",
-  `sub/.oak/${hash}/a`,
-  `sub/.oak/${hash}/b`,
-  `sub/.oak/${hash}/c`,
-  "d"
+  "sub/x",
+  `sub/.oak/${hash(["x1"])}/x`,
+  `sub/.oak/${hash(["x2"])}/x`,
+  "y1",
+  "y2"
 ];
 
 test.onFinish(async () => {
@@ -33,9 +32,7 @@ test("run-inject", async t => {
     targets: []
   });
   const t1 = await getTree(outs, env);
-  t.equal(t1.get("sub/a").content, "NY a");
-  t.equal(t1.get("sub/b").content, "NY b");
-  t.equal(t1.get("sub/c").content, "NY aNY b");
+  t.equal(t1.get("sub/x").content, "A x");
 
   await oak_run({
     filename: env("Oakfile"),
@@ -43,13 +40,10 @@ test("run-inject", async t => {
   });
   const t2 = await getTree(outs, env);
 
-  t.equal(t2.get("sub/a").content, "NY a");
-  t.equal(t2.get("sub/b").content, "NY b");
-  t.equal(t2.get("sub/c").content, "NY aNY b");
+  t.equal(t2.get("y1").content, "B1 x");
+  t.equal(t2.get("y2").content, "B2 x");
 
-  t.equal(t2.get(`sub/.oak/${hash}/a`).content, "CA a");
-  t.equal(t2.get(`sub/.oak/${hash}/b`).content, "CA b");
-  t.equal(t2.get(`sub/.oak/${hash}/c`).content, "CA aCA b");
-  t.equal(t2.get("d").content, "CA aCA b");
+  t.equal(t2.get(`sub/.oak/${hash(["x1"])}/x`).content, "B1 x");
+  t.equal(t2.get(`sub/.oak/${hash(["x2"])}/x`).content, "B2 x");
   t.end();
 });
