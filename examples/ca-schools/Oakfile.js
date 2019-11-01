@@ -32,20 +32,28 @@ charter_schools_in_county = task({
     shell`csvgrep -c county -m ${COUNTY} ${charter_schools} > ${charter_schools_in_county}`
 });
 
+to_geo = (input, output) =>
+  command("pipenv", [
+    "run",
+    "python",
+    "to_geo.py",
+    `--input=${input}`,
+    `--output=${output}`
+  ]);
+
 charter_schools_geo = task({
   path: "charter_schools.geojson",
-  run: charter_schools_geo =>
-    shell`pipenv run python to_geo.py --input=${charter_schools} --output=${charter_schools_geo}`
+  run: charter_schools_geo => to_geo(charter_schools, charter_schools_geo)
 });
 
 public_schools_in_county_geo = task({
   path: `public_schools_in_${COUNTY_SNAKE}_county.geojson`,
   run: public_schools_in_county_geo =>
-    shell`pipenv run python to_geo.py --input=${public_schools_in_county} --output=${public_schools_in_county_geo}`
+    to_geo(public_schools_in_county, public_schools_in_county_geo)
 });
 
 charter_schools_in_county_geo = task({
   path: `charter_schools_in_${COUNTY_SNAKE}_county.geojson`,
   run: charter_schools_in_county_geo =>
-    shell`pipenv run python to_geo.py --input=${charter_schools_in_county} --output=${charter_schools_in_county_geo}`
+    to_geo(charter_schools_in_county, charter_schools_in_county_geo)
 });
