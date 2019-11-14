@@ -29,9 +29,9 @@ export default function(
 
       // run recipe if no file or if it's out of date
       if (currCell.stat === null) {
-        console.log(
+        /*console.log(
           `${formatPath(currCell.path)} - Doesn't exist - running recipe...`
-        );
+        );*/
         await currCell.runRecipe();
         currCell.stat = await getStat(currCell.path);
         return currCell;
@@ -46,7 +46,7 @@ export default function(
         outOfDateCellDependencies.length > 0 ||
         outOfDateWatchFiles.length > 0
       ) {
-        console.log(`${formatPath(currCell.path)} - out of date:`);
+        /*console.log(`${formatPath(currCell.path)} - out of date:`);
         if (outOfDateCellDependencies.length > 0)
           console.log(
             "Cell Dependencies: ",
@@ -58,13 +58,13 @@ export default function(
           console.log(
             "Watch Files: ",
             outOfDateWatchFiles.map(d => `\t${formatPath(d.path)}`).join(",")
-          );
+          );*/
 
         await currCell.runRecipe();
         currCell.stat = await getStat(currCell.path);
         return currCell;
       } else {
-        console.log(`${formatPath(currCell.path)} - not out of date `);
+        //console.log(`${formatPath(currCell.path)} - not out of date `);
         return currCell;
       }
     }

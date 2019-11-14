@@ -27,14 +27,14 @@ function transform(strings: string[], ...values: any[]): Promise<string> {
       typeof values[i] === "string"
         ? `${values[i]}${strings[i + 1]}`
         : `"${values[i].path.replace(`"`, `"`)}"${strings[i + 1]}`;
-  console.log(s);
+  //console.log(s);
   return new Promise((resolve, reject) =>
     executeCommand(s)
       .on("stdout", chunk => {
-        process.stdout.write(chunk);
+        //process.stdout.write(chunk);
       })
       .on("stderr", chunk => {
-        process.stderr.write(chunk);
+        //process.stderr.write(chunk);
       })
       .on("close", async code => {
         resolve(s);

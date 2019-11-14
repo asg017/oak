@@ -1,11 +1,26 @@
 import { Runtime } from "@observablehq/runtime";
 import { Library } from "./Library";
 import { oakDefineFile } from "./oak-compile";
-import { formatCellName, formatPath } from "./utils";
+import { formatCellName, formatPath, parseOakfile } from "./utils";
 import { isAbsolute, join, dirname } from "path";
 import { EventEmitter } from "events";
 import { default as runCellDecorator } from "./decorators/run";
+import logUpdate from "log-update";
+import { Observable } from "rxjs";
 
+function getPossibleCells(cells: any) {
+  let possibleCells = [];
+  cells.map(cell => {
+    if (cell.id && cell.id.name) {
+      possibleCells.push(cell.id.name);
+    } else if (cell.body.type === "ImportDeclaration") {
+      possibleCells = possibleCells.concat(
+        cell.body.specifiers.map(spec => spec.local.name)
+      );
+    }
+  });
+  return possibleCells;
+}
 export async function oak_run(args: {
   filename: string;
   targets: readonly string[];
@@ -17,6 +32,28 @@ export async function oak_run(args: {
 
   const runtime = new Runtime(new Library());
   const define = await oakDefineFile(oakfilePath, null, runCellDecorator);
+  const parseResults = await parseOakfile(oakfilePath).catch(err => {
+    throw Error(`Error parsing Oakfile at ${oakfilePath} ${err}`);
+  });
+  const possibleCells = getPossibleCells(parseResults.module.cells);
+  const listrTasks = [];
+  const ee = new EventEmitter();
+
+  Array.from(possibleCells).map(possibleCell => {
+    listrTasks.push({
+      title: possibleCell,
+      task: () =>
+        new Observable(observer => {
+          observer.next(possibleCell + " pending");
+          ee.on(possibleCell, (status, value) => {
+            console.log(`ee on ${possibleCell} ${status}`);
+            if (status === "pending") observer.next(status);
+            else if (status === "fulfilled") observer.complete();
+            else if (status === "rejected") observer.error(value);
+          });
+        }),
+    });
+  });
 
   const origDir = process.cwd();
   process.chdir(dirname(oakfilePath));
@@ -30,28 +67,38 @@ export async function oak_run(args: {
         : ""
     }`
   );
-  const ee = new EventEmitter();
-  ee.on("pending", name => console.log("pending", name));
-  ee.on("fulfilled", name => console.log("fulfilled", name));
-  ee.on("rejected", name => console.log("rejected", name));
-
+  const cellStatus: Map<string, string | null> = new Map();
+  function updateStatus() {
+    const status = Array.from(cellStatus)
+      .map(([key, value]) => `${key} - ${value}`)
+      .join("\n");
+    logUpdate(status);
+  }
   const cells: Set<string> = new Set();
   const m1 = runtime.module(define, name => {
     if (targetSet.size === 0 || targetSet.has(name)) {
       cells.add(name);
+      cellStatus.set(name, null);
       return {
         pending() {
-          ee.emit("pending", name);
+          ee.emit(name, "pending");
+          cellStatus.set(name, "pending");
+          updateStatus();
         },
         fulfilled(value) {
-          ee.emit("fulfilled", name, value);
+          cellStatus.set(name, "fulfilled");
+          ee.emit(name, "fulfilled", value);
+          updateStatus();
         },
         rejected(error) {
-          ee.emit("rejected", name, error);
+          cellStatus.set(name, "rejected");
+          ee.emit(name, "rejected", error);
+          updateStatus();
         },
       };
     }
   });
+
   await runtime._compute();
   await Promise.all(Array.from(cells).map(cell => m1.value(cell)));
   runtime.dispose();

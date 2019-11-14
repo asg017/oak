@@ -1,0 +1,26 @@
+a = task({
+  path: "a",
+  run: a => {
+    return new Promise((res, rej) => {
+      setTimeout(async () => {
+        res(await shell`echo -n "a" > ${a}`);
+      }, 1000);
+    });
+  }
+});
+
+b = task({
+  path: "b",
+  run: b => {
+    return new Promise((res, rej) => {
+      setTimeout(async () => {
+        res(await shell`echo -n "b" > ${b}`);
+      }, 2000);
+    });
+  }
+});
+
+c = task({
+  path: "c",
+  run: c => shell`cat ${a} ${b} > ${c}`
+});
