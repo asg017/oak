@@ -2,7 +2,7 @@ import { Stats } from "fs";
 import { join } from "path";
 import { getStat } from "./utils";
 
-export default class FileInfo {
+export default class Task {
   path: string;
   stat: Stats | null;
   run: (any) => any;
@@ -25,7 +25,7 @@ export default class FileInfo {
     this.path = this.absPath(newBasePath);
     this.stat = await getStat(this.path);
   }
-  async runRecipe() {
+  async runTask() {
     await this.run(this.path);
   }
 }

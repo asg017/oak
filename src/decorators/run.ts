@@ -1,4 +1,4 @@
-import FileInfo from "../FileInfo";
+import Task from "../Task";
 import { formatPath, getStat } from "../utils";
 import * as log from "npmlog";
 
@@ -7,16 +7,16 @@ export default function(
   baseModuleDir: string
 ): (...any) => any {
   return async function(...dependencies) {
-    // dont try and get fileinfo for cell depends like `cell` or `shell`
+    // dont try and get Task for cell depends like `cell` or `shell`
     let cellDependents = [];
     dependencies.map(dependency => {
-      if (dependency instanceof FileInfo) {
+      if (dependency instanceof Task) {
         cellDependents.push(dependency);
       }
     });
     let currCell = await cellFunction(...dependencies);
 
-    if (currCell instanceof FileInfo) {
+    if (currCell instanceof Task) {
       await currCell.updateBasePath(baseModuleDir);
 
       const watchFiles = currCell.watch;
@@ -33,7 +33,7 @@ export default function(
           "oak-run decorator",
           `${formatPath(currCell.path)} - Doesn't exist - running recipe...`
         );
-        await currCell.runRecipe();
+        await currCell.runTask();
         currCell.stat = await getStat(currCell.path);
         return currCell;
       }
@@ -66,7 +66,7 @@ export default function(
               .join(",")}`
           );
 
-        await currCell.runRecipe();
+        await currCell.runTask();
         currCell.stat = await getStat(currCell.path);
         return currCell;
       } else {

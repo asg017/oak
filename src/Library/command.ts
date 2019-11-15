@@ -1,5 +1,5 @@
 import { execFile, ChildProcess } from "child_process";
-import FileInfo from "../FileInfo";
+import Task from "../Task";
 import { createWriteStream } from "fs";
 import * as log from "npmlog";
 
@@ -10,16 +10,16 @@ type CommandConfig = {
 export default function(
   file: string = "",
   args: any[] = [],
-  outPath: string | FileInfo,
+  outPath: string | Task,
   config: CommandConfig = { stdout: true, stderr: true }
 ): Promise<ChildProcess> {
   const cleanedArgs = args.map(arg => {
-    if (arg instanceof FileInfo) {
+    if (arg instanceof Task) {
       return arg.path;
     }
     return arg;
   });
-  outPath = outPath instanceof FileInfo ? outPath.path : outPath;
+  outPath = outPath instanceof Task ? outPath.path : outPath;
   const outStream = createWriteStream(outPath);
 
   const process = execFile(file, cleanedArgs);
