@@ -1,1 +1,1 @@
-a = task({ path: "a", run: a => shell`echo -n "a" > ${a}` });
+a = task({ target: "a", run: a => shell`echo -n "a" > ${a}` });

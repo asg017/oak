@@ -15,11 +15,11 @@ export default function(
 ): Promise<ChildProcess> {
   const cleanedArgs = args.map(arg => {
     if (arg instanceof Task) {
-      return arg.path;
+      return arg.target;
     }
     return arg;
   });
-  outPath = outPath instanceof Task ? outPath.path : outPath;
+  outPath = outPath instanceof Task ? outPath.target : outPath;
   const outStream = createWriteStream(outPath);
 
   const process = execFile(file, cleanedArgs);

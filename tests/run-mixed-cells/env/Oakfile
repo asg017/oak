@@ -1,11 +1,11 @@
 getName = name => `${name}.txt`
 
 a = task({
-    path: getName("a"),
+    target: getName("a"),
     run: a => shell`echo -n "a" > ${a}`
 })
 
 b = task({
-    path: getName("b"),
+    target: getName("b"),
     run: b => shell`cat ${a} > ${b}`
 })

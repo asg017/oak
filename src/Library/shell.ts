@@ -27,7 +27,7 @@ function transform(strings: string[], ...values: any[]): Promise<string> {
     s +=
       typeof values[i] === "string"
         ? `${values[i]}${strings[i + 1]}`
-        : `"${values[i].path.replace(`"`, `"`)}"${strings[i + 1]}`;
+        : `"${values[i].target.replace(`"`, `"`)}"${strings[i + 1]}`;
   return new Promise((resolve, reject) =>
     executeCommand(s)
       .on("stdout", chunk => {

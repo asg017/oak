@@ -33,11 +33,13 @@ const getYN = (): Promise<boolean> => {
   });
 };
 
-function removeFiles(map: Map<string, { path: string; exists: boolean }>) {
+type ExistMap = Map<string, { target: string; exists: boolean }>;
+
+function removeFiles(map: ExistMap) {
   Array.from(map).map(a => {
     if (a[1].exists) {
-      console.log(`Removing ${a[0]} at ${a[1].path}...`);
-      unlinkSync(a[1].path);
+      console.log(`Removing ${a[0]} at ${a[1].target}...`);
+      unlinkSync(a[1].target);
     }
   });
   return;
@@ -57,9 +59,10 @@ export default async function oak_clean(args: {
   const runtime = new Runtime(
     Object.assign(new Library(), {
       task: () => async params => {
-        const path = join(dirname(oakfilePath), params.path);
-        const exists = Boolean(await getStat(path));
-        return { path, exists, __type: overriddenTaskSymbol };
+        const target = join(dirname(oakfilePath), params.target);
+        console.log(target);
+        const exists = Boolean(await getStat(target));
+        return { target, exists, __type: overriddenTaskSymbol };
       },
     })
   );
@@ -85,7 +88,7 @@ export default async function oak_clean(args: {
     }
   });
   await runtime._compute();
-  const map: Map<string, { path: string; exists: boolean }> = new Map();
+  const map: ExistMap = new Map();
   await Promise.all(
     Array.from(cells).map(async cell => {
       // only try and clean cells that are defined with the "task" override above
@@ -116,8 +119,8 @@ export default async function oak_clean(args: {
   Array.from(map).map(a =>
     console.log(
       a[1].exists
-        ? `[${a[0]}] ${a[1].path}`
-        : `${chalk.strikethrough(`[${a[0]}] ${a[1].path}`)} ${chalk.bold(
+        ? `[${a[0]}] ${a[1].target}`
+        : `${chalk.strikethrough(`[${a[0]}] ${a[1].target}`)} ${chalk.bold(
             "path not in filesystem"
           )}`
     )

@@ -9,7 +9,7 @@ const env = envFile(__dirname);
 test("Library.ts", async t => {
   t.test("cell", async st => {
     const c1 = await task({
-      path: env("test.txt"),
+      target: env("test.txt"),
       run: c => 4
     });
     st.skip(); // .equals(c1.stat.mtime.getTime(), new Date(2).getTime());

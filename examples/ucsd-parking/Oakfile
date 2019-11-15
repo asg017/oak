@@ -1,20 +1,20 @@
 parking_html = recipe({
-    path: 'quarterly_tables.html',
+    target: 'quarterly_tables.html',
     run: parking_html => shell`wget -O ${parking_html} http://rmp-wapps.ucsd.edu/TS/Survey/Parking%20Space%20Inventory/Quarterly%20Tables/Contents.html`
 })
 
 wb_dir = recipe({
-    path: 'quarterly_workbooks', 
+    target: 'quarterly_workbooks', 
     run: wb_dir => shell`mkdir -p ${wb_dir}`
 })
 
 wbs_list = recipe({
-    path: 'workbooks_list.txt', 
+    target: 'workbooks_list.txt', 
     run: wbs_list => shell`pipenv run python extract_list.py --input-html=${parking_html} --output-dir=${wb_dir} --output-list=${wbs_list}`
 })
 
 raw_lots_csv = recipe({
-    path: 'raw_lots.csv',
+    target: 'raw_lots.csv',
     run: raw_lots_csv => shell`pipenv run python aggregate_lots.py --workbooks=${wbs_list} --output-csv=${raw_lots_csv}`
 })
 

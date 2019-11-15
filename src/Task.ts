@@ -3,7 +3,7 @@ import { join } from "path";
 import { getStat } from "./utils";
 
 export default class Task {
-  path: string;
+  target: string;
   stat: Stats | null;
   run: (any) => any;
   watch: string[];
@@ -13,19 +13,19 @@ export default class Task {
     run: (any) => any,
     watch: string[]
   ) {
-    this.path = path;
+    this.target = path;
     this.stat = stat;
     this.run = run;
     this.watch = watch;
   }
   absPath(basePath: string) {
-    return join(basePath, this.path);
+    return join(basePath, this.target);
   }
   async updateBasePath(newBasePath: string) {
-    this.path = this.absPath(newBasePath);
-    this.stat = await getStat(this.path);
+    this.target = this.absPath(newBasePath);
+    this.stat = await getStat(this.target);
   }
   async runTask() {
-    await this.run(this.path);
+    await this.run(this.target);
   }
 }

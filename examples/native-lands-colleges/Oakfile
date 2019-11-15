@@ -1,27 +1,27 @@
 cscFile = "CollegeScorecard_Raw_Data/MERGED2015_16_PP.csv"
 
 nativelands = cell({
-  path: 'indigenousTerritories.geojson',
+  target: 'indigenousTerritories.geojson',
   recipe: nativelands => shell`wget -O ${nativelands} https://native-land.ca/coordinates/indigenousTerritories.json`
 })
 
 zipped_csc = cell({
-    path: 'CollegeScorecard_Raw_Data.zip',
+    target: 'CollegeScorecard_Raw_Data.zip',
     recipe: zipped_csc => shell`wget -O ${zipped_csc} https://ed-public-download.app.cloud.gov/downloads/CollegeScorecard_Raw_Data.zip`
 })
 
 csc15 = cell({
-    path: 'csc15.csv',
+    target: 'csc15.csv',
     recipe: csc15 => shell`unzip -j ${zipped_csc} ${cscFile} -d .
 mv ${cscFile} ${csc15}`
 })
 
 known_colleges = cell({
-  path: 'colleges.csv', 
+  target: 'colleges.csv', 
   recipe: known_colleges => shell`pipenv run python filter_colleges.py --input=${csc15} --output=${known_colleges}`
 })
 
 /*nativelands_colleges = cell({
-  path: 'nativelands_colleges.geojson',
+  target: 'nativelands_colleges.geojson',
   recipe: nativelands_colleges => shell`pipenv run python geocode_colleges.py --colleges=${known_colleges} --nativelands=${nativelands} --output=${nativelands_colleges}`
 })*/

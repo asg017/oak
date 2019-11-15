@@ -31,10 +31,10 @@ export default function(
       if (currCell.stat === null) {
         log.info(
           "oak-run decorator",
-          `${formatPath(currCell.path)} - Doesn't exist - running recipe...`
+          `${formatPath(currCell.target)} - Doesn't exist - running recipe...`
         );
         await currCell.runTask();
-        currCell.stat = await getStat(currCell.path);
+        currCell.stat = await getStat(currCell.target);
         return currCell;
       }
       const outOfDateCellDependencies = cellDependents.filter(
@@ -49,7 +49,7 @@ export default function(
       ) {
         log.info(
           "oak-run decorator",
-          `${formatPath(currCell.path)} - out of date:`
+          `${formatPath(currCell.target)} - out of date:`
         );
         if (outOfDateCellDependencies.length > 0)
           log.info(
@@ -67,12 +67,12 @@ export default function(
           );
 
         await currCell.runTask();
-        currCell.stat = await getStat(currCell.path);
+        currCell.stat = await getStat(currCell.target);
         return currCell;
       } else {
         log.info(
           "oak-run decorator",
-          `${formatPath(currCell.path)} - not out of date `
+          `${formatPath(currCell.target)} - not out of date `
         );
         return currCell;
       }

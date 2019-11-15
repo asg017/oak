@@ -1,35 +1,35 @@
 a = task({
-    path: 'temp/a.txt',
+    target: 'temp/a.txt',
     run: a => shell`sleep 1 && echo "hello its a! " > ${a}`
 })
 
 
 b = task({
-    path: 'temp/b.txt',
+    target: 'temp/b.txt',
     run: b => shell`sleep 1.5 && echo "hello now its b! " > ${b}`
 })
 
 c = task({
-    path: 'temp/c.txt',
+    target: 'temp/c.txt',
     run: c => shell`sleep 1 && cat ${a} ${b} > ${c}`
 })
 
 d = task({
-    path: 'temp/d.txt',
+    target: 'temp/d.txt',
     run: d=> shell`sleep 1 && cat ${c} > ${d}`
 })
 
 e = task({
-    path: 'temp/e.txt',
+    target: 'temp/e.txt',
     run: e=> shell`sleep 1 && cat ${d} > ${e}`
 })
 
 f = task({
-    path: 'temp/f.txt',
+    target: 'temp/f.txt',
     run: f=> shell`sleep 1 && cat ${e} > ${f}`
 })
 
 g = task({
-    path: 'temp/g.txt',
+    target: 'temp/g.txt',
     run: g=> shell`sleep 1 && cat ${e} ${f} > ${g}`
 })

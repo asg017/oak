@@ -1,11 +1,11 @@
 import {e} from './Oakfile.simple'
 
 f = recipe({
-    path: 'f',
+    target: 'f',
     run: f => shell`${e} ${f}`
 })
 
 g = recipe({
-    path: 'g', 
+    target: 'g', 
     run: g => shell`${f} ${g}`
 })

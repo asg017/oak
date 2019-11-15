@@ -1,6 +1,6 @@
 wrap = s => `A ${s}`
 
 x = task({
-    path: "x", 
+    target: "x", 
     run: x => shell`echo -n "${wrap("x")}" > ${x}`
 })

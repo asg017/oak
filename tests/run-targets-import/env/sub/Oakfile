@@ -1,9 +1,9 @@
 a = task({
-    path: 'a',
+    target: 'a',
     run: a => shell`echo -n "a" > ${a}`
 })
 
 b = task({
-    path: 'b',
+    target: 'b',
     run: b => shell`cat ${a} > ${b}`
 })

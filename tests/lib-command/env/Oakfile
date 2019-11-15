@@ -3,15 +3,15 @@ echo = async (path, content) => command("echo", ["-n", content], path);
 cat = async (path, files) => command("cat", files, path);
 
 a = task({
-  path: "a",
+  target: "a",
   run: a => echo(a, "a")
 });
 
 b = task({
-  path: "b",
+  target: "b",
   run: a => echo(a, "b")
 });
 c = task({
-  path: "c",
+  target: "c",
   run: c => cat(c, [a, b])
 });

@@ -1,23 +1,23 @@
 a = recipe({
-    path: 'a',
+    target: 'a',
     run: a => shell`${a}`
 })
 
 b = recipe({
-    path: 'b',
+    target: 'b',
     run: b => shell`${b}`
 })
 
 c = recipe({
-    path: 'c',
+    target: 'c',
     run: c => shell`${c}`
 })
 
 d = recipe({
-    path: 'd',
+    target: 'd',
     run: d => shell`${c} ${d}`
 })
 e = recipe({
-    path: 'a',
+    target: 'a',
     run: a => shell`${a} ${d} ${e}`
 })

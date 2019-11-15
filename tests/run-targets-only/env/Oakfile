@@ -9,61 +9,61 @@ h
 */
 
 a = task({
-    path: 'a',
+    target: 'a',
     run: a => shell`echo -n "a" > ${a}`
 })
 
 b = task({
-    path: 'b',
+    target: 'b',
     run: b => shell`echo -n "b" > ${b}`
 })
 
 c = task({
-    path: 'c',
+    target: 'c',
     run: c => shell`echo -n "c" > ${c}`
 })
 
 x = task({
-    path: 'x',
+    target: 'x',
     run: x => shell`echo -n "x" > ${x}`
 })
 
 y = task({
-    path: 'y',
+    target: 'y',
     run: y => shell`echo -n "y" > ${y}`
 })
 
 m = task({
-    path: 'm',
+    target: 'm',
     run: m => shell`echo -n "m" > ${m}`
 })
 
 d = task({
-    path: 'd',
+    target: 'd',
     run: d => shell`cat ${a} > ${d}`
 })
 
 e = task({
-    path: 'e',
+    target: 'e',
     run: e => shell`cat ${b} ${c} > ${e}`
 })
 
 z = task({
-    path: 'z',
+    target: 'z',
     run: z => shell`cat ${x} ${y} > ${z}`
 })
 
 f = task({
-    path: 'f',
+    target: 'f',
     run: f => shell`cat ${d} > ${f}`
 })
 
 g = task({
-    path: 'g',
+    target: 'g',
     run: g => shell`cat ${e} > ${g}`
 })
 
 h = task({
-    path: 'h',
+    target: 'h',
     run: h => shell`cat ${f} ${g} > ${h}`
 })

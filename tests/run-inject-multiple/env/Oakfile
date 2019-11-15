@@ -6,11 +6,11 @@ import {x as x1} with {wrap1 as wrap} from './sub/Oakfile'
 import {x as x2} with {wrap2 as wrap} from './sub/Oakfile'
 
 y1 = task({
-    path: 'y1',
+    target: 'y1',
     run: y1 => command('cat', [x1], y1)
 })
 
 y2 = task({
-    path: 'y2',
+    target: 'y2',
     run: y2 => command('cat', [x2], y2)
 })

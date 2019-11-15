@@ -3,6 +3,6 @@ STATE = "CA"
 import {c} with {STATE} from "./sub/Oakfile"
 
 d = task({
-    path: "d",
+    target: "d",
     run: d => shell`cat ${c} > ${d}`
 })

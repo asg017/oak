@@ -4,14 +4,14 @@ import Task from "../Task";
 type WatchArg = string | string[];
 
 export default async function task(params: {
-  path: string;
+  target: string;
   run: (any) => any;
   watch?: WatchArg;
 }): Promise<Task> {
-  const { path, run } = params;
+  const { target, run } = params;
   let { watch = [] } = params;
   watch = Array.isArray(watch) ? watch : [watch];
 
-  const stat = await getStat(path);
-  return new Task(path, stat, run, watch);
+  const stat = await getStat(target);
+  return new Task(target, stat, run, watch);
 }

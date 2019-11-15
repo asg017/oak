@@ -6,6 +6,6 @@ wrap = s => {
 import {x} with {wrap} from "./sub/Oakfile";
 
 y = task({
-    path: "y", 
+    target: "y", 
     run: y => shell`cat ${x} > ${y}`
 })
