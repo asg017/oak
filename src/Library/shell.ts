@@ -1,10 +1,11 @@
 import { spawn } from "child_process";
 import { EventEmitter } from "events";
+import * as log from "npmlog";
 
 const executeCommand = (command: string) => {
   const e = new EventEmitter();
   const process = spawn(command, { shell: true });
-  // console.log(`[executeCommand] running command ${command}`);
+  log.info("oak-stdlib shell", command);
   process.stdout.on("data", chunk => {
     e.emit("stdout", chunk);
   });
@@ -27,21 +28,21 @@ function transform(strings: string[], ...values: any[]): Promise<string> {
       typeof values[i] === "string"
         ? `${values[i]}${strings[i + 1]}`
         : `"${values[i].path.replace(`"`, `"`)}"${strings[i + 1]}`;
-  console.log(s);
   return new Promise((resolve, reject) =>
     executeCommand(s)
       .on("stdout", chunk => {
-        process.stdout.write(chunk);
+        //process.stdout.write(chunk);
+        log.info("oak-stdlib shell chunk", chunk);
       })
       .on("stderr", chunk => {
-        process.stderr.write(chunk);
+        //process.stderr.write(chunk);
+        log.error("oak-stdlib shell chunk", chunk);
       })
       .on("close", async code => {
         resolve(s);
       })
       .on("error", () => {
         process = null;
-        console.error(`Process errored`);
         reject("error");
       })
   );

@@ -5,6 +5,7 @@ import { formatCellName, formatPath } from "./utils";
 import { isAbsolute, join, dirname } from "path";
 import { EventEmitter } from "events";
 import { default as runCellDecorator } from "./decorators/run";
+import * as log from "npmlog";
 
 export async function oak_run(args: {
   filename: string;
@@ -21,7 +22,8 @@ export async function oak_run(args: {
   const origDir = process.cwd();
   process.chdir(dirname(oakfilePath));
 
-  console.log(
+  log.info(
+    "oak-run",
     `Oak: ${formatPath(oakfilePath)}${
       targetSet.size > 0
         ? ` - targets: ${Array.from(targetSet)
@@ -31,9 +33,9 @@ export async function oak_run(args: {
     }`
   );
   const ee = new EventEmitter();
-  ee.on("pending", name => console.log("pending", name));
-  ee.on("fulfilled", name => console.log("fulfilled", name));
-  ee.on("rejected", name => console.log("rejected", name));
+  ee.on("pending", name => log.verbose("pending", name));
+  ee.on("fulfilled", name => log.verbose("fulfilled", name));
+  ee.on("rejected", name => log.verbose("rejected", name));
 
   const cells: Set<string> = new Set();
   const m1 = runtime.module(define, name => {

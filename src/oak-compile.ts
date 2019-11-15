@@ -203,11 +203,6 @@ export const oakDefine = async (
         cellFunction,
         cellReferences,
       } = createRegularCellDefintion(cell, source);
-      console.log(
-        `oakDefine cell=${formatCellName(cellName)} refs=${cellReferences.join(
-          ","
-        )}`
-      );
       main
         .variable(observer(cellName))
         .define(

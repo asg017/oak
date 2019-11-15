@@ -1,6 +1,7 @@
 import { execFile, ChildProcess } from "child_process";
 import FileInfo from "../FileInfo";
 import { createWriteStream } from "fs";
+import * as log from "npmlog";
 
 type CommandConfig = {
   stdout: boolean;
@@ -22,7 +23,10 @@ export default function(
   const outStream = createWriteStream(outPath);
 
   const process = execFile(file, cleanedArgs);
-  console.log(`execFile(${file}, ${JSON.stringify(cleanedArgs)})`);
+  log.info(
+    "oak-stdlib command",
+    `execFile(${file}, ${JSON.stringify(cleanedArgs)})`
+  );
   if (config.stdout) process.stdout.pipe(outStream);
   if (config.stderr) process.stderr.pipe(outStream);
   return new Promise((res, rej) => {

@@ -1,6 +1,6 @@
 import FileInfo from "../FileInfo";
 import { formatPath, getStat } from "../utils";
-import { stat } from "fs";
+import * as log from "npmlog";
 
 export default function(
   cellFunction: (...any) => any,
@@ -29,7 +29,8 @@ export default function(
 
       // run recipe if no file or if it's out of date
       if (currCell.stat === null) {
-        console.log(
+        log.info(
+          "oak-run decorator",
           `${formatPath(currCell.path)} - Doesn't exist - running recipe...`
         );
         await currCell.runRecipe();
@@ -46,25 +47,33 @@ export default function(
         outOfDateCellDependencies.length > 0 ||
         outOfDateWatchFiles.length > 0
       ) {
-        console.log(`${formatPath(currCell.path)} - out of date:`);
+        log.info(
+          "oak-run decorator",
+          `${formatPath(currCell.path)} - out of date:`
+        );
         if (outOfDateCellDependencies.length > 0)
-          console.log(
-            "Cell Dependencies: ",
-            outOfDateCellDependencies
+          log.info(
+            "oak-run decorator",
+            `Cell Dependencies: ${outOfDateCellDependencies
               .map(d => `\t${formatPath(d.path)}`)
-              .join(",")
+              .join(",")}`
           );
         if (outOfDateWatchFiles.length > 0)
-          console.log(
-            "Watch Files: ",
-            outOfDateWatchFiles.map(d => `\t${formatPath(d.path)}`).join(",")
+          log.info(
+            "oak-run decorator",
+            `Watch Files: ${outOfDateWatchFiles
+              .map(d => `\t${formatPath(d.path)}`)
+              .join(",")}`
           );
 
         await currCell.runRecipe();
         currCell.stat = await getStat(currCell.path);
         return currCell;
       } else {
-        console.log(`${formatPath(currCell.path)} - not out of date `);
+        log.info(
+          "oak-run decorator",
+          `${formatPath(currCell.path)} - not out of date `
+        );
         return currCell;
       }
     }
