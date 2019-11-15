@@ -1,6 +1,6 @@
 {
   "name": "@alex.garcia/oak",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Easy, simple, data workflows",
   "main": "./built/oak.js",
   "bin": {
