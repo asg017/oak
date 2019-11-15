@@ -28,9 +28,9 @@
   ],
   "scripts": {
     "build": "tsc",
-    "prepare": "npm run build",
+    "prepare": "rm -rf built && npm run build",
     "preversion": "npm test",
-    "version": "npm run build",
+    "version": "rm -rf built && npm run build",
     "postversion": "git push && git push --tags && rm -rf build/temp",
     "test": "ts-node ./node_modules/tape/bin/tape tests/**/*.ts",
     "t": "ts-node ./node_modules/tape/bin/tape",
