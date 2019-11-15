@@ -10,6 +10,7 @@ import * as log from "npmlog";
 export async function oak_run(args: {
   filename: string;
   targets: readonly string[];
+  with: readonly string[];
 }): Promise<void> {
   const targetSet = new Set(args.targets);
   const oakfilePath = isAbsolute(args.filename)
