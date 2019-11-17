@@ -1,6 +1,6 @@
 import { Runtime } from "@observablehq/runtime";
 import { Library } from "./Library";
-import { oakDefineFile } from "./oak-compile";
+import { OakCompiler } from "./oak-compile";
 import { dirname, isAbsolute, join } from "path";
 import { EventEmitter } from "events";
 import yn from "yn";
@@ -66,7 +66,8 @@ export default async function oak_clean(args: {
       },
     })
   );
-  const define = await oakDefineFile(oakfilePath);
+  const compiler = new OakCompiler();
+  const define = await compiler.file(oakfilePath);
 
   const ee = new EventEmitter();
   const cells: Set<string> = new Set();

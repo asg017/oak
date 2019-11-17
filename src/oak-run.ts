@@ -1,6 +1,6 @@
 import { Runtime } from "@observablehq/runtime";
 import { Library } from "./Library";
-import { oakDefineFile } from "./oak-compile";
+import { OakCompiler } from "./oak-compile";
 import { formatCellName, formatPath } from "./utils";
 import { isAbsolute, join, dirname } from "path";
 import { EventEmitter } from "events";
@@ -17,7 +17,8 @@ export async function oak_run(args: {
     : join(process.cwd(), args.filename);
 
   const runtime = new Runtime(new Library());
-  const define = await oakDefineFile(oakfilePath, null, runCellDecorator);
+  const compiler = new OakCompiler();
+  const define = await compiler.file(oakfilePath, runCellDecorator, null);
 
   const origDir = process.cwd();
   process.chdir(dirname(oakfilePath));

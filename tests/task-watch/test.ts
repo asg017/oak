@@ -8,7 +8,6 @@ const env = envFile(__dirname);
 const outs = ["a", "b", "c", "build_c.js"];
 
 const createBuildC = (contents: string) => {
-  console.log("QQQQQQQQQQ", env("build_c.js"));
   writeFileSync(env("build_c.js"), contents, "utf8");
 };
 

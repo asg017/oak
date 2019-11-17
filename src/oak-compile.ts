@@ -2,65 +2,19 @@
 
 import { parseOakfile, getBaseFileHashes } from "./utils";
 import { dirname, join, resolve } from "path";
-import { formatCellName } from "./utils";
 import { existsSync, mkdirSync } from "fs";
+import {
+  InjectingSource,
+  ObservableCell,
+  DefineFunctionType,
+  Decorator,
+} from "./oak-compile-types";
+import * as log from "npmlog";
 
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 const GeneratorFunction = Object.getPrototypeOf(function*() {}).constructor;
 const AsyncGeneratorFunction = Object.getPrototypeOf(async function*() {})
   .constructor;
-
-type Inspector = {
-  pending: () => void;
-  fulfilled: (value: any) => void;
-  rejected: (error: any) => void;
-};
-type DefineFunctionType = (
-  runtime: any,
-  observer: (name: string) => Inspector | null
-) => any;
-
-type ObservableImportDeclaration = {
-  type: "ImportDeclaration";
-  specifiers: {
-    type: "ImportSpecifier";
-    view: boolean;
-    imported: { type: "Identifier"; name: string };
-    local: { type: "Identifier"; name: string };
-  }[];
-  source: { type: "Literal"; value: string; raw: string };
-  start: number;
-  end: number;
-};
-type ObservableLiteral = {
-  type: "Literal";
-  value: any;
-  raw: string;
-  start: number;
-  end: number;
-};
-type ObservableBlockStatement = {
-  type: "BlockStatement";
-  body: any[];
-  start: number;
-  end: number;
-};
-type ObservableCell = {
-  type: "Cell";
-  id: {
-    type: "Identifier";
-    name: string;
-    id: {
-      name: string;
-    };
-  } | null;
-  async: boolean;
-  generator: boolean;
-  references: { type: string; name: string }[];
-  body: ObservableLiteral &
-    ObservableImportDeclaration &
-    ObservableBlockStatement;
-};
 
 export const createRegularCellDefintion = (
   cell: ObservableCell,
@@ -95,71 +49,63 @@ export const createRegularCellDefintion = (
   };
 };
 
-type InjectingSource = {
-  sourcePath: string;
-  cells: string[];
-};
-/*
-Given the parsed result of an Oakfile, create an define function 
-with the results.
-
-oakfilePath: Path to the Oakfile for the define function
-oakfileModule: The parsed results of the Oakfile.
-source: The source string of the original Oakfile. 
-baseModuleDir: The path to the directory that oakfilePath is inside.
-decorate: Whether to decorate the cell definitions wtih the default decorator.
-injectingSource?: If this oakDefine is being injected from somewhere, then 
-this is the path to the Oakfile that's doing the original injecting.
-*/
-export const oakDefine = async (
-  oakfilePath: string,
-  oakfileModule: any,
+async function createOakDefinition(
+  path: string, // absolote path to the oakfile
   source: string,
-  baseModuleDir: string,
+  module: any,
   decorator: Decorator,
   injectingSource?: InjectingSource
-): Promise<DefineFunctionType> => {
+) {
   const depMap: Map<string, (runtime: any, observer: any) => void> = new Map();
 
-  const importCells = oakfileModule.cells.filter(
+  const importCells = module.cells.filter(
     cell => cell.body.type === "ImportDeclaration"
   );
 
-  await Promise.all(
-    importCells.map(async cell => {
-      const path = join(baseModuleDir, cell.body.source.value);
-      const localSpecifiers = cell.body.specifiers.map(
-        specifier => specifier.local.name
-      );
-      const is: InjectingSource | null =
-        cell.body.injections !== undefined
-          ? {
-              sourcePath:
-                (injectingSource && injectingSource.sourcePath) || oakfilePath,
-              cells: localSpecifiers,
-            }
-          : null;
-      const fromModule = await oakDefineFile(path, is, decorator);
-      depMap.set([path, ...localSpecifiers].join(","), fromModule);
-    })
-  );
+  const importCellsPromises = importCells.map(async cell => {
+    const outsideModulePath = join(dirname(path), cell.body.source.value);
+    const localSpecifiers = cell.body.specifiers.map(
+      specifier => specifier.local.name
+    );
+
+    // if we are injecting, then we need to compile downstream modules with that knowledge.
+    // if we haven't been injecting yet, then we make our own (with "path"),
+    // otherwise use the non-empty injectingSource
+    let localInjectingSource: InjectingSource | null;
+    if (cell.body.injections !== undefined)
+      localInjectingSource = {
+        sourcePath: (injectingSource && injectingSource.sourcePath) || path,
+        cells: localSpecifiers,
+      };
+    const c = new OakCompiler();
+    const fromModule = await c.file(
+      outsideModulePath,
+      decorator,
+      localInjectingSource
+    );
+    depMap.set([outsideModulePath, ...localSpecifiers].join(","), fromModule);
+  });
+
+  await Promise.all(importCellsPromises);
+
   let hash: (cellNames: string[]) => string | null;
   if (injectingSource) {
-    hash = getBaseFileHashes(injectingSource.sourcePath, oakfilePath);
-    const oakDir = join(baseModuleDir, ".oak", hash(injectingSource.cells));
+    hash = getBaseFileHashes(injectingSource.sourcePath, path);
+    const oakDir = join(dirname(path), ".oak", hash(injectingSource.cells));
     if (!existsSync(oakDir)) {
       mkdirSync(oakDir, { recursive: true });
     }
   }
+
   return async function define(runtime, observer) {
     const main = runtime.module();
-    const importCells = oakfileModule.cells.filter(
+    const importCells = module.cells.filter(
       cell => cell.body.type === "ImportDeclaration"
     );
-    const regularCells = oakfileModule.cells.filter(
+    const regularCells = module.cells.filter(
       cell => cell.body.type !== "ImportDeclaration"
     );
-    importCells.map(async (cell, i) => {
+    importCells.map(cell => {
       const specifiers: { name: string; alias: string }[] = [];
       if (cell.body.specifiers)
         for (const specifier of cell.body.specifiers) {
@@ -176,14 +122,13 @@ export const oakDefine = async (
             alias: injection.local.name,
           });
         }
-      const path = join(baseModuleDir, cell.body.source.value);
+      const importCellPath = join(dirname(path), cell.body.source.value);
       const localSpecifiers = cell.body.specifiers.map(
         specifier => specifier.local.name
       );
       const other = runtime.module(
-        depMap.get([path, ...localSpecifiers].join(","))
+        depMap.get([importCellPath, ...localSpecifiers].join(","))
       );
-
       if (injections.length > 0) {
         const child = other.derive(injections, main);
         specifiers.map(specifier => {
@@ -194,7 +139,6 @@ export const oakDefine = async (
           main.import(specifier.name, specifier.alias, other);
         });
       }
-      return;
     });
 
     regularCells.map(cell => {
@@ -212,47 +156,34 @@ export const oakDefine = async (
             ? decorator(
                 cellFunction,
                 injectingSource
-                  ? join(baseModuleDir, ".oak", hash(injectingSource.cells))
-                  : baseModuleDir
+                  ? join(dirname(path), ".oak", hash(injectingSource.cells))
+                  : dirname(path)
               )
             : cellFunction
         );
     });
     return main;
   };
-};
+}
 
-type Decorator = (
-  cellFunction: (...any) => any,
-  baseModuleDir: string
-) => (...any) => any;
-/*
+export class OakCompiler {
+  constructor() {}
+  async file(
+    path: string,
+    decorator?: Decorator,
+    injectingSource?: InjectingSource
+  ): Promise<(runtime: any, observer: any) => any> {
+    log.info("file", path, injectingSource);
+    const parseResults = await parseOakfile(path).catch(err => {
+      throw Error(`Error parsing Oakfile at ${path} ${err}`);
+    });
 
-Given a Oakfile path, get the define function for that module. 
-The define function can be used in the Observable runtime.
-path: Path to the Oakfile
-injectingSource?: If this Oakfile is being imported and the module
-has an injection, this is the path to the file that is doing the injecting.
-decorate: Whether to decorate the cell definintion with the 
-default deorator. 
-*/
-export const oakDefineFile = async (
-  path: string,
-  injectingSource?: InjectingSource,
-  decorator?: Decorator
-): Promise<any> => {
-  const parseResults = await parseOakfile(path).catch(err => {
-    throw Error(`Error parsing Oakfile at ${path} ${err}`);
-  });
-  const oakfileModule = parseResults.module;
-  const oakfileContents = parseResults.contents;
-  const baseModuleDir = dirname(path);
-  return oakDefine(
-    resolve(path),
-    oakfileModule,
-    oakfileContents,
-    baseModuleDir,
-    decorator,
-    injectingSource
-  );
-};
+    return await createOakDefinition(
+      path,
+      parseResults.contents,
+      parseResults.module,
+      decorator,
+      injectingSource
+    );
+  }
+}
