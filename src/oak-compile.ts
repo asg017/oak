@@ -1,6 +1,7 @@
 // Modified https://github.com/asg017/unofficial-observablehq-compiler/blob/master/src/compiler.js
 
 import { parseOakfile, getBaseFileHashes } from "./utils";
+import { parseCell } from "@observablehq/parser";
 import { dirname, join, resolve } from "path";
 import { existsSync, mkdirSync } from "fs";
 import {
@@ -16,14 +17,13 @@ const GeneratorFunction = Object.getPrototypeOf(function*() {}).constructor;
 const AsyncGeneratorFunction = Object.getPrototypeOf(async function*() {})
   .constructor;
 
-export const createRegularCellDefintion = (
-  cell: ObservableCell,
-  source: string
+export const createRegularCellDefinition = (
+  cell: ObservableCell
 ): { cellFunction: any; cellName: string; cellReferences: string[] } => {
   let name = null;
   if (cell.id && cell.id.id && cell.id.id.name) name = cell.id.id.name;
   else if (cell.id && cell.id.name) name = cell.id.name;
-  const bodyText = source.substring(cell.body.start, cell.body.end);
+  const bodyText = cell.input.substring(cell.body.start, cell.body.end);
   let code;
   if (cell.body.type !== "BlockStatement") {
     if (cell.async)
@@ -49,6 +49,72 @@ export const createRegularCellDefintion = (
   };
 };
 
+const createCellDefinition = (
+  path,
+  cell,
+  main,
+  observer,
+  depMap,
+  define = true,
+  decorator,
+  injectingSource
+) => {
+  if (cell.body.type === "ImportDeclaration") {
+    const specifiers: { name: string; alias: string }[] = [];
+    if (cell.body.specifiers)
+      for (const specifier of cell.body.specifiers) {
+        specifiers.push({
+          name: specifier.imported.name,
+          alias: specifier.local.name,
+        });
+      }
+    const injections: { name: string; alias: string }[] = [];
+    if (cell.body.injections !== undefined)
+      for (const injection of cell.body.injections) {
+        injections.push({
+          name: injection.imported.name,
+          alias: injection.local.name,
+        });
+      }
+    const importCellPath = join(dirname(path), cell.body.source.value);
+    const localSpecifiers = cell.body.specifiers.map(
+      specifier => specifier.local.name
+    );
+    const other = main._runtime.module(
+      depMap.get([importCellPath, ...localSpecifiers].join(","))
+    );
+    if (injections.length > 0) {
+      const child = other.derive(injections, main);
+      specifiers.map(specifier => {
+        main.import(specifier.name, specifier.alias, child);
+      });
+    } else {
+      specifiers.map(specifier => {
+        main.import(specifier.name, specifier.alias, other);
+      });
+    }
+  } else {
+    const {
+      cellName,
+      cellFunction,
+      cellReferences,
+    } = createRegularCellDefinition(cell);
+    let hash =
+      injectingSource && getBaseFileHashes(injectingSource.sourcePath, path);
+
+    const f = decorator
+      ? decorator(
+          cellFunction,
+          injectingSource
+            ? join(dirname(path), ".oak", hash(injectingSource.cells))
+            : dirname(path)
+        )
+      : cellFunction;
+    if (define)
+      main.variable(observer(cellName)).define(cellName, cellReferences, f);
+    else main.redefine(cellName, cellReferences, f);
+  }
+};
 async function createOakDefinition(
   path: string, // absolote path to the oakfile
   source: string,
@@ -99,68 +165,17 @@ async function createOakDefinition(
 
   return async function define(runtime, observer) {
     const main = runtime.module();
-    const importCells = module.cells.filter(
-      cell => cell.body.type === "ImportDeclaration"
-    );
-    const regularCells = module.cells.filter(
-      cell => cell.body.type !== "ImportDeclaration"
-    );
-    importCells.map(cell => {
-      const specifiers: { name: string; alias: string }[] = [];
-      if (cell.body.specifiers)
-        for (const specifier of cell.body.specifiers) {
-          specifiers.push({
-            name: specifier.imported.name,
-            alias: specifier.local.name,
-          });
-        }
-      const injections: { name: string; alias: string }[] = [];
-      if (cell.body.injections !== undefined)
-        for (const injection of cell.body.injections) {
-          injections.push({
-            name: injection.imported.name,
-            alias: injection.local.name,
-          });
-        }
-      const importCellPath = join(dirname(path), cell.body.source.value);
-      const localSpecifiers = cell.body.specifiers.map(
-        specifier => specifier.local.name
+    module.cells.map(cell => {
+      createCellDefinition(
+        path,
+        cell,
+        main,
+        observer,
+        depMap,
+        true,
+        decorator,
+        injectingSource
       );
-      const other = runtime.module(
-        depMap.get([importCellPath, ...localSpecifiers].join(","))
-      );
-      if (injections.length > 0) {
-        const child = other.derive(injections, main);
-        specifiers.map(specifier => {
-          main.import(specifier.name, specifier.alias, child);
-        });
-      } else {
-        specifiers.map(specifier => {
-          main.import(specifier.name, specifier.alias, other);
-        });
-      }
-    });
-
-    regularCells.map(cell => {
-      const {
-        cellName,
-        cellFunction,
-        cellReferences,
-      } = createRegularCellDefintion(cell, source);
-      main
-        .variable(observer(cellName))
-        .define(
-          cellName,
-          cellReferences,
-          decorator
-            ? decorator(
-                cellFunction,
-                injectingSource
-                  ? join(dirname(path), ".oak", hash(injectingSource.cells))
-                  : dirname(path)
-              )
-            : cellFunction
-        );
     });
     return main;
   };
@@ -168,12 +183,60 @@ async function createOakDefinition(
 
 export class OakCompiler {
   constructor() {}
+
+  async cell(
+    text: string,
+    path: string,
+    decorator?: Decorator,
+    injectingSource?: InjectingSource
+  ) {
+    const cell = parseCell(text);
+    cell.input = text;
+    const dependencyMap = new Map();
+    if (cell.body.type === "ImportDeclaration") {
+      const fromModule = await this.file(
+        join(process.cwd(), cell.body.source.value),
+        decorator,
+        null
+      );
+      dependencyMap.set(
+        join(process.cwd(), cell.body.source.value),
+        fromModule
+      );
+    }
+    return {
+      define(module, observer) {
+        createCellDefinition(
+          path,
+          cell,
+          module,
+          observer,
+          dependencyMap,
+          true,
+          decorator,
+          injectingSource
+        );
+      },
+      redefine(module, observer) {
+        createCellDefinition(
+          path,
+          cell,
+          module,
+          observer,
+          dependencyMap,
+          false,
+          decorator,
+          injectingSource
+        );
+      },
+    };
+  }
+
   async file(
     path: string,
     decorator?: Decorator,
     injectingSource?: InjectingSource
   ): Promise<(runtime: any, observer: any) => any> {
-    log.info("file", path, injectingSource);
     const parseResults = await parseOakfile(path).catch(err => {
       throw Error(`Error parsing Oakfile at ${path} ${err}`);
     });

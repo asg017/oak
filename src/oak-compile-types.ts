@@ -45,6 +45,7 @@ export type ObservableBlockStatement = {
 };
 export type ObservableCell = {
   type: "Cell";
+  input: string;
   id: {
     type: "Identifier";
     name: string;

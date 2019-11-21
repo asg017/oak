@@ -142,7 +142,7 @@ class PrintAction extends CommandLineAction {
 class RunAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
   private _targets: CommandLineStringListParameter;
-  private _with: CommandLineStringListParameter;
+  private _override: CommandLineStringListParameter;
 
   public constructor() {
     super({
@@ -155,7 +155,7 @@ class RunAction extends CommandLineAction {
     await oak_run({
       filename: this._filename.value,
       targets: this._targets.values,
-      with: this._with.values,
+      overrides: this._override.values,
     });
     return;
   }
@@ -175,10 +175,9 @@ class RunAction extends CommandLineAction {
       description: "List of target names to resolve.",
     });
 
-    this._with = this.defineStringListParameter({
-      argumentName: "WITH",
-      parameterLongName: "--with",
-      parameterShortName: "-w",
+    this._override = this.defineStringListParameter({
+      argumentName: "OVERRIDE",
+      parameterLongName: "--override",
       description: "Temporarily override cell values.",
     });
   }

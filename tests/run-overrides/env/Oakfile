@@ -1,0 +1,6 @@
+name = "world"
+
+greetings = task({
+  target:'greetings', 
+  run: greetings=> command('echo', ['-n', `Hello ${name}`], greetings)
+})
