@@ -1,4 +1,4 @@
-import * as test from "tape";
+import test from "tape";
 import { oak_print } from "../../src/oak-print";
 import { envFile } from "../utils";
 

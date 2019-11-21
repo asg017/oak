@@ -2,6 +2,7 @@ import { Library } from "./Library";
 import { join } from "path";
 import { digraph } from "graphviz";
 import { parseModules } from "./utils";
+import { fileArgument } from "./cli-utils";
 
 type OakPrintArgumentsType = {
   filename: string;
@@ -81,7 +82,8 @@ const print_stdout = (filename, modules: any[], libSet = defaultLibSet) => {
 };
 
 export async function oak_print(args: OakPrintArgumentsType): Promise<void> {
-  const modules = await parseModules(join(process.cwd(), args.filename));
+  const filename = fileArgument(args.filename);
+  const modules = await parseModules(filename);
   switch (args.output) {
     case "stdout":
       print_stdout(args.filename, modules);

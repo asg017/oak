@@ -1,7 +1,7 @@
 import * as express from "express";
 import * as http from "http";
 import * as socketio from "socket.io";
-import * as randomatic from "randomatic";
+import randomatic from "randomatic";
 import * as socketioJwt from "socketio-jwt";
 import * as jwt from "jsonwebtoken";
 import { watch } from "fs";

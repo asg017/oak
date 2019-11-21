@@ -3,7 +3,7 @@ import { parseModule } from "@observablehq/parser";
 import chalk from "chalk";
 import { dirname, join } from "path";
 import { merge } from "d3-array";
-import * as hasha from "hasha";
+import hasha from "hasha";
 
 export const formatPath = (s: string) => chalk.black.bgWhiteBright.bold(s);
 export const formatCellName = (s: string) => chalk.black.bgCyanBright.bold(s);

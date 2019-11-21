@@ -1,4 +1,4 @@
-import * as test from "tape";
+import test from "tape";
 import { oak_run } from "../../src/oak-run";
 import oak_clean from "../../src/oak-clean";
 import { cleanUp, envFile, open, getTree } from "../utils";

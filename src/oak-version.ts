@@ -1,4 +1,4 @@
-import * as readPackageJson from "read-package-json";
+import readPackageJson from "read-package-json";
 
 export default (): void => {
   readPackageJson("./package.json", (err: any, data: any) => {

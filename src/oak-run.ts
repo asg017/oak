@@ -2,19 +2,18 @@ import { Runtime } from "@observablehq/runtime";
 import { Library } from "./Library";
 import { OakCompiler } from "./oak-compile";
 import { formatCellName, formatPath } from "./utils";
-import { isAbsolute, join, dirname } from "path";
+import { dirname } from "path";
 import { EventEmitter } from "events";
 import { default as runCellDecorator } from "./decorators/run";
 import * as log from "npmlog";
+import { fileArgument } from "./cli-utils";
 
 export async function oak_run(args: {
   filename: string;
   targets: readonly string[];
 }): Promise<void> {
   const targetSet = new Set(args.targets);
-  const oakfilePath = isAbsolute(args.filename)
-    ? args.filename
-    : join(process.cwd(), args.filename);
+  const oakfilePath = fileArgument(args.filename);
 
   const runtime = new Runtime(new Library());
   const compiler = new OakCompiler();

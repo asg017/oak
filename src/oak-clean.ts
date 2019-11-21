@@ -1,13 +1,14 @@
 import { Runtime } from "@observablehq/runtime";
 import { Library } from "./Library";
 import { OakCompiler } from "./oak-compile";
-import { dirname, isAbsolute, join } from "path";
+import { dirname, join } from "path";
 import { EventEmitter } from "events";
 import yn from "yn";
 import { createInterface } from "readline";
 import { unlinkSync } from "fs";
 import { getStat } from "./utils";
 import chalk from "chalk";
+import { fileArgument } from "./cli-utils";
 
 const getYN = (): Promise<boolean> => {
   const rl = createInterface({
@@ -51,9 +52,7 @@ export default async function oak_clean(args: {
   targets: readonly string[];
 }) {
   const targetSet = new Set(args.targets);
-  const oakfilePath = isAbsolute(args.filename)
-    ? args.filename
-    : join(process.cwd(), args.filename);
+  const oakfilePath = fileArgument(args.filename);
 
   const overriddenTaskSymbol = Symbol("task");
   const runtime = new Runtime(

@@ -1,4 +1,4 @@
-import * as test from "tape";
+import test from "tape";
 import { oak_run } from "../../src/oak-run";
 import { cleanUp, envFile, open } from "../utils";
 import { writeFileSync } from "fs";

@@ -1,5 +1,5 @@
 import { Library } from "../../src/Library";
-import * as test from "tape";
+import test from "tape";
 import { envFile, open } from "../utils";
 import task from "../../src/Library/task";
 import shell from "../../src/Library/shell";
