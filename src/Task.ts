@@ -26,6 +26,6 @@ export default class Task {
     this.stat = await getStat(this.target);
   }
   async runTask() {
-    await this.run(this.target);
+    return await this.run(this.target);
   }
 }

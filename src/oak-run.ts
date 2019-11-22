@@ -35,7 +35,7 @@ export async function oak_run(args: {
   const ee = new EventEmitter();
   ee.on("pending", name => log.verbose("pending", name));
   ee.on("fulfilled", name => log.verbose("fulfilled", name));
-  ee.on("rejected", name => log.verbose("rejected", name));
+  ee.on("rejected", name => log.error("rejected", name));
 
   const cells: Set<string> = new Set();
   const m1 = runtime.module(define, name => {

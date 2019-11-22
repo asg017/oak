@@ -13,8 +13,8 @@ const executeCommand = (command: string) => {
     e.emit("stderr", chunk);
   });
 
-  process.on("close", async code => {
-    e.emit("close", code);
+  process.on("exit", async code => {
+    e.emit("exit", code);
   });
   process.on("error", () => {
     e.emit("error");
@@ -38,8 +38,9 @@ function transform(strings: string[], ...values: any[]): Promise<string> {
         //process.stderr.write(chunk);
         log.error("oak-stdlib shell chunk", chunk);
       })
-      .on("close", async code => {
-        resolve(s);
+      .on("exit", async code => {
+        if (code === 0) return resolve(s);
+        return reject(code);
       })
       .on("error", () => {
         process = null;
