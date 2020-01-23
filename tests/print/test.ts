@@ -1,5 +1,5 @@
 import test from "tape";
-import { oak_print } from "../../src/oak-print";
+import { oak_print } from "../../src/commands/print";
 import { envFile } from "../utils";
 
 test("oak-print dot", async t => {

@@ -1,12 +1,12 @@
 import { Runtime } from "@observablehq/runtime";
-import { Library } from "./Library";
-import { OakCompiler } from "./oak-compile";
-import { formatCellName, formatPath } from "./utils";
+import { Library } from "../Library";
+import { OakCompiler } from "../oak-compile";
+import { formatCellName, formatPath } from "../utils";
 import { dirname } from "path";
 import { EventEmitter } from "events";
-import { default as runCellDecorator } from "./decorators/run";
+import { default as runCellDecorator } from "../decorators/run";
 import * as log from "npmlog";
-import { fileArgument } from "./cli-utils";
+import { fileArgument } from "../cli-utils";
 
 export async function oak_run(args: {
   filename: string;

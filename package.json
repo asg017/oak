@@ -2,9 +2,9 @@
   "name": "@alex.garcia/oak",
   "version": "0.0.12",
   "description": "Easy, simple, data workflows",
-  "main": "./built/oak.js",
+  "main": "./built/cli.js",
   "bin": {
-    "oak": "./built/oak.js"
+    "oak": "./built/cli.js"
   },
   "files": [
     "built/**/*"
@@ -34,7 +34,7 @@
     "postversion": "git push && git push --tags && rm -rf build/temp",
     "test": "ts-node ./node_modules/tape/bin/tape tests/**/*.ts",
     "t": "ts-node ./node_modules/tape/bin/tape",
-    "o": "ts-node ./src/oak.ts"
+    "o": "ts-node ./src/cli.ts"
   },
   "dependencies": {
     "@microsoft/ts-command-line": "^4.2.6",

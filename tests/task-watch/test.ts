@@ -1,5 +1,5 @@
 import test from "tape";
-import { oak_run } from "../../src/oak-run";
+import { oak_run } from "../../src/commands/run";
 import { cleanUp, envFile, open } from "../utils";
 import { writeFileSync } from "fs";
 

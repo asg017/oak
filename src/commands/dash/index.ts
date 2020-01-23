@@ -5,9 +5,9 @@ import randomatic from "randomatic";
 import * as socketioJwt from "socketio-jwt";
 import * as jwt from "jsonwebtoken";
 import { watch } from "fs";
-import { parseOakfile, ParseOakfileResults } from "../utils";
+import { parseOakfile, ParseOakfileResults } from "../../utils";
 import { join } from "path";
-import { getDot } from "../oak-print";
+import { getDot } from "../print";
 
 const SECRET = randomatic("Aa0", 24);
 

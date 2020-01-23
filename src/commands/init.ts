@@ -1,4 +1,4 @@
-import { getStat } from "./utils";
+import { getStat } from "../utils";
 import { openSync, closeSync } from "fs";
 import { join } from "path";
 import * as log from "npmlog";

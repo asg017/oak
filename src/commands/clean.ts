@@ -1,14 +1,14 @@
 import { Runtime } from "@observablehq/runtime";
-import { Library } from "./Library";
-import { OakCompiler } from "./oak-compile";
+import { Library } from "../Library";
+import { OakCompiler } from "../oak-compile";
 import { dirname, join } from "path";
 import { EventEmitter } from "events";
 import yn from "yn";
 import { createInterface } from "readline";
 import { unlinkSync } from "fs";
-import { getStat } from "./utils";
+import { getStat } from "../utils";
 import chalk from "chalk";
-import { fileArgument } from "./cli-utils";
+import { fileArgument } from "../cli-utils";
 
 const getYN = (): Promise<boolean> => {
   const rl = createInterface({

@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
-import { oak_run } from "./oak-run";
-import { oak_status } from "./oak-status";
-import { oak_print } from "./oak-print";
-import { oak_init } from "./oak-init";
-import oak_dash from "./oak-dash";
-import oak_version from "./oak-version";
+import { oak_run } from "./commands/run";
+import { oak_status } from "./commands/status";
+import { oak_print } from "./commands/print";
+import { oak_init } from "./commands/init";
+import oak_dash from "./commands/dash";
+import oak_version from "./commands/version";
+import oak_clean from "./commands/clean";
 
 import {
   CommandLineChoiceParameter,
@@ -15,7 +16,6 @@ import {
   CommandLineParser,
   CommandLineFlagParameter,
 } from "@microsoft/ts-command-line";
-import oak_clean from "./oak-clean";
 
 class CleanAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;

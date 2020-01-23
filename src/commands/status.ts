@@ -1,11 +1,11 @@
 import { Runtime } from "@observablehq/runtime";
-import { Library } from "./Library";
-import { OakCompiler } from "./oak-compile";
+import { Library } from "../Library";
+import { OakCompiler } from "../oak-compile";
 import { dirname } from "path";
 import { EventEmitter } from "events";
-import { default as runCellDecorator } from "./decorators/status";
+import { default as runCellDecorator } from "../decorators/status";
 import * as log from "npmlog";
-import { fileArgument } from "./cli-utils";
+import { fileArgument } from "../cli-utils";
 
 export async function oak_status(args: { filename: string }): Promise<void> {
   const oakfilePath = fileArgument(args.filename);

@@ -1,6 +1,6 @@
 import test from "tape";
-import { oak_run } from "../../src/oak-run";
-import oak_clean from "../../src/oak-clean";
+import { oak_run } from "../../src/commands/run";
+import oak_clean from "../../src/commands/clean";
 import { cleanUp, envFile, open, getTree } from "../utils";
 
 const env = envFile(__dirname);

@@ -1,8 +1,7 @@
-import { Library } from "./Library";
-import { join } from "path";
+import { Library } from "../Library";
 import { digraph } from "graphviz";
-import { parseModules } from "./utils";
-import { fileArgument } from "./cli-utils";
+import { parseModules } from "../utils";
+import { fileArgument } from "../cli-utils";
 
 type OakPrintArgumentsType = {
   filename: string;
