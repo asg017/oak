@@ -1,19 +1,19 @@
 import Task from "../Task";
-import { formatPath, getStat } from "../utils";
+import { duration, formatPath, getStat } from "../utils";
 import * as log from "npmlog";
+import chalk from "chalk";
 
 export default function(
-  cellFunction: (...any) => any,
+  cellFunction: (...args: any) => any,
   cellName: string,
   cellReferences: string[],
   baseModuleDir: string
 ): (...any) => any {
   return async function(...dependencies) {
-    // dont try and get Task for cell depends like `cell` or `shell`
-    let cellDependents = [];
-    dependencies.map(dependency => {
+    let taskDependents: number[] = [];
+    dependencies.map((dependency, i) => {
       if (dependency instanceof Task) {
-        cellDependents.push(dependency);
+        taskDependents.push(i);
       }
     });
     let currCell = await cellFunction(...dependencies);
@@ -29,40 +29,43 @@ export default function(
         })
       );
 
-      // run recipe if no file or if it's out of date
       if (currCell.stat === null) {
         log.info(
-          "oak-run decorator",
-          `${formatPath(currCell.target)} - Doesn't exist - running recipe...`
+          "oak-status",
+          `${cellName} - ${chalk.red("Does not exist")} - [${taskDependents
+            .map(i => cellReferences[i])
+            .join(", ")}] - ${formatPath(currCell.target)}`
         );
-        await currCell.runTask();
-        currCell.stat = await getStat(currCell.target);
         return currCell;
       }
-      const outOfDateCellDependencies = cellDependents.filter(
-        c => currCell.stat.mtime <= c.stat.mtime
+
+      const outOfDateTaskDependencies = taskDependents.filter(
+        i => currCell.stat.mtime <= dependencies[i].stat.mtime
       );
       const outOfDateWatchFiles = watchStats.filter(
         ({ stat }) => currCell.stat.mtime <= stat.mtime
       );
+      const mtime = new Date(currCell.stat.mtime);
       if (
-        outOfDateCellDependencies.length > 0 ||
+        outOfDateTaskDependencies.length > 0 ||
         outOfDateWatchFiles.length > 0
       ) {
         log.info(
-          "oak-run decorator",
-          `${formatPath(currCell.target)} - out of date:`
+          "oak-status",
+          `${cellName} ${duration(mtime)} ${formatPath(
+            currCell.target
+          )} - ${chalk.red("out of date")}:`
         );
-        if (outOfDateCellDependencies.length > 0)
+        if (outOfDateTaskDependencies.length > 0)
           log.info(
-            "oak-run decorator",
-            `Cell Dependencies: ${outOfDateCellDependencies
-              .map(d => `\t${formatPath(d.path)}`)
+            "oak-status",
+            `Cell Dependencies: ${outOfDateTaskDependencies
+              .map(i => `\t${cellReferences[i]}`)
               .join(",")}`
           );
         if (outOfDateWatchFiles.length > 0)
           log.info(
-            "oak-run decorator",
+            "oak-status",
             `Watch Files: ${outOfDateWatchFiles
               .map(d => `\t${formatPath(d.path)}`)
               .join(",")}`
@@ -73,8 +76,10 @@ export default function(
         return currCell;
       } else {
         log.info(
-          "oak-run decorator",
-          `${formatPath(currCell.target)} - not out of date `
+          "oak-status",
+          `${cellName} - ${duration(mtime)} ${chalk.green(
+            "not out of date"
+          )} - ${formatPath(currCell.target)}`
         );
         return currCell;
       }

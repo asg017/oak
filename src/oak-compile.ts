@@ -155,6 +155,8 @@ async function createOakDefinition(
           decorator
             ? decorator(
                 cellFunction,
+                cellName,
+                cellReferences,
                 injectingSource
                   ? join(dirname(path), ".oak", hash(injectingSource.cells))
                   : dirname(path)

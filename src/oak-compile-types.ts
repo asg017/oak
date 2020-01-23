@@ -5,6 +5,8 @@ export type InjectingSource = {
 
 export type Decorator = (
   cellFunction: (...any) => any,
+  cellName: string,
+  cellReferences: string[],
   baseModuleDir: string
 ) => (...any) => any;
 
