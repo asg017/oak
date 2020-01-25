@@ -53,7 +53,7 @@ You're able to call any language, tool, or program that's accessible through the
 
 With one command, `oak print --output=png`, you can create a graphic that explains your entire data workflow:
 
-![](./example.png)
+![](./assets/example.png)
 
 This workflow downloads a dataset from the California government containing data about all K-12 schools in the state (`cde_text`), then filters out for public schools, charter schools, public/charter schools in Los Angeles country, and then generates `.geojson` files for all those combinations.
 
