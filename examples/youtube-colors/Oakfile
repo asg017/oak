@@ -1,0 +1,30 @@
+
+ytUrl = "https://www.youtube.com/watch?v=Rb4lgOiHBZo"
+
+video_mp4 = task({
+  target: 'video.mp4',
+  run: video_mp4 => command('youtube-dl', [ytUrl], video_mp4)
+})
+
+frames_dir = task({
+  target: 'frames',
+  run: frames_dir => command('docker',
+    [
+      'run', '-it', '--rm', 
+      '-v', '$PWD:/tmp', 
+      'jrottenberg/ffmpeg:4.1-alpine',
+      '-i', "/tmp/OK Go - Skyscrapers - Official Video-Rb4lgOiHBZo.mp4", 
+      '-r', '30',
+      '/tmp/frames/$filename%09d.jpg',
+    ], frames_dir)
+})
+
+barcode_png = task({
+  target: 'barcode.png',
+  run: barcode_png => command('docker', [ 
+    'run', '-it', '--rm', 
+    '-v'. '$PWD:/tmp',
+    'pillow-test', 
+    'python3', '/tmp/gen_bars.py'
+  ], barcode_png)
+})
