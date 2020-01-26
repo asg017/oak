@@ -6,8 +6,9 @@ type OpenFileType = {
   stat: Stats;
 };
 
-export const envFile = (dirname: string) => (path: string) =>
-  join(dirname, "env", path);
+export const envFile = (dirname: string) => 
+Object.assign((path: string) =>
+  join(dirname, "env", path), {data: (path: string) => join(dirname, 'env', 'oak_data', path)});
 
 export const touch = async (
   path: string,

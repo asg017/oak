@@ -1,26 +1,32 @@
 import test from "tape";
+import {removeSync} from 'fs-extra';
 import { oak_run } from "../../src/commands/run";
-import { cleanUp, envFile, open } from "../utils";
+import { envFile, open } from "../utils";
 
-const outs = ["sub/subsub/a", "sub/b", "sub/c", "d", "f"];
 const env = envFile(__dirname);
 
+function cleanUp() {
+  removeSync(env('oak_data'));
+  removeSync(env('sub/oak_data'));
+  removeSync(env('sub/subsub/oak_data'));
+}
+
 test.onFinish(() => {
-  cleanUp(env, outs);
+  cleanUp();
 });
 
-cleanUp(env, outs);
+cleanUp();
 
 test("oak-run simple-import", async t => {
   await oak_run({
     filename: env("Oakfile"),
     targets: []
   });
-  const a_file = await open(env("sub/subsub/a"));
-  const b_file = await open(env("sub/b"));
-  const c_file = await open(env("sub/c"));
-  const d_file = await open(env("d"));
-  const f_file = await open(env("f"));
+  const a_file = await open(env("sub/subsub/oak_data/a"));
+  const b_file = await open(env("sub/oak_data/b"));
+  const c_file = await open(env("sub/oak_data/c"));
+  const d_file = await open(env("oak_data/d"));
+  const f_file = await open(env("oak_data/f"));
   t.equal(a_file.content, "a");
   t.equal(b_file.content, "b");
   t.equal(c_file.content, "ab");

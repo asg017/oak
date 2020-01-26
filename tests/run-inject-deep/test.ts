@@ -1,10 +1,18 @@
 import test from "tape";
 import { oak_run } from "../../src/commands/run";
-import { cleanUp, envFile, getTree } from "../utils";
-import { remove } from "fs-extra";
+import { envFile, getTree } from "../utils";
+import { removeSync } from "fs-extra";
 import { getBaseFileHashes } from "../../src/utils";
 
 const env = envFile(__dirname);
+
+function cleanUp() {
+  removeSync(env('oak_data'));
+  removeSync(env('sub/.oak'));
+  removeSync(env('sub/oak_data'));
+  removeSync(env('sub/subsub/.oak'));
+  removeSync(env('sub/subsub/oak_data'));
+}
 
 const top = env("Oakfile");
 const mid = env("sub/Oakfile");
@@ -13,24 +21,20 @@ const deep = getBaseFileHashes(mid, bot)(["x"]);
 const shallow = getBaseFileHashes(top, bot)(["x"]);
 
 const outs = [
-  `sub/subsub/x`,
+  `sub/subsub/oak_data/x`,
 
-  `sub/y`,
-  `sub/subsub/.oak/${deep}/x`,
+  `sub/oak_data/y`,
+  `sub/subsub/.oak/${deep}/oak_data/x`,
 
-  `y`,
-  `sub/subsub/.oak/${shallow}/x`
+  `oak_data/y`,
+  `sub/subsub/.oak/${shallow}/oak_data/x`
 ];
 
 test.onFinish(async () => {
-  cleanUp(env, outs);
-  await remove(env("sub/.oak"));
-  await remove(env("sub/subsub/.oak"));
+  cleanUp();
 });
 
-cleanUp(env, outs);
-remove(env("sub/.oak"));
-remove(env("sub/subsub/.oak"));
+cleanUp();
 
 test("run-inject-deep", async t => {
   await oak_run({
@@ -38,15 +42,15 @@ test("run-inject-deep", async t => {
     targets: []
   });
   const t1 = await getTree(outs, env);
-  t.equal(t1.get("sub/subsub/x").content, "A x");
+  t.equal(t1.get("sub/subsub/oak_data/x").content, "A x");
 
   await oak_run({
     filename: env("sub/Oakfile"),
     targets: []
   });
   const t2 = await getTree(outs, env);
-  t.equal(t2.get("sub/y").content, "B x");
-  t.equal(t2.get(`sub/subsub/.oak/${deep}/x`).content, "B x");
+  t.equal(t2.get("sub/oak_data/y").content, "B x");
+  t.equal(t2.get(`sub/subsub/.oak/${deep}/oak_data/x`).content, "B x");
 
   await oak_run({
     filename: env("Oakfile"),
@@ -54,8 +58,8 @@ test("run-inject-deep", async t => {
   });
   const t3 = await getTree(outs, env);
 
-  t.equal(t3.get("y").content, "C x");
-  t.equal(t3.get(`sub/subsub/.oak/${shallow}/x`).content, "C x");
+  t.equal(t3.get("oak_data/y").content, "C x");
+  t.equal(t3.get(`sub/subsub/.oak/${shallow}/oak_data/x`).content, "C x");
 
   t.end();
 });

@@ -1,5 +1,5 @@
-import { Stats } from "fs";
-import { join } from "path";
+import { Stats, existsSync, mkdirSync } from "fs";
+import { join, dirname } from "path";
 import { getStat } from "./utils";
 
 export default class Task {
@@ -13,7 +13,7 @@ export default class Task {
     run: (any) => any,
     watch: string[]
   ) {
-    this.target = path;
+    this.target = join('oak_data', path);
     this.stat = stat;
     this.run = run;
     this.watch = watch;
@@ -26,6 +26,9 @@ export default class Task {
     this.stat = await getStat(this.target);
   }
   async runTask() {
+    if(!existsSync(dirname(this.target))) {
+      mkdirSync(dirname(this.target), {recursive: true});
+    }
     return await this.run(this.target);
   }
 }

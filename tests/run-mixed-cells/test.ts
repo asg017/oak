@@ -1,22 +1,23 @@
 import test from "tape";
+import {removeSync} from 'fs-extra';
 import { oak_run } from "../../src/commands/run";
-import { cleanUp, envFile, open, getTree } from "../utils";
+import { open, envFile } from "../utils";
 
 const env = envFile(__dirname);
 
-const outs = ["a.txt", "b.txt"];
+function cleanUp() {
+  removeSync(env('oak_data'));
+}
 
 test.onFinish(() => {
-  cleanUp(env, outs);
+  cleanUp();
 });
 
-cleanUp(env, outs);
+cleanUp();
 
-test("oak-run hello", async t => {
+test("run-mixed-cell", async t => {
   await oak_run({ filename: env("Oakfile"), targets: [] });
-  const t1 = await getTree(outs, env);
-
-  t.equals(t1.get("a.txt").content, "a");
-  t.equals(t1.get("b.txt").content, "a");
+  t.equals((await open(env("oak_data/a.txt"))).content, "a");
+  t.equals((await open(env("oak_data/b.txt"))).content, "a");
   t.end();
 });

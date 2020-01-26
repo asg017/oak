@@ -1,31 +1,35 @@
 import test from "tape";
 import { oak_run } from "../../src/commands/run";
-import { cleanUp, envFile, getTree } from "../utils";
-import { remove } from "fs-extra";
+import { envFile, getTree } from "../utils";
+import { removeSync } from "fs-extra";
 import { getBaseFileHashes } from "../../src/utils";
 
 const env = envFile(__dirname);
+
+function cleanUp() {
+  removeSync(env.data(''));
+  removeSync(env('sub/.oak'));
+  removeSync(env('sub/oak_data'));
+}
 
 const source = env("Oakfile");
 const target = env("sub/Oakfile");
 const hash = getBaseFileHashes(source, target)(["c"]);
 const outs = [
-  "sub/a",
-  "sub/b",
-  "sub/c",
-  `sub/.oak/${hash}/a`,
-  `sub/.oak/${hash}/b`,
-  `sub/.oak/${hash}/c`,
-  "d"
+  "sub/oak_data/a",
+  "sub/oak_data/b",
+  "sub/oak_data/c",
+  `sub/.oak/${hash}/oak_data/a`,
+  `sub/.oak/${hash}/oak_data/b`,
+  `sub/.oak/${hash}/oak_data/c`,
+  "oak_data/d"
 ];
 
 test.onFinish(async () => {
-  cleanUp(env, outs);
-  await remove(env("sub/.oak"));
+  cleanUp();
 });
 
-cleanUp(env, outs);
-remove(env("sub/.oak"));
+cleanUp();
 
 test("run-inject", async t => {
   await oak_run({
@@ -33,9 +37,10 @@ test("run-inject", async t => {
     targets: []
   });
   const t1 = await getTree(outs, env);
-  t.equal(t1.get("sub/a").content, "NY a");
-  t.equal(t1.get("sub/b").content, "NY b");
-  t.equal(t1.get("sub/c").content, "NY aNY b");
+  console.log(t1.keys())
+  t.equal(t1.get("sub/oak_data/a").content, "NY a");
+  t.equal(t1.get("sub/oak_data/b").content, "NY b");
+  t.equal(t1.get("sub/oak_data/c").content, "NY aNY b");
 
   await oak_run({
     filename: env("Oakfile"),
@@ -43,13 +48,13 @@ test("run-inject", async t => {
   });
   const t2 = await getTree(outs, env);
 
-  t.equal(t2.get("sub/a").content, "NY a");
-  t.equal(t2.get("sub/b").content, "NY b");
-  t.equal(t2.get("sub/c").content, "NY aNY b");
+  t.equal(t2.get("sub/oak_data/a").content, "NY a");
+  t.equal(t2.get("sub/oak_data/b").content, "NY b");
+  t.equal(t2.get("sub/oak_data/c").content, "NY aNY b");
 
-  t.equal(t2.get(`sub/.oak/${hash}/a`).content, "CA a");
-  t.equal(t2.get(`sub/.oak/${hash}/b`).content, "CA b");
-  t.equal(t2.get(`sub/.oak/${hash}/c`).content, "CA aCA b");
-  t.equal(t2.get("d").content, "CA aCA b");
+  t.equal(t2.get(`sub/.oak/${hash}/oak_data/a`).content, "CA a");
+  t.equal(t2.get(`sub/.oak/${hash}/oak_data/b`).content, "CA b");
+  t.equal(t2.get(`sub/.oak/${hash}/oak_data/c`).content, "CA aCA b");
+  t.equal(t2.get("oak_data/d").content, "CA aCA b");
   t.end();
 });

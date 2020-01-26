@@ -58,7 +58,7 @@ export default async function oak_clean(args: {
   const runtime = new Runtime(
     Object.assign(new Library(), {
       task: () => async params => {
-        const target = join(dirname(oakfilePath), params.target);
+        const target = join(dirname(oakfilePath), 'oak_data', params.target);
         console.log(target);
         const exists = Boolean(await getStat(target));
         return { target, exists, __type: overriddenTaskSymbol };

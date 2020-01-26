@@ -1,15 +1,20 @@
 import test from "tape";
+import {removeSync} from 'fs-extra';
 import { oak_run } from "../../src/commands/run";
-import { cleanUp, envFile, open } from "../utils";
+import { envFile, open } from "../utils";
 
-const outs = ["sub/a", "sub/b", "x", "y"];
 const env = envFile(__dirname);
 
+function cleanUp(){
+  removeSync(env.data(''));
+  removeSync(env('sub/oak_data'));
+}
+
 test.onFinish(() => {
-  cleanUp(env, outs);
+  cleanUp();
 });
 
-cleanUp(env, outs);
+cleanUp();
 
 /*
 
@@ -25,8 +30,8 @@ test("run-import-aliases", async t => {
     filename: env("Oakfile"),
     targets: ["x"]
   });
-  const x = await open(env("x"));
-  let y = await open(env("y"));
+  const x = await open(env.data("x"));
+  let y = await open(env.data("y"));
   t.equal(x.content, "x");
   t.equal(y.stat, null);
 
@@ -34,8 +39,8 @@ test("run-import-aliases", async t => {
     filename: env("Oakfile"),
     targets: ["y"]
   });
-  const b = await open(env("sub/b"));
-  y = await open(env("y"));
+  const b = await open(env("sub/oak_data/b"));
+  y = await open(env.data("y"));
   t.equal(b.content, "a");
   t.equal(y.content, "xa");
 
