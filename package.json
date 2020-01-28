@@ -32,7 +32,9 @@
     "preversion": "npm test",
     "version": "rm -rf built && npm run build",
     "postversion": "git push && git push --tags && rm -rf build/temp",
-    "test": "ts-node ./node_modules/tape/bin/tape tests/**/*.ts",
+    "format": "prettier --write src/**/*.ts",
+    "format-test": "prettier --check src/**/*.ts",
+    "test": "npm run format-test && ts-node ./node_modules/tape/bin/tape tests/**/*.ts",
     "t": "ts-node ./node_modules/tape/bin/tape",
     "o": "ts-node ./src/cli.ts"
   },
@@ -52,6 +54,7 @@
     "immutable": "^4.0.0-rc.12",
     "jsonwebtoken": "^8.5.1",
     "npmlog": "^4.1.2",
+    "prettier": "^1.19.1",
     "randomatic": "^3.1.1",
     "read-package-json": "^2.1.0",
     "socket.io": "^2.2.0",

@@ -3,7 +3,7 @@ import { Library } from "../Library";
 import { OakCompiler } from "../oak-compile";
 import { dirname } from "path";
 import { EventEmitter } from "events";
-import { default as runCellDecorator } from "../decorators/status";
+import { default as statusCellDecorator } from "../decorators/status";
 import * as log from "npmlog";
 import { fileArgument } from "../cli-utils";
 
@@ -12,7 +12,7 @@ export async function oak_status(args: { filename: string }): Promise<void> {
 
   const runtime = new Runtime(new Library());
   const compiler = new OakCompiler();
-  const define = await compiler.file(oakfilePath, runCellDecorator, null);
+  const define = await compiler.file(oakfilePath, statusCellDecorator, null);
 
   const origDir = process.cwd();
   process.chdir(dirname(oakfilePath));

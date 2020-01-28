@@ -74,7 +74,7 @@ const print_stdout = (filename, modules: any[], libSet = defaultLibSet) => {
           .map(ref => ref.name)
           .filter((refName: string) => !libSet.has(refName))
           .join(",")}]`
-      ); 
+      );
     });
     console.log("----");
   });
