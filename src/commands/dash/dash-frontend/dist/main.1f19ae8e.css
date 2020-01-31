@@ -1,24 +1,57 @@
-html,
-body {
-  font: 14px/1.21 "Helvetica Neue", arial, sans-serif;
-  font-weight: 400;
+.taskgraph-section {
+  display: grid;
+  grid-template-columns: 80% 20%;
 }
-h1 {
-  text-align: center;
+.taskgraph {
+  border: 1px solid #999;
+  border-radius: 0.5rem;
+  background-color: #8bd9e3;
+  overflow: none;
 }
-.OakfileCode {
-  background-color: #aaa;
-  padding: 1rem 2rem;
-  border-radius: 0.25rem;
+.taskgraph > svg {
+  width: 100%;
+  height: 100%;
 }
-.socket-status {
-  position: fixed;
-  background-color: white;
-  bottom: 0;
-  right: 0;
-  width: 100px;
-  height: 24px;
-  border: 1px solid black;
+.taskgraphnode {
+  cursor: pointer;
+}
+.taskgraphnode-name {
+  font-size: 1.2rem;
+  font-weight: 650;
+}
+.taskgraphnode-container {
+  fill: #ddd;
+  stroke: #999;
+  stroke-opacity: 50%;
+}
+.taskgraphnode-container--selected {
+  fill: #f4c654;
+}
+.taskgraphnode-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+.taskgraphnode-status-label {
+  font-size: 0.94rem;
+  font-style: italic;
+}
+.taskgraphnode-status-bar-dne {
+  fill: #9b1617;
+}
+.taskgraphnode-status-bar-out {
+  fill: #f4362a;
+}
+.taskgraphnode-status-bar-up {
+  fill: #595;
+}
+.taskgraphnode-target-size {
+  text-anchor: end;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.taskgraphedge-path {
+  fill: none;
+  stroke-width: 2px;
 }
 
 
