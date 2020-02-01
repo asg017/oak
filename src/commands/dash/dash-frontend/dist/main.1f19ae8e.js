@@ -872,6 +872,48 @@ var global = arguments[3];
 })));
 
 
+},{}],"utils/format.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.bytesToSize = bytesToSize;
+exports.duration = duration;
+
+function bytesToSize(bytes) {
+  var sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+  if (bytes == 0) return "0 B";
+  var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+  if (i == 0) return bytes + " " + sizes[i];
+  return (bytes / Math.pow(1024, i)).toFixed(1) + " " + sizes[i];
+}
+
+function duration(referenceDate, fromDate) {
+  if (!fromDate) fromDate = new Date();
+  var ms = fromDate.getTime() - referenceDate.getTime();
+  if (ms < 1000) return "just now";
+  var numSeconds = Math.floor(ms / 1000);
+
+  if (numSeconds < 60) {
+    return "".concat(numSeconds, " second").concat(numSeconds <= 1 ? "" : "s", " ago");
+  }
+
+  var numMinutes = Math.floor(numSeconds / 60);
+
+  if (numMinutes < 60) {
+    return "".concat(numMinutes, " minute").concat(numMinutes <= 1 ? "" : "s", " ago");
+  }
+
+  var numHours = Math.floor(numMinutes / 60);
+
+  if (numHours < 24) {
+    return "".concat(numHours, " hour").concat(numHours <= 1 ? "" : "s", " ago");
+  }
+
+  var numDays = Math.floor(numHours / 24);
+  return "".concat(numDays, " day").concat(numDays <= 1 ? "" : "s", " ago");
+}
 },{}],"components/Header.js":[function(require,module,exports) {
 "use strict";
 
@@ -882,33 +924,90 @@ exports.default = void 0;
 
 var _preact = require("preact");
 
+var _format = require("../utils/format");
+
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 var Header =
 /*#__PURE__*/
-function () {
+function (_Component) {
+  _inherits(Header, _Component);
+
   function Header() {
+    var _getPrototypeOf2;
+
+    var _this;
+
     _classCallCheck(this, Header);
+
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    _this = _possibleConstructorReturn(this, (_getPrototypeOf2 = _getPrototypeOf(Header)).call.apply(_getPrototypeOf2, [this].concat(args)));
+
+    _defineProperty(_assertThisInitialized(_this), "state", {
+      meta: null
+    });
+
+    return _this;
   }
 
   _createClass(Header, [{
+    key: "componentDidMount",
+    value: function componentDidMount() {
+      var _this2 = this;
+
+      fetch("/api/meta").then(function (r) {
+        return r.json();
+      }).then(function (meta) {
+        return _this2.setState({
+          meta: meta
+        });
+      });
+    }
+  }, {
     key: "render",
     value: function render() {
+      var meta = this.state.meta;
+      if (!meta) return (0, _preact.h)("div", {
+        className: "header"
+      }, "Loading...");
       return (0, _preact.h)("div", {
         className: "header"
-      }, "Header");
+      }, (0, _preact.h)("div", {
+        className: "header-title"
+      }, "Oak Dash"), (0, _preact.h)("div", null, (0, _preact.h)("span", {
+        className: "header-path"
+      }, meta.oakfilePath)), (0, _preact.h)("div", {
+        className: "header-timestamp"
+      }, "Last update: ".concat((0, _format.duration)(new Date(meta.stat.mtime)))));
     }
   }]);
 
   return Header;
-}();
+}(_preact.Component);
 
 exports.default = Header;
-},{"preact":"node_modules/preact/dist/preact.umd.js"}],"node_modules/d3/dist/package.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.umd.js","../utils/format":"utils/format.js"}],"node_modules/d3/dist/package.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -29669,48 +29768,17 @@ var reloadCSS = require('_css_loader');
 
 module.hot.dispose(reloadCSS);
 module.hot.accept(reloadCSS);
-},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"utils/format.js":[function(require,module,exports) {
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"utils/colors.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.bytesToSize = bytesToSize;
-exports.duration = duration;
-
-function bytesToSize(bytes) {
-  var sizes = ["Bytes", "KB", "MB", "GB", "TB"];
-  if (bytes == 0) return "- B";
-  var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
-  if (i == 0) return bytes + " " + sizes[i];
-  return (bytes / Math.pow(1024, i)).toFixed(1) + " " + sizes[i];
-}
-
-function duration(referenceDate, fromDate) {
-  if (!fromDate) fromDate = new Date();
-  var ms = fromDate.getTime() - referenceDate.getTime();
-  if (ms < 1000) return "just now";
-  var numSeconds = Math.floor(ms / 1000);
-
-  if (numSeconds < 60) {
-    return "".concat(numSeconds, " second").concat(numSeconds <= 1 ? "" : "s", " ago");
-  }
-
-  var numMinutes = Math.floor(numSeconds / 60);
-
-  if (numMinutes < 60) {
-    return "".concat(numMinutes, " minute").concat(numMinutes <= 1 ? "" : "s", " ago");
-  }
-
-  var numHours = Math.floor(numMinutes / 60);
-
-  if (numHours < 24) {
-    return "".concat(numHours, " hour").concat(numHours <= 1 ? "" : "s", " ago");
-  }
-
-  var numDays = Math.floor(numHours / 24);
-  return "".concat(numDays, " day").concat(numDays <= 1 ? "" : "s", " ago");
-}
+exports.colorVariable = void 0;
+var colorVariable = new Map([// palette 1
+["blue-dark", "#31666b"], ["blue-light", "#8bd9e3"], ["gold", "#f4c654"], ["red-light", "#f4362a"], ["red-dark", "#9b1617"], // status
+["dne", "#9b1617"], ["out", "#f4362a"], ["up", "#595"]]);
+exports.colorVariable = colorVariable;
 },{}],"components/TaskGraphNode.js":[function(require,module,exports) {
 "use strict";
 
@@ -29726,6 +29794,8 @@ var d3 = _interopRequireWildcard(require("d3"));
 require("../style.less");
 
 var _format = require("../utils/format");
+
+var _colors = require("../utils/colors");
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
@@ -29758,7 +29828,9 @@ function TaskGraphNodeContainer(props) {
     rx: 7.5,
     ry: 7.5,
     width: node.width,
-    height: node.height
+    height: node.height,
+    stroke: _colors.colorVariable.get(node.status),
+    strokeWidth: 3
   });
 }
 
@@ -29770,24 +29842,26 @@ function TaskGraphNodeStatusBar(props) {
   }));
 }
 
+function getIcon(type) {
+  switch (type) {
+    case "pipenv":
+    case "python":
+      return "python";
+
+    default:
+      return "shell";
+  }
+}
+
 function TaskGraphNodeType(props) {
   var node = props.node;
   return (0, _preact.h)("g", {
     className: "taskgraphnode-type",
-    transform: "translate(".concat(node.width - 28 - 8, ", 10)")
-  }, (0, _preact.h)("circle", {
-    className: "taskgraphnode-circle",
-    cx: 11,
-    cy: 11,
-    r: 14,
-    fill: "none",
-    stroke: "red"
-  }), (0, _preact.h)("image", {
+    transform: "translate(16, 8)"
+  }, (0, _preact.h)("image", {
     width: 18,
     height: 18,
-    x: 2,
-    y: 2,
-    xlinkHref: "https://simpleicons.org/icons/docker.svg"
+    xlinkHref: "https://simpleicons.org/icons/".concat(getIcon(node.type), ".svg")
   }));
 }
 
@@ -29846,7 +29920,6 @@ function (_Component) {
         text = text.slice(0, -1);
         t.text(text + "...");
         textLength = t.node().getComputedTextLength();
-        console.log(text, t.text());
       }
 
       this.setState({
@@ -29860,7 +29933,7 @@ function (_Component) {
       var nameLength = this.state.nameLength;
       return (0, _preact.h)("g", {
         class: "taskgraphnode-name",
-        transform: "translate(16,20)"
+        transform: "translate(".concat(16 + 28, ",22)")
       }, (0, _preact.h)("text", {
         ref: this.textRef,
         alignmentBaseline: "hanging"
@@ -29944,18 +30017,7 @@ function (_Component2) {
 }(_preact.Component);
 
 exports.default = TaskGraphNode;
-},{"preact":"node_modules/preact/dist/preact.umd.js","d3":"node_modules/d3/index.js","../style.less":"style.less","../utils/format":"utils/format.js"}],"utils/colors.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.colorVariable = void 0;
-var colorVariable = new Map([// palette 1
-["blue-dark", "#31666b"], ["blue-light", "#8bd9e3"], ["gold", "#f4c654"], ["red-light", "#f4362a"], ["red-dark", "#9b1617"], // status
-["dne", "rgb(175, 163, 163)"], ["out", "#f77"], ["up", "#595"]]);
-exports.colorVariable = colorVariable;
-},{}],"components/TaskGraphEdge.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.umd.js","d3":"node_modules/d3/index.js","../style.less":"style.less","../utils/format":"utils/format.js","../utils/colors":"utils/colors.js"}],"components/TaskGraphEdge.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -30016,7 +30078,7 @@ function TaskGraphEdge(props) {
   var edge = props.edge;
   return (0, _preact.h)("g", {
     class: "taskgraphedge",
-    transform: "translate(".concat(edge.fromWidth / 2, ", ", 50, ")")
+    transform: "translate(".concat(edge.fromWidth / 2, ", ").concat(edge.fromHeight / 2, ")")
   }, (0, _preact.h)(TaskGraphEdgePath, {
     edge: edge
   }), (0, _preact.h)(TaskGraphEdgeFrom, {
@@ -30150,6 +30212,8 @@ exports.default = void 0;
 
 var _preact = require("preact");
 
+var _format = require("../utils/format");
+
 require("../style.less");
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
@@ -30188,9 +30252,18 @@ function (_Component) {
           dag = _this$props.dag,
           tasks = _this$props.tasks,
           selectedTask = _this$props.selectedTask;
+      if (selectedTask === null) return (0, _preact.h)("div", {
+        className: "tasksidebar"
+      }, (0, _preact.h)("div", null, "none selected"));
+      var task = dag.node(selectedTask);
+      console.log(task);
       return (0, _preact.h)("div", {
         className: "tasksidebar"
-      }, (0, _preact.h)("div", null, "Sidebar"), (0, _preact.h)("div", null, selectedTask !== null ? dag.node(selectedTask).label : "none selected"));
+      }, (0, _preact.h)("div", null, task.label), (0, _preact.h)("table", null, (0, _preact.h)("tr", null, (0, _preact.h)("td", null, "Path"), (0, _preact.h)("td", {
+        style: {
+          overflow: "ellipses"
+        }
+      }, task.target)), (0, _preact.h)("tr", null, (0, _preact.h)("td", null, "Size"), (0, _preact.h)("td", null, (0, _format.bytesToSize)(task.bytes))), (0, _preact.h)("tr", null, (0, _preact.h)("td", null, "Last Modified"), (0, _preact.h)("td", null, task.mtime ? (0, _format.duration)(new Date(task.mtime)) : "-"))));
     }
   }]);
 
@@ -30198,7 +30271,7 @@ function (_Component) {
 }(_preact.Component);
 
 exports.default = TaskSidebar;
-},{"preact":"node_modules/preact/dist/preact.umd.js","../style.less":"style.less"}],"node_modules/lodash/_listCacheClear.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.umd.js","../utils/format":"utils/format.js","../style.less":"style.less"}],"node_modules/lodash/_listCacheClear.js":[function(require,module,exports) {
 /**
  * Removes all key-value entries from the list cache.
  *
@@ -41743,7 +41816,7 @@ function createDag(tasks) {
       taskIndex: i
     }, cell, {
       width: 275,
-      height: 100
+      height: 75
     }));
   }); // create edges
 
@@ -41753,7 +41826,8 @@ function createDag(tasks) {
       graph.setEdge(nodeMap.get(dep), nodeMap.get(cell.name), {
         fromStatus: graph.node(nodeMap.get(dep)).status,
         toStatus: graph.node(nodeMap.get(cell.name)).status,
-        fromWidth: graph.node(nodeMap.get(dep)).width
+        fromWidth: graph.node(nodeMap.get(dep)).width,
+        fromHeight: graph.node(nodeMap.get(dep)).height
       });
     });
   });
@@ -41818,7 +41892,7 @@ function (_Component) {
       }, "Loading...");
       return (0, _preact.h)("div", {
         className: "taskgraph-section"
-      }, (0, _preact.h)("div", null, (0, _preact.h)(_TaskGraph.default, {
+      }, (0, _preact.h)(_TaskGraph.default, {
         dag: dag,
         tasks: tasks,
         onTaskSelect: function onTaskSelect(selectedTask) {
@@ -41831,7 +41905,7 @@ function (_Component) {
         dag: dag,
         tasks: tasks,
         selectedTask: selectedTask
-      })));
+      }));
     }
   }]);
 

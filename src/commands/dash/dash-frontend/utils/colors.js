@@ -7,7 +7,7 @@ export const colorVariable = new Map([
   ["red-dark", "#9b1617"],
 
   // status
-  ["dne", "rgb(175, 163, 163)"],
-  ["out", "#f77"],
+  ["dne", "#9b1617"],
+  ["out", "#f4362a"],
   ["up", "#595"],
 ]);

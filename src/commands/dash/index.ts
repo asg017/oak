@@ -5,6 +5,7 @@ import { oak_pulse } from "../../commands/pulse";
 import { fileArgument } from "../../cli-utils";
 import cors from "cors";
 import { networkInterfaces } from "os";
+import { getStat } from "../../utils";
 
 export default function oak_dash(args: { filename: string; port: string }) {
   const oakfilePath = fileArgument(args.filename);
@@ -17,7 +18,8 @@ export default function oak_dash(args: { filename: string; port: string }) {
     res.json({ ACK: true, pulseResult });
   });
   app.get("/api/meta", express.json(), cors(), async (req, res) => {
-    res.json({ ACK: true, oakfilePath });
+    const stat = await getStat(oakfilePath);
+    res.json({ ACK: true, oakfilePath, stat });
   });
 
   app.listen(args.port);
@@ -31,7 +33,7 @@ export default function oak_dash(args: { filename: string; port: string }) {
   // 1) specify protocol
   // 2) specifiy address
   // 3) portfinder? nah
-  const protocol = "https://";
+  const protocol = "http://";
 
   Object.keys(ifaces).forEach(function(dev) {
     ifaces[dev].forEach(function(details) {

@@ -20,7 +20,7 @@ function createDag(tasks) {
       taskIndex: i,
       ...cell,
       width: 275,
-      height: 100,
+      height: 75,
     });
   });
 
@@ -33,6 +33,7 @@ function createDag(tasks) {
         fromStatus: graph.node(nodeMap.get(dep)).status,
         toStatus: graph.node(nodeMap.get(cell.name)).status,
         fromWidth: graph.node(nodeMap.get(dep)).width,
+        fromHeight: graph.node(nodeMap.get(dep)).height,
       });
     });
   });
@@ -59,15 +60,13 @@ export default class TaskGraphSection extends Component {
       return <div className="taskgraph-section">Loading...</div>;
     return (
       <div className="taskgraph-section">
-        <div>
-          <TaskGraph
-            dag={dag}
-            tasks={tasks}
-            onTaskSelect={selectedTask => this.setState({ selectedTask })}
-            selectedTask={selectedTask}
-          />
-          <TaskSidebar dag={dag} tasks={tasks} selectedTask={selectedTask} />
-        </div>
+        <TaskGraph
+          dag={dag}
+          tasks={tasks}
+          onTaskSelect={selectedTask => this.setState({ selectedTask })}
+          selectedTask={selectedTask}
+        />
+        <TaskSidebar dag={dag} tasks={tasks} selectedTask={selectedTask} />
       </div>
     );
   }

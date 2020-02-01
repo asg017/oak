@@ -54,7 +54,7 @@ export default function TaskGraphEdge(props) {
   return (
     <g
       class="taskgraphedge"
-      transform={`translate(${edge.fromWidth / 2}, ${50})`}
+      transform={`translate(${edge.fromWidth / 2}, ${edge.fromHeight / 2})`}
     >
       <TaskGraphEdgePath edge={edge} />
       <TaskGraphEdgeFrom edge={edge} />

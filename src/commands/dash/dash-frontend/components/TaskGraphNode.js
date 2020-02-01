@@ -2,6 +2,7 @@ import { h, createRef, Component } from "preact";
 import * as d3 from "d3";
 import "../style.less";
 import { duration, bytesToSize } from "../utils/format";
+import { colorVariable } from "../utils/colors";
 
 function TaskGraphNodeContainer(props) {
   const { node, hover, selected } = props;
@@ -16,6 +17,8 @@ function TaskGraphNodeContainer(props) {
       ry={7.5}
       width={node.width}
       height={node.height}
+      stroke={colorVariable.get(node.status)}
+      strokeWidth={3}
     ></rect>
   );
 }
@@ -34,27 +37,24 @@ function TaskGraphNodeStatusBar(props) {
   );
 }
 
+function getIcon(type) {
+  switch (type) {
+    case "pipenv":
+    case "python":
+      return "python";
+    default:
+      return "shell";
+  }
+}
+
 function TaskGraphNodeType(props) {
   const { node } = props;
   return (
-    <g
-      className="taskgraphnode-type"
-      transform={`translate(${node.width - 28 - 8}, 10)`}
-    >
-      <circle
-        className={`taskgraphnode-circle`}
-        cx={11}
-        cy={11}
-        r={14}
-        fill="none"
-        stroke="red"
-      ></circle>
+    <g className="taskgraphnode-type" transform={`translate(16, 8)`}>
       <image
         width={18}
         height={18}
-        x={2}
-        y={2}
-        xlinkHref={`https://simpleicons.org/icons/docker.svg`}
+        xlinkHref={`https://simpleicons.org/icons/${getIcon(node.type)}.svg`}
       ></image>
     </g>
   );
@@ -108,7 +108,6 @@ class TaskGraphNodeName extends Component {
       text = text.slice(0, -1);
       t.text(text + "...");
       textLength = t.node().getComputedTextLength();
-      console.log(text, t.text());
     }
 
     this.setState({ nameLength: text.length });
@@ -117,7 +116,7 @@ class TaskGraphNodeName extends Component {
     const { node } = this.props;
     const { nameLength } = this.state;
     return (
-      <g class="taskgraphnode-name" transform="translate(16,20)">
+      <g class="taskgraphnode-name" transform={`translate(${16 + 28},22)`}>
         <text ref={this.textRef} alignmentBaseline="hanging">
           {`${node.label.substring(0, nameLength)}${
             node.label.length !== nameLength ? "..." : ""
