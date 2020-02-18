@@ -50,7 +50,7 @@ export const createRegularCellDefintion = (
 };
 
 async function createOakDefinition(
-  path: string, // absolote path to the oakfile
+  path: string, // absolute path to the oakfile
   source: string,
   module: any,
   decorator: Decorator,

@@ -1,0 +1,4 @@
+a_dir = task({
+  target: "a",
+  run: a_dir => command("node", ["generate_files.js", a_dir, 5, "a"])
+});

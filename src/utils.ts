@@ -8,6 +8,24 @@ import hasha from "hasha";
 export const formatPath = (s: string) => chalk.black.bgWhiteBright.bold(s);
 export const formatCellName = (s: string) => chalk.black.bgCyanBright.bold(s);
 
+type DirStat = {
+  dirStat: Stats;
+  mtimeRecursive: number;
+};
+export async function getDirectoryStat(
+  directoryPath: string
+): Promise<DirStat> {
+  stat(filename, (err: any, stat: any) => {
+    if (err) {
+      if (err.code === "ENOENT") {
+        res(null);
+        return;
+      }
+      rej(err);
+    }
+    res(stat);
+  });
+}
 export const getStat = (filename: string): Promise<Stats | null> =>
   new Promise(function(res, rej) {
     stat(filename, (err: any, stat: any) => {

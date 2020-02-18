@@ -1,7 +1,7 @@
 import Task from "../Task";
 import { formatPath, getStat } from "../utils";
 import * as log from "npmlog";
-import {join} from 'path';
+import { join } from "path";
 
 export default function(
   cellFunction: (...any) => any,
