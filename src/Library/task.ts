@@ -10,7 +10,7 @@ export default async function task(params: {
   dir?: boolean;
   watch?: WatchArg;
 }): Promise<Task> {
-  const { target, run, dir, directory } = params;
+  let { target, run, dir, directory } = params;
   directory = directory || dir;
   let { watch = [] } = params;
   watch = Array.isArray(watch) ? watch : [watch];
