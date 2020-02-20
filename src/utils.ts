@@ -1,4 +1,4 @@
-import { readFile, readFileSync, stat, Stats } from "fs";
+import { readFile, readdirSync, readFileSync, stat, Stats } from "fs-extra";
 import { parseModule } from "@observablehq/parser";
 import chalk from "chalk";
 import { dirname, join } from "path";
@@ -13,18 +13,35 @@ type DirStat = {
   mtimeRecursive: number;
 };
 export async function getDirectoryStat(
-  directoryPath: string
-): Promise<DirStat> {
-  stat(filename, (err: any, stat: any) => {
-    if (err) {
-      if (err.code === "ENOENT") {
-        res(null);
-        return;
-      }
-      rej(err);
-    }
-    res(stat);
-  });
+  directoryPath: string,
+  directoryStat: Stats
+): Promise<Stats> {
+  const filesInDirectory = readdirSync(directoryPath);
+  const fileStats: Stats[] = [];
+  await Promise.all(
+    filesInDirectory.map(filename => {
+      return new Promise((resolve, reject) => {
+        stat(filename, (err: any, stat: Stats) => {
+          if (err) {
+            // reject even if a "file not found" error is thrown
+            // since that shouldnt happen here bc were getting these
+            // files from readdirSync right before
+            reject(err);
+          }
+          fileStats.push(stat);
+          resolve(stat);
+        });
+      });
+    })
+  );
+
+  let maxMTime = -1;
+  for (let currStat of fileStats) {
+    if (currStat.mtime.getTime() > maxMTime)
+      maxMTime = currStat.mtime.getTime();
+  }
+
+  return Object.assign(directoryStat, { mtime: maxMTime });
 }
 export const getStat = (filename: string): Promise<Stats | null> =>
   new Promise(function(res, rej) {
@@ -35,6 +52,9 @@ export const getStat = (filename: string): Promise<Stats | null> =>
           return;
         }
         rej(err);
+      }
+      if (stat.isDirectory()) {
+        return getDirectoryStat(filename, stat).then(stat => res(stat));
       }
       res(stat);
     });
