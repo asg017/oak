@@ -1,4 +1,4 @@
-import * as express from "express";
+import express from "express";
 import * as http from "http";
 import * as socketio from "socket.io";
 import randomatic from "randomatic";

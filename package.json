@@ -63,6 +63,7 @@
     "yn": "^3.1.1"
   },
   "devDependencies": {
+    "@types/fs-extra": "^8.1.0",
     "@types/graphviz": "^0.0.30",
     "@types/npmlog": "^4.1.2",
     "mock-fs": "^4.10.1",

@@ -6,9 +6,12 @@ type WatchArg = string | string[];
 export default async function task(params: {
   target: string;
   run: (any) => any;
+  directory?: boolean;
+  dir?: boolean;
   watch?: WatchArg;
 }): Promise<Task> {
-  const { target, run } = params;
+  let { target, run, dir, directory } = params;
+  directory = directory || dir;
   let { watch = [] } = params;
   watch = Array.isArray(watch) ? watch : [watch];
 
