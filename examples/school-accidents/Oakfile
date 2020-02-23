@@ -1,0 +1,45 @@
+YEAR = '2019'
+CITY = 'WHITTIER'
+
+accidents_raw = task({
+  target: '',
+  run: accidents_raw => command('test', [])
+})
+
+accidents = task({
+  target: '',
+  run: accidents => command('test', [])
+})
+
+cde_schools = task({
+  target: '',
+  run: cde_schools => command('test', [])
+})
+
+schools = task({
+  target: '',
+  run: schools => command('test', [])
+})
+
+accidents_near_schools = task({
+  target: '',
+  run: accidents_near_schools => command('test', [])
+})
+
+top_schools = task({
+  target: '',
+  run: top_schools => command('test', [])
+})
+all_shapefile = task({
+  target: '',
+  run: all_shapefile => command('test', [])
+})
+top_schools_count_csv = task({
+  target: '',
+  run: top_schools_count_csv  => command('test', [])
+})
+
+top_schools_count_geojson = task({
+  target: '',
+  run: top_schools_count_geojson  => command('test', [])
+})
