@@ -19,7 +19,7 @@ const Home = () => (
       </div>
       <div>
         <section>
-          A Makefile-like runtime, built with the Observable runtime.
+          A Makefile-like runtime, built with the Observable notebook runtime.
         </section>
         <section>Reproduce your analysis. Reuse your pipelines.</section>
         <svg
