@@ -7,11 +7,11 @@ import { getBaseFileHashes } from "../../src/utils";
 const env = envFile(__dirname);
 
 function cleanUp() {
-  removeSync(env('oak_data'));
-  removeSync(env('sub/.oak'));
-  removeSync(env('sub/oak_data'));
-  removeSync(env('sub/subsub/.oak'));
-  removeSync(env('sub/subsub/oak_data'));
+  removeSync(env("oak_data"));
+  removeSync(env("sub/.oak"));
+  removeSync(env("sub/oak_data"));
+  removeSync(env("sub/subsub/.oak"));
+  removeSync(env("sub/subsub/oak_data"));
 }
 
 const top = env("Oakfile");
@@ -24,10 +24,10 @@ const outs = [
   `sub/subsub/oak_data/x`,
 
   `sub/oak_data/y`,
-  `sub/subsub/.oak/${deep}/oak_data/x`,
+  `sub/subsub/oak_data/.oak-imports/${deep}/x`,
 
   `oak_data/y`,
-  `sub/subsub/.oak/${shallow}/oak_data/x`
+  `sub/subsub/oak_data/.oak-imports/${shallow}/x`
 ];
 
 test.onFinish(async () => {
@@ -50,7 +50,7 @@ test("run-inject-deep", async t => {
   });
   const t2 = await getTree(outs, env);
   t.equal(t2.get("sub/oak_data/y").content, "B x");
-  t.equal(t2.get(`sub/subsub/.oak/${deep}/oak_data/x`).content, "B x");
+  t.equal(t2.get(`sub/subsub/oak_data/.oak-imports/${deep}/x`).content, "B x");
 
   await oak_run({
     filename: env("Oakfile"),
@@ -59,7 +59,10 @@ test("run-inject-deep", async t => {
   const t3 = await getTree(outs, env);
 
   t.equal(t3.get("oak_data/y").content, "C x");
-  t.equal(t3.get(`sub/subsub/.oak/${shallow}/oak_data/x`).content, "C x");
+  t.equal(
+    t3.get(`sub/subsub/oak_data/.oak-imports/${shallow}/x`).content,
+    "C x"
+  );
 
   t.end();
 });

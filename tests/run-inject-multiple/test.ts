@@ -7,9 +7,9 @@ import { removeSync } from "fs-extra";
 const env = envFile(__dirname);
 
 function cleanUp() {
-  removeSync(env('oak_data'));
-  removeSync(env('sub/.oak'));
-  removeSync(env('sub/oak_data'));
+  removeSync(env("oak_data"));
+  removeSync(env("sub/.oak"));
+  removeSync(env("sub/oak_data"));
 }
 
 const source = env("Oakfile");
@@ -18,8 +18,8 @@ const hash = getBaseFileHashes(source, target);
 
 const outs = [
   "sub/oak_data/x",
-  `sub/.oak/${hash(["x1"])}/oak_data/x`,
-  `sub/.oak/${hash(["x2"])}/oak_data/x`,
+  `sub/oak_data/.oak-imports/${hash(["x1"])}/x`,
+  `sub/oak_data/.oak-imports/${hash(["x2"])}/x`,
   "oak_data/y1",
   "oak_data/y2"
 ];
@@ -47,7 +47,13 @@ test("run-inject-multiple", async t => {
   t.equal(t2.get("oak_data/y1").content, "B1 x");
   t.equal(t2.get("oak_data/y2").content, "B2 x");
 
-  t.equal(t2.get(`sub/.oak/${hash(["x1"])}/oak_data/x`).content, "B1 x");
-  t.equal(t2.get(`sub/.oak/${hash(["x2"])}/oak_data/x`).content, "B2 x");
+  t.equal(
+    t2.get(`sub/oak_data/.oak-imports/${hash(["x1"])}/x`).content,
+    "B1 x"
+  );
+  t.equal(
+    t2.get(`sub/oak_data/.oak-imports/${hash(["x2"])}/x`).content,
+    "B2 x"
+  );
   t.end();
 });

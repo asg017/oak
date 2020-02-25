@@ -7,9 +7,9 @@ import { getBaseFileHashes } from "../../src/utils";
 const env = envFile(__dirname);
 
 function cleanUp() {
-  removeSync(env.data(''));
-  removeSync(env('sub/.oak'));
-  removeSync(env('sub/oak_data'));
+  removeSync(env.data(""));
+  removeSync(env("sub/.oak"));
+  removeSync(env("sub/oak_data"));
 }
 
 const source = env("Oakfile");
@@ -19,9 +19,9 @@ const outs = [
   "sub/oak_data/a",
   "sub/oak_data/b",
   "sub/oak_data/c",
-  `sub/.oak/${hash}/oak_data/a`,
-  `sub/.oak/${hash}/oak_data/b`,
-  `sub/.oak/${hash}/oak_data/c`,
+  `sub/oak_data/.oak-imports/${hash}/a`,
+  `sub/oak_data/.oak-imports/${hash}/b`,
+  `sub/oak_data/.oak-imports/${hash}/c`,
   "oak_data/d"
 ];
 
@@ -37,7 +37,7 @@ test("run-inject", async t => {
     targets: []
   });
   const t1 = await getTree(outs, env);
-  console.log(t1.keys())
+  console.log(t1.keys());
   t.equal(t1.get("sub/oak_data/a").content, "NY a");
   t.equal(t1.get("sub/oak_data/b").content, "NY b");
   t.equal(t1.get("sub/oak_data/c").content, "NY aNY b");
@@ -52,9 +52,9 @@ test("run-inject", async t => {
   t.equal(t2.get("sub/oak_data/b").content, "NY b");
   t.equal(t2.get("sub/oak_data/c").content, "NY aNY b");
 
-  t.equal(t2.get(`sub/.oak/${hash}/oak_data/a`).content, "CA a");
-  t.equal(t2.get(`sub/.oak/${hash}/oak_data/b`).content, "CA b");
-  t.equal(t2.get(`sub/.oak/${hash}/oak_data/c`).content, "CA aCA b");
+  t.equal(t2.get(`sub/oak_data/.oak-imports/${hash}/a`).content, "CA a");
+  t.equal(t2.get(`sub/oak_data/.oak-imports/${hash}/b`).content, "CA b");
+  t.equal(t2.get(`sub/oak_data/.oak-imports/${hash}/c`).content, "CA aCA b");
   t.equal(t2.get("oak_data/d").content, "CA aCA b");
   t.end();
 });
