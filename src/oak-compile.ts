@@ -98,9 +98,6 @@ async function createOakDefinition(
       ".oak-imports",
       hash(injectingSource.cells)
     );
-    if (!existsSync(baseModuleDir)) {
-      mkdirSync(baseModuleDir, { recursive: true });
-    }
   } else {
     baseModuleDir = join(dirname(path), "oak_data");
   }
