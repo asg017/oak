@@ -13,7 +13,7 @@ export default class Task {
     run: (any) => any,
     watch: string[]
   ) {
-    this.target = join("oak_data", path);
+    this.target = path;
     this.stat = stat;
     this.run = run;
     this.watch = watch;

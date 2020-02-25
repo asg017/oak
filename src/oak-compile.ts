@@ -92,13 +92,18 @@ async function createOakDefinition(
 
   if (injectingSource) {
     const hash = getBaseFileHashes(injectingSource.sourcePath, path);
-    const oakDir = join(dirname(path), ".oak", hash(injectingSource.cells));
+    const oakDir = join(
+      dirname(path),
+      ".oak",
+      hash(injectingSource.cells),
+      "oak_data"
+    );
     if (!existsSync(oakDir)) {
       mkdirSync(oakDir, { recursive: true });
     }
     baseModuleDir = oakDir;
   } else {
-    baseModuleDir = dirname(path);
+    baseModuleDir = join(dirname(path), "oak_data");
   }
 
   return async function define(runtime, observer) {
