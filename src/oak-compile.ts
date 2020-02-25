@@ -88,13 +88,17 @@ async function createOakDefinition(
 
   await Promise.all(importCellsPromises);
 
-  let hash: (cellNames: string[]) => string | null;
+  let baseModuleDir: string;
+
   if (injectingSource) {
-    hash = getBaseFileHashes(injectingSource.sourcePath, path);
+    const hash = getBaseFileHashes(injectingSource.sourcePath, path);
     const oakDir = join(dirname(path), ".oak", hash(injectingSource.cells));
     if (!existsSync(oakDir)) {
       mkdirSync(oakDir, { recursive: true });
     }
+    baseModuleDir = oakDir;
+  } else {
+    baseModuleDir = dirname(path);
   }
 
   return async function define(runtime, observer) {
@@ -153,14 +157,7 @@ async function createOakDefinition(
           cellName,
           cellReferences,
           decorator
-            ? decorator(
-                cellFunction,
-                cellName,
-                cellReferences,
-                injectingSource
-                  ? join(dirname(path), ".oak", hash(injectingSource.cells))
-                  : dirname(path)
-              )
+            ? decorator(cellFunction, cellName, cellReferences, baseModuleDir)
             : cellFunction
         );
     });
