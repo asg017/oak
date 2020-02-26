@@ -1,15 +1,29 @@
 import test from "tape";
 import { removeSync } from "fs-extra";
 import { oak_run } from "../../src/commands/run";
-import { envFile, touch , getTree} from "../utils";
+import { envFile, touch, getTree } from "../utils";
 
 const env = envFile(__dirname);
 
 function cleanUp() {
-  removeSync(env('oak_data'));
+  removeSync(env("oak_data"));
+  removeSync(env(".oak"));
 }
 
-const outs :string[]= ["a", "b", "c", "d", "e", "f", "g", "h", "x", "y", "z", "m"].map(s=>`oak_data/${s}`);
+const outs: string[] = [
+  "a",
+  "b",
+  "c",
+  "d",
+  "e",
+  "f",
+  "g",
+  "h",
+  "x",
+  "y",
+  "z",
+  "m"
+].map(s => `oak_data/${s}`);
 
 test.onFinish(() => {
   cleanUp();
@@ -33,11 +47,10 @@ test("run-targets-only", async t => {
 
   t.equal(t1.get("oak_data/a").content, "a");
   // all other recipes should not have been created
-  outs.map(out=>{
-    if(out != 'oak_data/a')
-    t.equal(t1.get(out).stat, null);
-  })
-  
+  outs.map(out => {
+    if (out != "oak_data/a") t.equal(t1.get(out).stat, null);
+  });
+
   // Tree 2: target d, so a stays same and everything else still empty
   await oak_run({ filename: env("Oakfile"), targets: ["d"] });
   const t2 = await getTree(outs, env);
@@ -67,15 +80,31 @@ test("run-targets-only", async t => {
   // Tree 5: only target h, so adfbceg built
   await oak_run({ filename: env("Oakfile"), targets: ["h"] });
   const t5 = await getTree(outs, env);
-  t.equal(t4.get("oak_data/h").stat.mtime.getTime(), t5.get("oak_data/h").stat.mtime.getTime());
+  t.equal(
+    t4.get("oak_data/h").stat.mtime.getTime(),
+    t5.get("oak_data/h").stat.mtime.getTime()
+  );
 
   // Tree 6: touch a, so dfh updates
-  await touch(env("oak_data/a"), t5.get("oak_data/h").stat.atime, t5.get("oak_data/h").stat.mtime);
+  await touch(
+    env("oak_data/a"),
+    t5.get("oak_data/h").stat.atime,
+    t5.get("oak_data/h").stat.mtime
+  );
   await oak_run({ filename: env("Oakfile"), targets: ["h"] });
   const t6 = await getTree(outs, env);
-  t.true(t5.get("oak_data/a").stat.mtime.getTime() < t6.get("oak_data/a").stat.mtime.getTime());
-  t.true(t5.get("oak_data/f").stat.mtime.getTime() < t6.get("oak_data/f").stat.mtime.getTime());
-  t.true(t5.get("oak_data/h").stat.mtime.getTime() < t6.get("oak_data/h").stat.mtime.getTime());
+  t.true(
+    t5.get("oak_data/a").stat.mtime.getTime() <
+      t6.get("oak_data/a").stat.mtime.getTime()
+  );
+  t.true(
+    t5.get("oak_data/f").stat.mtime.getTime() <
+      t6.get("oak_data/f").stat.mtime.getTime()
+  );
+  t.true(
+    t5.get("oak_data/h").stat.mtime.getTime() <
+      t6.get("oak_data/h").stat.mtime.getTime()
+  );
 
   t.end();
 });

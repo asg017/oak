@@ -1,6 +1,6 @@
-echo = async (path, content) => command("echo", ["-n", content], path);
+echo = (path, content) => command("echo", ["-n", content], path);
 
-cat = async (path, files) => command("cat", files, path);
+cat = (path, files) => command("cat", files, path);
 
 a = task({
   target: "a",

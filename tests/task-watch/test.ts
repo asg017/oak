@@ -6,9 +6,9 @@ import { envFile, open } from "../utils";
 const env = envFile(__dirname);
 
 function cleanUp() {
-  removeSync(env('oak_data'));
-  removeSync(env('build_c.js'));
-
+  removeSync(env("oak_data"));
+  removeSync(env(".oak"));
+  removeSync(env("build_c.js"));
 }
 
 const createBuildC = (contents: string) => {

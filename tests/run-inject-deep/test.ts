@@ -8,6 +8,7 @@ const env = envFile(__dirname);
 
 function cleanUp() {
   removeSync(env("oak_data"));
+  removeSync(env(".oak"));
   removeSync(env("sub/.oak"));
   removeSync(env("sub/oak_data"));
   removeSync(env("sub/subsub/.oak"));

@@ -1,6 +1,7 @@
 import { Stats, existsSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import { getStat } from "./utils";
+import { Execution } from "./Execution";
 
 export default class Task {
   target: string;
@@ -10,7 +11,7 @@ export default class Task {
   constructor(
     path: string,
     stat: Stats | null,
-    run: (any) => any,
+    run: (any) => Execution,
     watch: string[]
   ) {
     this.target = path;
@@ -25,10 +26,10 @@ export default class Task {
     this.target = this.absPath(newBasePath);
     this.stat = await getStat(this.target);
   }
-  async runTask() {
+  runTask(): Execution {
     if (!existsSync(dirname(this.target))) {
       mkdirSync(dirname(this.target), { recursive: true });
     }
-    return await this.run(this.target);
+    return this.run(this.target);
   }
 }

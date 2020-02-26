@@ -1,13 +1,14 @@
 import test from "tape";
-import {removeSync} from 'fs-extra';
+import { removeSync } from "fs-extra";
 import { oak_run } from "../../src/commands/run";
 import { envFile, open } from "../utils";
 
 const env = envFile(__dirname);
 
-function cleanUp(){
-  removeSync(env.data(''));
-  removeSync(env('sub/oak_data'));
+function cleanUp() {
+  removeSync(env.data(""));
+  removeSync(env(".oak"));
+  removeSync(env("sub/oak_data"));
 }
 
 test.onFinish(() => {

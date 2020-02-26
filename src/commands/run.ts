@@ -1,12 +1,13 @@
 import { Runtime } from "@observablehq/runtime";
 import { Library } from "../Library";
 import { OakCompiler } from "../oak-compile";
-import { formatCellName, formatPath } from "../utils";
-import { dirname } from "path";
+import { formatCellName, formatPath, hashFile, hashString } from "../utils";
+import { dirname, join } from "path";
 import { EventEmitter } from "events";
 import { default as runCellDecorator } from "../decorators/run";
 import * as log from "npmlog";
 import { fileArgument } from "../cli-utils";
+import { writeFileSync, mkdirsSync } from "fs-extra";
 
 export async function oak_run(args: {
   filename: string;
@@ -17,8 +18,27 @@ export async function oak_run(args: {
 
   const runtime = new Runtime(new Library());
   const compiler = new OakCompiler();
-  const define = await compiler.file(oakfilePath, runCellDecorator, null);
+  const oakfileHash = hashFile(oakfilePath);
+  const runHash = hashString(`${new Date()}${Math.random()}`);
 
+  const runDirectory = join(
+    dirname(oakfilePath),
+    ".oak",
+    "oakfiles",
+    oakfileHash,
+    "runs",
+    runHash
+  );
+  mkdirsSync(runDirectory);
+
+  const logDirectory = join(runDirectory, "logs");
+  const define = await compiler.file(
+    oakfilePath,
+    runCellDecorator(logDirectory),
+    null
+  );
+
+  const events = [];
   const origDir = process.cwd();
   process.chdir(dirname(oakfilePath));
 
@@ -43,12 +63,15 @@ export async function oak_run(args: {
       cells.add(name);
       return {
         pending() {
+          events.push({ type: "pending", name, time: new Date().getTime() });
           ee.emit("pending", name);
         },
         fulfilled(value) {
+          events.push({ type: "fulfilled", name, time: new Date().getTime() });
           ee.emit("fulfilled", name, value);
         },
         rejected(error) {
+          events.push({ type: "rejected", name, time: new Date().getTime() });
           ee.emit("rejected", name, error);
         },
       };
@@ -58,4 +81,6 @@ export async function oak_run(args: {
   await Promise.all(Array.from(cells).map(cell => m1.value(cell)));
   runtime.dispose();
   process.chdir(origDir);
+
+  writeFileSync(join(runDirectory, "events.json"), events);
 }

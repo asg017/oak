@@ -124,6 +124,14 @@ export const getBaseFileHashes = (
   };
 };
 
+export const hashFile = (filePath: string): string => {
+  return hasha([readFileSync(filePath, "utf8")], { algorithm: "sha1" });
+};
+
+export const hashString = (s: string): string => {
+  return hasha([s], { algorithm: "sha1" });
+};
+
 export function duration(referenceDate: Date, fromDate?: Date): string {
   if (!fromDate) fromDate = new Date();
   const ms = fromDate.getTime() - referenceDate.getTime();
