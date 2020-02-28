@@ -1,45 +1,59 @@
-YEAR = '2019'
-CITY = 'WHITTIER'
+YEAR = "2019";
+CITY = "WHITTIER";
 
 accidents_raw = task({
-  target: '',
-  run: accidents_raw => command('test', [])
-})
+  target: "",
+  run: accidents_raw => command("test", [])
+});
 
 accidents = task({
-  target: '',
-  run: accidents => command('test', [])
-})
+  target: "",
+  run: accidents => command("test", [])
+});
 
 cde_schools = task({
-  target: '',
-  run: cde_schools => command('test', [])
-})
+  target: "cde_schools.txt",
+  run: cde_schools =>
+    command("wget", [
+      "-O",
+      cde_schools,
+      "https://www.cde.ca.gov/schooldirectory/report?rid=dl1&tp=txt"
+    ])
+});
 
 schools = task({
-  target: '',
-  run: schools => command('test', [])
-})
+  target: "schools.csv",
+  run: schools =>
+    command("pipenv", [
+      "run",
+      "python",
+      "clean_cde.py",
+      "--input",
+      cde_schools,
+      "--output",
+      schools
+    ])
+});
 
 accidents_near_schools = task({
-  target: '',
-  run: accidents_near_schools => command('test', [])
-})
+  target: "",
+  run: accidents_near_schools => command("test", [])
+});
 
 top_schools = task({
-  target: '',
-  run: top_schools => command('test', [])
-})
+  target: "",
+  run: top_schools => command("test", [])
+});
 all_shapefile = task({
-  target: '',
-  run: all_shapefile => command('test', [])
-})
+  target: "",
+  run: all_shapefile => command("test", [])
+});
 top_schools_count_csv = task({
-  target: '',
-  run: top_schools_count_csv  => command('test', [])
-})
+  target: "",
+  run: top_schools_count_csv => command("test", [])
+});
 
 top_schools_count_geojson = task({
-  target: '',
-  run: top_schools_count_geojson  => command('test', [])
-})
+  target: "",
+  run: top_schools_count_geojson => command("test", [])
+});
