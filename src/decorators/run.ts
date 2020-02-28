@@ -2,7 +2,12 @@ import Task from "../Task";
 import { formatPath, getStat } from "../utils";
 import * as log from "npmlog";
 import { join } from "path";
-import { createWriteStream, createFileSync } from "fs-extra";
+import {
+  createWriteStream,
+  createFileSync,
+  createReadStream,
+  readFileSync,
+} from "fs-extra";
 
 async function runTask(cell, logFile: string): Promise<number> {
   const {
@@ -29,10 +34,16 @@ async function runTask(cell, logFile: string): Promise<number> {
 
   return new Promise((resolve, reject) => {
     childProcess.on("error", err => {
+      logStream.end();
       reject(err);
     });
     childProcess.on("exit", code => {
-      if (code !== 0) return reject(code);
+      logStream.end();
+      if (code !== 0) {
+        // TODO lets log with chunks
+        console.log(readFileSync(logFile, { encoding: "utf8" }));
+        return reject({ code });
+      }
       resolve(code);
     });
   });
