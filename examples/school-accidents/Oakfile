@@ -2,8 +2,13 @@ YEAR = "2019";
 CITY = "WHITTIER";
 
 accidents_raw = task({
-  target: "",
-  run: accidents_raw => command("test", [])
+  target: "accidents_raw.csv",
+  run: accidents_raw =>
+    command("wget", [
+      "-O",
+      accidents_raw,
+      "https://data.lacity.org/api/views/d5tf-ez2w/rows.csv?accessType=DOWNLOAD"
+    ])
 });
 
 accidents = task({
@@ -32,7 +37,8 @@ schools = task({
       cde_schools,
       "--output",
       schools
-    ])
+    ]),
+  watch: ["clean_cde.py"]
 });
 
 accidents_near_schools = task({

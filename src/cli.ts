@@ -169,6 +169,7 @@ class StatusAction extends CommandLineAction {
 class RunAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
   private _targets: CommandLineStringListParameter;
+  private _force: CommandLineStringListParameter;
 
   public constructor() {
     super({
@@ -178,10 +179,13 @@ class RunAction extends CommandLineAction {
     });
   }
   protected async onExecute(): Promise<void> {
-    await oak_run({
-      filename: this._filename.value,
-      targets: this._targets.values,
-    });
+    await oak_run(
+      {
+        filename: this._filename.value,
+        targets: this._targets.values,
+      },
+      this._force.values
+    );
     return;
   }
 
@@ -198,6 +202,11 @@ class RunAction extends CommandLineAction {
       parameterLongName: "--targets",
       parameterShortName: "-t",
       description: "List of target names to resolve.",
+    });
+    this._force = this.defineStringListParameter({
+      argumentName: "TASK",
+      parameterLongName: "--force",
+      description: "Force an Oakfile run, ignoring target mtime.",
     });
   }
 }

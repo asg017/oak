@@ -2,12 +2,7 @@ import Task from "../Task";
 import { formatPath, getStat } from "../utils";
 import * as log from "npmlog";
 import { join } from "path";
-import {
-  createWriteStream,
-  createFileSync,
-  createReadStream,
-  readFileSync,
-} from "fs-extra";
+import { createWriteStream, createFileSync, readFileSync } from "fs-extra";
 
 async function runTask(cell, logFile: string): Promise<number> {
   const {
@@ -49,7 +44,7 @@ async function runTask(cell, logFile: string): Promise<number> {
   });
 }
 
-export default function(logDirectory) {
+export default function(logDirectory: string, forceSet: Set<String>) {
   return function(
     cellFunction: (...any) => any,
     cellName: string,
@@ -68,6 +63,18 @@ export default function(logDirectory) {
 
       if (currCell instanceof Task) {
         await currCell.updateBasePath(baseModuleDir);
+        const logFile = join(logDirectory, cellName);
+
+        // if we're just forcing this cell, then just do it.
+        if (forceSet.has(cellName)) {
+          log.info(
+            "oak-run decorator",
+            `${formatPath(currCell.target)} -Forcing task run...`
+          );
+          await runTask(currCell, logFile);
+          currCell.stat = await getStat(currCell.target);
+          return currCell;
+        }
 
         const watchFiles = currCell.watch;
         const watchStats = await Promise.all(
@@ -83,7 +90,6 @@ export default function(logDirectory) {
             "oak-run decorator",
             `${formatPath(currCell.target)} - Doesn't exist - running recipe...`
           );
-          const logFile = join(logDirectory, cellName);
           await runTask(currCell, logFile);
           currCell.stat = await getStat(currCell.target);
           return currCell;
@@ -117,7 +123,6 @@ export default function(logDirectory) {
                 .join(",")}`
             );
 
-          const logFile = join(logDirectory, cellName);
           await runTask(currCell, logFile);
           currCell.stat = await getStat(currCell.target);
           return currCell;

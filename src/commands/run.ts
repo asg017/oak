@@ -9,11 +9,15 @@ import * as log from "npmlog";
 import { fileArgument } from "../cli-utils";
 import { writeFileSync, mkdirsSync } from "fs-extra";
 
-export async function oak_run(args: {
-  filename: string;
-  targets: readonly string[];
-}): Promise<void> {
+export async function oak_run(
+  args: {
+    filename: string;
+    targets: readonly string[];
+  },
+  force: readonly string[] = []
+): Promise<void> {
   const targetSet = new Set(args.targets);
+  const forceSet = new Set(force);
   const oakfilePath = fileArgument(args.filename);
 
   const runtime = new Runtime(new Library());
@@ -34,7 +38,7 @@ export async function oak_run(args: {
   const logDirectory = join(runDirectory, "logs");
   const define = await compiler.file(
     oakfilePath,
-    runCellDecorator(logDirectory),
+    runCellDecorator(logDirectory, forceSet),
     null
   );
 

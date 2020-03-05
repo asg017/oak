@@ -1,4 +1,3 @@
-import pdb
 import argparse
 from os import path
 import pandas as pd
@@ -62,4 +61,5 @@ cleaned_df = trimmed_df.rename(columns={
     'GSserved': "grades_served",
 })
 
-cleaned_df.to_csv(OUTPUT_FILE, encoding="utf-8", index=False)
+filtered_df = cleaned_df[cleaned_df['county'] == 'Los Angeles']
+filtered_df.to_csv(OUTPUT_FILE, encoding="utf-8", index=False)

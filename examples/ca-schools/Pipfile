@@ -8,7 +8,6 @@ verify_ssl = true
 [packages]
 geopandas = "*"
 shapely = "*"
-pandas = "*"
 
 [requires]
 python_version = "3.6"
