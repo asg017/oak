@@ -1,7 +1,7 @@
 import express from "express";
 import { createReadStream } from "fs";
 import { join } from "path";
-import { oak_pulse } from "../../commands/pulse";
+import { getPulse } from "../../commands/pulse";
 import { fileArgument } from "../../cli-utils";
 import cors from "cors";
 import { networkInterfaces } from "os";
@@ -14,7 +14,7 @@ export default function oak_dash(args: { filename: string; port: string }) {
     createReadStream(oakfilePath).pipe(res);
   });
   app.get("/api/pulse", express.json(), cors(), async (req, res) => {
-    const pulseResult = await oak_pulse({ filename: oakfilePath });
+    const pulseResult = await getPulse(oakfilePath);
     res.json({ ACK: true, pulseResult });
   });
   app.get("/api/meta", express.json(), cors(), async (req, res) => {

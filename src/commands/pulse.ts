@@ -4,6 +4,7 @@ import { Library } from "../Library";
 import { default as pulseCellDecorator } from "../decorators/pulse";
 import * as log from "npmlog";
 import { fileArgument } from "../cli-utils";
+import { bytesToSize, duration } from "../utils";
 
 type PulseTaskStatus = "dne" | "up" | "out";
 
@@ -19,11 +20,8 @@ type PulseTaskResult = {
 type PulseResults = {
   tasks: PulseTaskResult[];
 };
-export async function oak_pulse(args: {
-  filename: string;
-}): Promise<PulseResults> {
-  const oakfilePath = fileArgument(args.filename);
 
+export async function getPulse(oakfilePath: string): Promise<PulseResults> {
   const runtime = new Runtime(
     Object.assign(new Library(), {
       shell: () => () => "shell",
@@ -51,4 +49,16 @@ export async function oak_pulse(args: {
   await Promise.all(Array.from(cells).map(cell => m1.value(cell)));
   runtime.dispose();
   return { tasks };
+}
+
+export async function oak_pulse(args: { filename: string }): Promise<void> {
+  const oakfilePath = fileArgument(args.filename);
+  const pulseResult = await getPulse(oakfilePath);
+  for (let task of pulseResult.tasks) {
+    console.log(
+      `${task.name} - ${task.status} - ${bytesToSize(task.bytes)} - ${duration(
+        new Date(task.mtime)
+      )}`
+    );
+  }
 }

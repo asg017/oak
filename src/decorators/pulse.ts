@@ -27,6 +27,8 @@ export default function(
         })
       );
 
+      // assuming that the library passed into this runtime
+      // isnt running the tasks, but actually returning the "type" of tasks
       const taskType = await currCell.runTask();
       if (currCell.stat === null) {
         return {
