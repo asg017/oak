@@ -1,6 +1,7 @@
 import Task from "../Task";
-import { getStat } from "../utils";
-import * as log from "npmlog";
+import pino from "pino";
+
+const logger = pino();
 
 export default function(
   cellFunction: (...args: any) => any,
@@ -18,7 +19,7 @@ export default function(
     let currCell = await cellFunction(...dependencies);
 
     if (currCell instanceof Task) {
-      console.log(
+      logger.log(
         `${cellName} - [${taskDependents
           .map(t => cellReferences[t])
           .join(", ")}]`

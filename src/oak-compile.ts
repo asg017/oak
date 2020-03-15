@@ -1,15 +1,12 @@
 // Modified https://github.com/asg017/unofficial-observablehq-compiler/blob/master/src/compiler.js
 
 import { parseOakfile, getBaseFileHashes } from "./utils";
-import { dirname, join, resolve } from "path";
-import { existsSync, mkdirSync } from "fs";
+import { dirname, join } from "path";
 import {
   InjectingSource,
   ObservableCell,
-  DefineFunctionType,
   Decorator,
 } from "./oak-compile-types";
-import * as log from "npmlog";
 
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 const GeneratorFunction = Object.getPrototypeOf(function*() {}).constructor;
@@ -173,7 +170,6 @@ export class OakCompiler {
     decorator?: Decorator,
     injectingSource?: InjectingSource
   ): Promise<(runtime: any, observer: any) => any> {
-    log.info("file", path, injectingSource);
     const parseResults = await parseOakfile(path).catch(err => {
       throw Error(`Error parsing Oakfile at ${path} ${err}`);
     });
