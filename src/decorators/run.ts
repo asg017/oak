@@ -19,14 +19,14 @@ async function runTask(cell, logFile: string): Promise<number> {
   const logStream = createWriteStream(logFile);
 
   childProcess.stdout.on("data", chunk => {
-    logStream.write(chunk);
+    if (logStream.writable) logStream.write(chunk);
     if (taskOutStream && taskConfig.stdout) {
       taskOutStream.write(chunk);
     }
   });
 
   childProcess.stderr.on("data", chunk => {
-    logStream.write(chunk);
+    if (logStream.writable) logStream.write(chunk);
     if (taskOutStream && taskConfig.stderr) {
       logStream.write(chunk);
     }
