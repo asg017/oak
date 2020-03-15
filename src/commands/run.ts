@@ -9,12 +9,12 @@ import pino from "pino";
 import { fileArgument } from "../cli-utils";
 import { writeFileSync, mkdirsSync } from "fs-extra";
 
-const logger = pino();
-
 export async function oak_run(args: {
   filename: string;
   targets: readonly string[];
 }): Promise<void> {
+  const logger = pino({ name: "oak run", prettyPrint: true });
+
   const targetSet = new Set(args.targets);
   const oakfilePath = fileArgument(args.filename);
 
@@ -36,7 +36,7 @@ export async function oak_run(args: {
   const logDirectory = join(runDirectory, "logs");
   const define = await compiler.file(
     oakfilePath,
-    runCellDecorator(logDirectory),
+    runCellDecorator(logger, logDirectory),
     null
   );
 
@@ -55,8 +55,8 @@ export async function oak_run(args: {
     }`
   );
   const ee = new EventEmitter();
-  ee.on("pending", name => logger.info("pending", name));
-  ee.on("fulfilled", name => logger.info("fulfilled", name));
+  ee.on("pending", name => logger.debug("pending", name));
+  ee.on("fulfilled", name => logger.debug("fulfilled", name));
   ee.on("rejected", name => logger.error("rejected", name));
 
   const cells: Set<string> = new Set();

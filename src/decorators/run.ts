@@ -4,8 +4,6 @@ import pino from "pino";
 import { join } from "path";
 import { createWriteStream, createFileSync, readFileSync } from "fs-extra";
 
-const logger = pino();
-
 async function runTask(cell, logFile: string): Promise<number> {
   const {
     process: childProcess,
@@ -46,7 +44,7 @@ async function runTask(cell, logFile: string): Promise<number> {
   });
 }
 
-export default function(logDirectory) {
+export default function(logger: pino.Logger, logDirectory: string) {
   return function(
     cellFunction: (...any) => any,
     cellName: string,
