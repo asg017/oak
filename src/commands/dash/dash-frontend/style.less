@@ -1,25 +1,90 @@
-html,
+@import "defintions.less";
+
 body {
-  font: 14px/1.21 "Helvetica Neue", arial, sans-serif;
-  font-weight: 400;
+  padding: 0;
+  margin: 0;
 }
 
-h1 {
-  text-align: center;
+#main {
+  background-color: #f5f5f5;
+}
+.header {
+  display: grid;
+  grid-template-columns: 150px auto auto;
+  background-color: #ddd;
+  &-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+  }
+  &-path {
+    font-family: "Roboto Mono";
+    color: @blue-dark;
+    background-color: #c5c5c5;
+    border-radius: 4px;
+    padding: 3px;
+    font-weight: 600;
+    vertical-align: middle;
+  }
+  &-timestamp {
+    text-align: right;
+  }
+}
+.taskgraph-section {
+  display: grid;
+  grid-template-columns: 700px auto;
 }
 
-.OakfileCode {
-  background-color: #aaa;
-  padding: 1rem 2rem;
-  border-radius: 0.25rem;
+.taskgraph {
+  border: 1px solid #999;
+  border-radius: .5rem;
+  background-color: @blue-light;
+  overflow: none;
 }
 
-.socket-status {
-  position: fixed;
-  background-color: white;
-  bottom: 0;
-  right: 0;
-  width: 100px;
-  height: 24px;
-  border: 1px solid black;
+.taskgraph > svg {
+  width: 100%;
+  height: 100%;
+}
+
+.taskgraphnode {
+  cursor: pointer;
+
+  &-name {
+    font-size: 1.2rem;
+    font-weight: 650;
+  }
+  &-container {
+    fill: #ddd;
+    &--hover {
+      // fill: @blue-light;
+    }
+    &--selected {
+      fill: @gold;
+    }
+  }
+  &-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+  &-status-label {
+    font-size: .94rem;
+    font-style: italic;
+  }
+  &-status-bar {
+    &-dne {fill: @dne;}
+    &-out {fill: @out;}
+    &-up {fill: @up;}
+  }
+  &-target-size {
+    text-anchor: end;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+}
+
+.taskgraphedge {
+  &-path {
+    fill: none;
+    stroke-width: 2px;
+  }
 }

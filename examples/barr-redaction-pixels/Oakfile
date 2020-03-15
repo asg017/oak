@@ -1,0 +1,23 @@
+report_pdf = task({
+  target: 'report.pdf',
+  run: report_pdf => command('curl', [
+    '-o', report_pdf,
+    'https://assets.documentcloud.org/documents/5955118/The-Mueller-Report.pdf'
+  ])
+})
+
+pages_dir = task({
+  target: 'pages',
+  run: pages_dir => command('pdftoppm', [
+    '-png',
+    '-f', 1,
+    report_pdf,
+    pages_dir
+  ])
+})
+
+histogram_dir = task({
+  target: 'histograms',
+  run: hisogram_dir => shell({path: '/bin/bash'})
+  ``
+  

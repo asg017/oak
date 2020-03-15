@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { oak_run } from "./commands/run";
-import { oak_status } from "./commands/status";
+import { oak_pulse } from "./commands/pulse";
 import { oak_print } from "./commands/print";
 import { oak_init } from "./commands/init";
 import oak_dash from "./commands/dash";
@@ -140,18 +140,18 @@ class PrintAction extends CommandLineAction {
   }
 }
 
-class StatusAction extends CommandLineAction {
+class PulseAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
 
   public constructor() {
     super({
-      actionName: "status",
-      summary: "Check the status of an Oakfile.",
+      actionName: "pulse",
+      summary: "Take a pulse of an oak project.",
       documentation: "TODO",
     });
   }
   protected async onExecute(): Promise<void> {
-    await oak_status({
+    await oak_pulse({
       filename: this._filename.value,
     });
   }
@@ -226,7 +226,7 @@ class OakCommandLine extends CommandLineParser {
     this.addAction(new CleanAction());
     this.addAction(new DashAction());
     this.addAction(new PrintAction());
-    this.addAction(new StatusAction());
+    this.addAction(new PulseAction());
     this.addAction(new RunAction());
     this.addAction(new InitAction());
     this.addAction(new OakVersionAction());

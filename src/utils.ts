@@ -132,6 +132,14 @@ export const hashString = (s: string): string => {
   return hasha([s], { algorithm: "sha1" });
 };
 
+export function bytesToSize(bytes) {
+  var sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+  if (bytes == 0) return "0 B";
+  var i = Math.floor(Math.log(bytes) / Math.log(1024));
+  if (i == 0) return bytes + " " + sizes[i];
+  return (bytes / Math.pow(1024, i)).toFixed(1) + " " + sizes[i];
+}
+
 export function duration(referenceDate: Date, fromDate?: Date): string {
   if (!fromDate) fromDate = new Date();
   const ms = fromDate.getTime() - referenceDate.getTime();

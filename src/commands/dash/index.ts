@@ -1,68 +1,45 @@
 import express from "express";
-import * as http from "http";
-import * as socketio from "socket.io";
-import randomatic from "randomatic";
-import * as socketioJwt from "socketio-jwt";
-import * as jwt from "jsonwebtoken";
-import { watch } from "fs";
-import { parseOakfile, ParseOakfileResults } from "../../utils";
+import { createReadStream } from "fs";
 import { join } from "path";
-import { getDot } from "../print";
-
-const SECRET = randomatic("Aa0", 24);
-
-type SocketOakfileType = {
-  oakfile: ParseOakfileResults;
-  dot: string;
-};
-
-const emitOakfile = (socket: any, socketOakfile: SocketOakfileType) => {
-  socket.emit("Oakfile", socketOakfile);
-};
-
-const watchOakfile = async (socket: socketio.Socket, path: string) => {
-  const initialOakfile = await parseOakfile(path);
-  const dot = getDot(initialOakfile);
-  emitOakfile(socket, { oakfile: initialOakfile, dot: dot.to_dot() });
-  watch(path, async (event, filename) => {
-    console.log(event);
-    const oakfile = await parseOakfile(path);
-    const dot = getDot(initialOakfile);
-    emitOakfile(socket, { oakfile, dot: dot.to_dot() });
-  });
-};
+import { getPulse } from "../../commands/pulse";
+import { fileArgument } from "../../cli-utils";
+import cors from "cors";
+import { networkInterfaces } from "os";
+import { getStat } from "../../utils";
 
 export default function oak_dash(args: { filename: string; port: string }) {
+  const oakfilePath = fileArgument(args.filename);
   const app = express();
-  const server = new http.Server(app);
-  const io = socketio(server);
-  server.listen(args.port);
+  app.get("/api/oakfile", (req, res) => {
+    createReadStream(oakfilePath).pipe(res);
+  });
+  app.get("/api/pulse", express.json(), cors(), async (req, res) => {
+    const pulseResult = await getPulse(oakfilePath);
+    res.json({ ACK: true, pulseResult });
+  });
+  app.get("/api/meta", express.json(), cors(), async (req, res) => {
+    const stat = await getStat(oakfilePath);
+    res.json({ ACK: true, oakfilePath, stat });
+  });
 
-  const token = jwt.sign(
-    {
-      data: "url",
-    },
-    SECRET,
-    { expiresIn: "10hr" }
-  );
-  const encodedToken = new Buffer(token).toString("base64");
-  console.log(
-    `Listening at http://localhost:${args.port}?token=${encodedToken}`
-  );
+  app.listen(args.port);
+
   app.use(express.static(join(__dirname, "dash-frontend", "dist")));
+  const ifaces = networkInterfaces();
 
-  io.on(
-    "connection",
-    socketioJwt.authorize({
-      secret: SECRET,
-      timeout: 2000,
-    })
-  ).on("authenticated", function(socket) {
-    watchOakfile(socket, args.filename);
-    console.log("authenticated");
-    socket.emit("news", { hello: "world" });
-    socket.on("my other event", function(data) {
-      console.log(data);
+  console.log(`Listening on:`);
+
+  // TODO
+  // 1) specify protocol
+  // 2) specifiy address
+  // 3) portfinder? nah
+  const protocol = "http://";
+
+  Object.keys(ifaces).forEach(function(dev) {
+    ifaces[dev].forEach(function(details) {
+      if (details.family === "IPv4") {
+        console.info("  " + protocol + details.address + ":" + args.port);
+      }
     });
   });
 }
