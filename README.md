@@ -1,16 +1,16 @@
 # oak
 
-A CLI tool for reproducible, customizable data workflows.
+A framework for reproducible, reusable data workflows.
+
 
 **Note** - `oak` is still under development - Watch this repo or [follow me on twitter](https://twitter.com/agarcia_me) to keep updated!
 
-**Another Note** - this readme will be changing A LOT in the next few weeks
 
 ## What is `oak`?
 
 `oak` is a CLI tool for small, static, data analysis projects.
 
-`oak` works well with projects that have a chain (or tree) of scripts that process files. For example, you may have a series of python/R/shell scripts that all take in a file as an input, processes it in some way, then outputs a new file (which then is used as an input to the next script). This is an ETL (Extract, Transform, Load) workflow - and `oak` makes it easier to define, develop, and re-use these workflows.
+`oak` works well with projects that have a chain (or tree) of scripts that process files. For example, you may have a series of python/R/shell scripts that take in files as an input, processes them in some way, then outputs new files. This is an ETL (Extract, Transform, Load) workflow - and `oak` makes it easier to define, develop, and re-use these workflows.
 
 ## Benefits of `oak`
 
@@ -25,27 +25,27 @@ With many data projects, it can be unclear on how to start - which script do you
 While `oak` is written in TypeScript, you can use the tool to kickoff any process in any language - for example, this is a sample `Oakfile` that uses python, R, and nodeJS:
 
 ```javascript
-scraped_data = recipe({
-  path: "scraped_data.csv",
- scraped_data => shell`python scrape.py > ${scraped_data}`
+scraped_data = task({
+  target: "scraped_data.csv",
+  run: scraped_data => shell`python scrape.py > ${scraped_data}`
 });
 
-analyzed_data = recipe({
-  path: "analysis.csv",
- analyzed_data =>
+analyzed_data = task({
+  target: "analysis.csv",
+  run: analyzed_data =>
     shell`Rscript analysis.R --input=${scraped_data} > ${analyzed_data}`
 });
 
 graphic = recipe({
-  path: "graphic.jpg",
- graphic =>
+  target: "graphic.jpg",
+  graphic => 
     shell`node generate-graphic.js --input=${analyzed_data} > ${graphic}`
 });
 ```
 
-In this `Oakfile`, the script `scrape.py` does some form of web-scraping, and then formats it as CSV and is outputed into `scraped_data.csv`. Then, `analysis.R` is ran, using `scraped_data.csv` as input, and outputs into `analysis.csv`. Finally, `generate-graphic.js` is called, taking `analysis.csv` as input and outputs into `graphic.jpg`.
+In this `Oakfile`, the script `scrape.py` scrapes some website, and then formats it as CSV and is outputed into `scraped_data.csv`. Then, `analysis.R` is ran, using `scraped_data.csv` as input, and outputs into `analysis.csv`. Finally, `generate-graphic.js` is called, taking `analysis.csv` as input and outputs into `graphic.jpg`.
 
-In order to do all the above, all you would have to run is `oak static`. Assuming your code works and all dependencies are installed, it would just work!
+In order to do all the above, all you would have to run is `oak run`. All the scripts will be run in the correct order with the correct parameters, and you will have a `scraped_data.csv`, `analysis.csv`, and `graphic.jpg` generated inside of the `oak_data/` directory! 
 
 You're able to call any language, tool, or program that's accessible through the command line - which is basically everything!
 
@@ -100,7 +100,7 @@ npm install -g @alex.garcia/oak
 ## Usage
 
 - `oak init` - create `Oakfile` in current directory
-- `oak static` - run the `Oakfile`, run recipes that are out of date
+- `oak run` - run the `Oakfile`, run recipes that are out of date
 - `oak print` - Print out dependencies of recipes in `Oakfile`. Can also use `--output dot` for printing graphviz dot notation
 
 ## `oak` Behind the scenes
