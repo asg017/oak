@@ -1,6 +1,3 @@
-import Layout from '../components/DocsLayout.jsx'
-export default Layout
-
 # Samples
 
 

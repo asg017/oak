@@ -1,0 +1,8 @@
+- [Documentation Home](/)
+- [Introduction](/introduction/README.md)
+- [Reference](/reference/README.md)
+    - [CLI Reference](/reference/cli.md)
+    - [Oakfile Reference](/reference/oakfile.md)
+    - [Standard Library Reference](/reference/stdlib.md)
+- [Guides](/guide/README.md)
+- [Samples](/samples/README.md)

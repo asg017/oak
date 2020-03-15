@@ -1,6 +1,3 @@
-import Layout from '../../components/DocsLayout.jsx'
-export default Layout
-
 # API Reference
 
 ## [Command Line Reference](/reference/cli)
