@@ -107,11 +107,6 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-12.12.29.tgz#46275f028b4e463b9ac5fefc1d08bc66cc193f25"
   integrity sha512-yo8Qz0ygADGFptISDj3pOC9wXfln/5pQaN/ysDIzOaAWXt73cNHmtEC8zSO2Y+kse/txmwIAJzkYZ5fooaS5DQ==
 
-"@types/npmlog@^4.1.2":
-  version "4.1.2"
-  resolved "https://registry.yarnpkg.com/@types/npmlog/-/npmlog-4.1.2.tgz#d070fe6a6b78755d1092a3dc492d34c3d8f871c4"
-  integrity sha512-4QQmOF5KlwfxJ5IGXFIudkeLCdMABz03RcUXu+LCb24zmln8QW6aDjuGl4d4XPVLf2j+FnjelHTP7dvceAFbhA==
-
 "@types/pino-std-serializers@*":
   version "2.4.0"
   resolved "https://registry.yarnpkg.com/@types/pino-std-serializers/-/pino-std-serializers-2.4.0.tgz#8cad99175cb79c2448f7455a2d32fb3fde29579c"
