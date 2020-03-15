@@ -2,7 +2,9 @@ import { execFile } from "child_process";
 import Task from "../Task";
 import { Execution } from "../Execution";
 import { createWriteStream } from "fs";
-import * as log from "npmlog";
+import pino from "pino";
+
+const logger = pino();
 
 type CommandConfig = {
   stdout: boolean;
@@ -23,7 +25,7 @@ export default function(
   outPath = outPath && (outPath instanceof Task ? outPath.target : outPath);
   const outStream = outPath && createWriteStream(outPath);
 
-  log.info(
+  logger.info(
     "oak-stdlib command",
     `execFile(${file}, ${JSON.stringify(cleanedArgs)})`
   );

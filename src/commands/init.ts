@@ -1,7 +1,9 @@
 import { getStat } from "../utils";
 import { openSync, closeSync } from "fs";
 import { join } from "path";
-import * as log from "npmlog";
+import pino from "pino";
+
+const logger = pino();
 
 export async function oak_init(): Promise<void> {
   const possiblePreexistingOakfiles = await Promise.all([
@@ -16,6 +18,6 @@ export async function oak_init(): Promise<void> {
   }
   const newOakfilePath = join(process.cwd(), "Oakfile");
   closeSync(openSync(newOakfilePath, "w"));
-  log.info("oak-init", `Created an empty Oakfile`);
+  logger.info("oak-init", `Created an empty Oakfile`);
   return;
 }

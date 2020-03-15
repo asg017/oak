@@ -5,9 +5,11 @@ import { formatCellName, formatPath, hashFile, hashString } from "../utils";
 import { dirname, join } from "path";
 import { EventEmitter } from "events";
 import { default as runCellDecorator } from "../decorators/run";
-import * as log from "npmlog";
+import pino from "pino";
 import { fileArgument } from "../cli-utils";
 import { writeFileSync, mkdirsSync } from "fs-extra";
+
+const logger = pino();
 
 export async function oak_run(args: {
   filename: string;
@@ -42,7 +44,7 @@ export async function oak_run(args: {
   const origDir = process.cwd();
   process.chdir(dirname(oakfilePath));
 
-  log.info(
+  logger.info(
     "oak-run",
     `Oak: ${formatPath(oakfilePath)}${
       targetSet.size > 0
@@ -53,9 +55,9 @@ export async function oak_run(args: {
     }`
   );
   const ee = new EventEmitter();
-  ee.on("pending", name => log.verbose("pending", name));
-  ee.on("fulfilled", name => log.verbose("fulfilled", name));
-  ee.on("rejected", name => log.error("rejected", name));
+  ee.on("pending", name => logger.info("pending", name));
+  ee.on("fulfilled", name => logger.info("fulfilled", name));
+  ee.on("rejected", name => logger.error("rejected", name));
 
   const cells: Set<string> = new Set();
   const m1 = runtime.module(define, name => {

@@ -2,9 +2,11 @@ import { Runtime } from "@observablehq/runtime";
 import { OakCompiler } from "../oak-compile";
 import { Library } from "../Library";
 import { default as pulseCellDecorator } from "../decorators/pulse";
-import * as log from "npmlog";
+import pino from "pino";
 import { fileArgument } from "../cli-utils";
 import { bytesToSize, duration } from "../utils";
+
+const logger = pino();
 
 type PulseTaskStatus = "dne" | "up" | "out";
 
@@ -41,7 +43,7 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
         if (value && value.__task) tasks.push(value);
       },
       rejected(error) {
-        log.error("rejected", name, error);
+        logger.error("rejected", name, error);
       },
     };
   });
@@ -55,7 +57,7 @@ export async function oak_pulse(args: { filename: string }): Promise<void> {
   const oakfilePath = fileArgument(args.filename);
   const pulseResult = await getPulse(oakfilePath);
   for (let task of pulseResult.tasks) {
-    console.log(
+    logger.info(
       `${task.name} - ${task.status} - ${bytesToSize(task.bytes)} - ${duration(
         new Date(task.mtime)
       )}`

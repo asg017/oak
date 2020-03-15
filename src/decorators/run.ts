@@ -1,13 +1,10 @@
 import Task from "../Task";
 import { formatPath, getStat } from "../utils";
-import * as log from "npmlog";
+import pino from "pino";
 import { join } from "path";
-import {
-  createWriteStream,
-  createFileSync,
-  createReadStream,
-  readFileSync,
-} from "fs-extra";
+import { createWriteStream, createFileSync, readFileSync } from "fs-extra";
+
+const logger = pino();
 
 async function runTask(cell, logFile: string): Promise<number> {
   const {
@@ -79,7 +76,7 @@ export default function(logDirectory) {
 
         // run recipe if no file or if it's out of date
         if (currCell.stat === null) {
-          log.info(
+          logger.info(
             "oak-run decorator",
             `${formatPath(currCell.target)} - Doesn't exist - running recipe...`
           );
@@ -98,19 +95,19 @@ export default function(logDirectory) {
           outOfDateCellDependencies.length > 0 ||
           outOfDateWatchFiles.length > 0
         ) {
-          log.info(
+          logger.info(
             "oak-run decorator",
             `${formatPath(currCell.target)} - out of date:`
           );
           if (outOfDateCellDependencies.length > 0)
-            log.info(
+            logger.info(
               "oak-run decorator",
               `Cell Dependencies: ${outOfDateCellDependencies
                 .map(d => `\t${formatPath(d.path)}`)
                 .join(",")}`
             );
           if (outOfDateWatchFiles.length > 0)
-            log.info(
+            logger.info(
               "oak-run decorator",
               `Watch Files: ${outOfDateWatchFiles
                 .map(d => `\t${formatPath(d.path)}`)
@@ -122,7 +119,7 @@ export default function(logDirectory) {
           currCell.stat = await getStat(currCell.target);
           return currCell;
         } else {
-          log.info(
+          logger.info(
             "oak-run decorator",
             `${formatPath(currCell.target)} - not out of date `
           );
