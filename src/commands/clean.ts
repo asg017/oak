@@ -5,7 +5,7 @@ import { dirname, join } from "path";
 import { EventEmitter } from "events";
 import yn from "yn";
 import { createInterface } from "readline";
-import { unlinkSync } from "fs";
+import { remove } from "fs-extra";
 import { getStat } from "../utils";
 import chalk from "chalk";
 import { fileArgument } from "../cli-utils";
@@ -40,7 +40,7 @@ function removeFiles(map: ExistMap) {
   Array.from(map).map(a => {
     if (a[1].exists) {
       console.log(`Removing ${a[0]} at ${a[1].target}...`);
-      unlinkSync(a[1].target);
+      remove(a[1].target);
     }
   });
   return;
