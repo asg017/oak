@@ -20,8 +20,9 @@ export async function getDirectoryStat(
   const fileStats: Stats[] = [];
   await Promise.all(
     filesInDirectory.map(filename => {
+      const path = join(directoryPath, filename);
       return new Promise((resolve, reject) => {
-        stat(filename, (err: any, stat: Stats) => {
+        stat(path, (err: any, stat: Stats) => {
           if (err) {
             // reject even if a "file not found" error is thrown
             // since that shouldnt happen here bc were getting these
