@@ -1,9 +1,10 @@
-fips = "06";
+fips = "48";
+year = "2014";
 
 raw_state_zip = task({
   target: "raw_state.zip",
   run: raw_state_zip =>
-    shell`wget -O ${raw_state_zip} 'http://www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_06_tract_500k.zip'`
+    shell`wget -O ${raw_state_zip} 'http://www2.census.gov/geo/tiger/GENZ2014/shp/cb_${year}_${fips}_tract_500k.zip'`
 });
 
 raw_state_dir = task({
@@ -15,7 +16,7 @@ raw_state_dir = task({
 state_json = task({
   target: "state.json",
   run: state_json =>
-    shell`shp2json ${raw_state_dir}/cb_2014_06_tract_500k.shp -o ${state_json}`
+    shell`shp2json ${raw_state_dir}/cb_${year}_${fips}_tract_500k.shp -o ${state_json}`
 });
 
 projection =
@@ -48,7 +49,7 @@ state_albers_id = task({
 census_pop_tract_raw = task({
   target: "census_pop_tract.json",
   run: census_tract_raw =>
-    shell`wget -O ${census_tract_raw} "https://api.census.gov/data/2018/acs/acs5?get=B01003_001E&for=tract:*&in=state:06"`
+    shell`wget -O ${census_tract_raw} "https://api.census.gov/data/2018/acs/acs5?get=B01003_001E&for=tract:*&in=state:${fips}"`
 });
 
 census_pop_tract_ndjson = task({
