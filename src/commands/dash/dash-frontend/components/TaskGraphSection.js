@@ -3,6 +3,7 @@ import TaskGraph from "./TaskGraph";
 import TaskSidebar from "./TaskSidebar";
 import graphlib from "graphlib";
 import dagre from "dagre";
+import { getPulse } from "../utils/api";
 
 function createDag(tasks) {
   const graph = new graphlib.Graph()
@@ -45,14 +46,12 @@ function createDag(tasks) {
 export default class TaskGraphSection extends Component {
   state = { tasks: null, selectedTask: null };
   componentDidMount() {
-    fetch("api/pulse")
-      .then(r => r.json())
-      .then(({ pulseResult }) =>
-        this.setState({
-          tasks: pulseResult.tasks,
-          dag: createDag(pulseResult.tasks),
-        })
-      );
+    getPulse().then(({ pulseResult }) =>
+      this.setState({
+        tasks: pulseResult.tasks,
+        dag: createDag(pulseResult.tasks),
+      })
+    );
   }
   render() {
     const { tasks, dag, selectedTask } = this.state;

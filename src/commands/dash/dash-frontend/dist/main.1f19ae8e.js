@@ -914,6 +914,27 @@ function duration(referenceDate, fromDate) {
   var numDays = Math.floor(numHours / 24);
   return "".concat(numDays, " day").concat(numDays <= 1 ? "" : "s", " ago");
 }
+},{}],"utils/api.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getMeta = getMeta;
+exports.getPulse = getPulse;
+var BASE = "http://abc.alxg.xyz:3000";
+
+function getMeta() {
+  return fetch("".concat(BASE, "/api/meta")).then(function (r) {
+    return r.json();
+  });
+}
+
+function getPulse() {
+  return fetch("".concat(BASE, "/api/pulse")).then(function (r) {
+    return r.json();
+  });
+}
 },{}],"components/Header.js":[function(require,module,exports) {
 "use strict";
 
@@ -925,6 +946,8 @@ exports.default = void 0;
 var _preact = require("preact");
 
 var _format = require("../utils/format");
+
+var _api = require("../utils/api");
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
@@ -976,9 +999,7 @@ function (_Component) {
     value: function componentDidMount() {
       var _this2 = this;
 
-      fetch("/api/meta").then(function (r) {
-        return r.json();
-      }).then(function (meta) {
+      (0, _api.getMeta)().then(function (meta) {
         return _this2.setState({
           meta: meta
         });
@@ -1007,7 +1028,30 @@ function (_Component) {
 }(_preact.Component);
 
 exports.default = Header;
-},{"preact":"node_modules/preact/dist/preact.umd.js","../utils/format":"utils/format.js"}],"node_modules/d3/dist/package.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.umd.js","../utils/format":"utils/format.js","../utils/api":"utils/api.js"}],"components/NavBar.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = _default;
+
+var _preact = require("preact");
+
+function _default(props) {
+  return (0, _preact.h)("div", {
+    className: "navbar"
+  }, (0, _preact.h)("div", {
+    className: "navbar-item"
+  }, "Task Graph"), (0, _preact.h)("div", {
+    className: "navbar-item navbar-item--disabled"
+  }, "Code"), (0, _preact.h)("div", {
+    className: "navbar-item navbar-item--disabled"
+  }, "Runs"), (0, _preact.h)("div", {
+    className: "navbar-item navbar-item--disabled"
+  }, "Logs"));
+}
+},{"preact":"node_modules/preact/dist/preact.umd.js"}],"node_modules/d3/dist/package.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -41774,6 +41818,8 @@ var _graphlib = _interopRequireDefault(require("graphlib"));
 
 var _dagre = _interopRequireDefault(require("dagre"));
 
+var _api = require("../utils/api");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
@@ -41868,9 +41914,7 @@ function (_Component) {
     value: function componentDidMount() {
       var _this2 = this;
 
-      fetch("api/pulse").then(function (r) {
-        return r.json();
-      }).then(function (_ref) {
+      (0, _api.getPulse)().then(function (_ref) {
         var pulseResult = _ref.pulseResult;
         return _this2.setState({
           tasks: pulseResult.tasks,
@@ -41913,7 +41957,7 @@ function (_Component) {
 }(_preact.Component);
 
 exports.default = TaskGraphSection;
-},{"preact":"node_modules/preact/dist/preact.umd.js","./TaskGraph":"components/TaskGraph.js","./TaskSidebar":"components/TaskSidebar.js","graphlib":"node_modules/graphlib/index.js","dagre":"node_modules/dagre/index.js"}],"components/App.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.umd.js","./TaskGraph":"components/TaskGraph.js","./TaskSidebar":"components/TaskSidebar.js","graphlib":"node_modules/graphlib/index.js","dagre":"node_modules/dagre/index.js","../utils/api":"utils/api.js"}],"components/App.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -41924,6 +41968,8 @@ exports.default = void 0;
 var _preact = require("preact");
 
 var _Header = _interopRequireDefault(require("./Header"));
+
+var _NavBar = _interopRequireDefault(require("./NavBar"));
 
 var _TaskGraphSection = _interopRequireDefault(require("./TaskGraphSection"));
 
@@ -41961,7 +42007,7 @@ function (_Component) {
   _createClass(App, [{
     key: "render",
     value: function render() {
-      return (0, _preact.h)("div", null, (0, _preact.h)(_Header.default, null), (0, _preact.h)(_TaskGraphSection.default, null));
+      return (0, _preact.h)("div", null, (0, _preact.h)(_Header.default, null), (0, _preact.h)(_NavBar.default, null), (0, _preact.h)(_TaskGraphSection.default, null));
     }
   }]);
 
@@ -41969,7 +42015,7 @@ function (_Component) {
 }(_preact.Component);
 
 exports.default = App;
-},{"preact":"node_modules/preact/dist/preact.umd.js","./Header":"components/Header.js","./TaskGraphSection":"components/TaskGraphSection.js"}],"main.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.umd.js","./Header":"components/Header.js","./NavBar":"components/NavBar.js","./TaskGraphSection":"components/TaskGraphSection.js"}],"main.js":[function(require,module,exports) {
 "use strict";
 
 var _App = _interopRequireDefault(require("./components/App"));
@@ -42007,7 +42053,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "8080" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "45725" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

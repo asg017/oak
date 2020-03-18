@@ -1,13 +1,15 @@
 import { h, Component } from "preact";
 import Header from "./Header";
-import TaskGraphSection from "./TaskGraphSection";
+import NavBar from "./NavBar";
+import AppSection from "./AppSection";
 
 export default class App extends Component {
   render() {
     return (
       <div>
         <Header />
-        <TaskGraphSection />
+        <NavBar />
+        <AppSection />
       </div>
     );
   }

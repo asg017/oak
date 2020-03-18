@@ -1,14 +1,13 @@
 import { h, Component } from "preact";
 import { duration } from "../utils/format";
+import { getMeta } from "../utils/api";
 
 export default class Header extends Component {
   state = {
     meta: null,
   };
   componentDidMount() {
-    fetch(`/api/meta`)
-      .then(r => r.json())
-      .then(meta => this.setState({ meta }));
+    getMeta().then(meta => this.setState({ meta }));
   }
   render() {
     const { meta } = this.state;
