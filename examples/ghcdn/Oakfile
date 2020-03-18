@@ -1,0 +1,43 @@
+backfill_raw = task({
+  target: "backfill_raw",
+  // could/should be a python script too, idk
+  run: backfill_raw => shell` mkdir -p ${backfill_raw};
+  for YEAR in {2015..2019}
+  do
+     wget  -O ${backfill_raw}/$YEAR.csv.gz ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/by_year/$YEAR.csv.gz
+  done`
+});
+
+backfill = task({
+  target: "backfill.db",
+  run: backfill =>
+    command("pipenv", [
+      "run",
+      "python",
+      "consolidate_raw_backfill.py",
+      backfill_raw,
+      backfill
+    ])
+});
+
+curr_year_raw = task({
+  target: "curr_year_raw.csv.gz",
+  run: curr_year_raw =>
+    command("wget", [
+      "-O",
+      curr_year_raw,
+      "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/by_year/2020.csv.gz"
+    ])
+});
+
+curr_year = task({
+  target: "curr_year.db",
+  run: curr_year =>
+    command("pipenv", [
+      "run",
+      "python",
+      "convert_curr_year.py",
+      curr_year_raw,
+      curr_year
+    ])
+});
