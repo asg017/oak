@@ -32,3 +32,63 @@ state_albers_svg = task({
   run: state_albers_svg =>
     shell`geo2svg --out ${state_albers_svg} -w 960 -h 960 ${state_albers}`
 });
+
+state_albers_ndjson = task({
+  target: "state-albers.ndjson",
+  run: state_albers_ndjson =>
+    shell`ndjson-split 'd.features' < ${state_albers} > ${state_albers_ndjson}`
+});
+
+state_albers_id = task({
+  target: "state-albers-id.ndjson",
+  run: state_albers_id =>
+    shell`ndjson-map 'd.id = d.properties.GEOID.slice(2), d' < ${state_albers_ndjson} > ${state_albers_id}`
+});
+
+census_pop_tract_raw = task({
+  target: "census_pop_tract.json",
+  run: census_tract_raw =>
+    shell`wget -O ${census_tract_raw} "https://api.census.gov/data/2018/acs/acs5?get=B01003_001E&for=tract:*&in=state:06"`
+});
+
+census_pop_tract_ndjson = task({
+  target: "census_pop_tract.ndjson",
+  run: census_pop_tract_ndjson =>
+    shell`ndjson-cat ${census_pop_tract_raw} \
+    | ndjson-split 'd.slice(1)' \
+    | ndjson-map '{id: d[2] + d[3], B01003: +d[0]}' \
+    > ${census_pop_tract_ndjson}`
+});
+
+state_pop_join_ndjson = task({
+  target: "state-albers-census-pop-join.ndjson",
+  run: state_pop_join_ndjson =>
+    shell`ndjson-join 'd.id' ${state_albers_id} ${census_pop_tract_ndjson} > ${state_pop_join_ndjson}`
+});
+
+state_density_ndjson = task({
+  target: "state-albers-density.ndjson",
+  run: state_density_ndjson =>
+    shell`ndjson-map 'd[0].properties = {density: Math.floor(d[1].B01003 / d[0].properties.ALAND * 2589975.2356)}, d[0]' \
+    < ${state_pop_join_ndjson} > ${state_density_ndjson} `
+});
+
+state_density_json = task({
+  target: "state-albers-density.json",
+  run: state_density_json =>
+    shell`ndjson-reduce < ${state_density_ndjson} | ndjson-map '{type: "FeatureCollection", features:d}' > ${state_density_json}`
+});
+
+state_density_color_ndjson = task({
+  target: "state-albers-color.ndjson",
+  run: state_density_color_ndjson => shell`ndjson-map -r d3 '(d.properties.fill = d3.scaleSequential(d3.interpolateViridis).domain([0, 4000])(d.properties.density), d)' \
+    < ${state_density_ndjson} \
+    > ${state_density_color_ndjson}`
+});
+
+state_density_color_svg = task({
+  target: "state-albers-color.svg",
+  run: state_density_color_svg => shell`geo2svg -n --stroke none -p 1 -w 960 -h 960 \
+    < ${state_density_color_ndjson} \
+    > ${state_density_color_svg}`
+});
