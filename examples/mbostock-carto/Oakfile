@@ -92,3 +92,33 @@ state_density_color_svg = task({
     < ${state_density_color_ndjson} \
     > ${state_density_color_svg}`
 });
+
+state_tracts_topo = task({
+  target: "state-tracts-topo.json",
+  run: state_tracts_topo =>
+    shell`geo2topo -n --out ${state_tracts_topo} tracts=${state_density_ndjson}`
+});
+
+state_tracts_simple_topo = task({
+  target: "state-tracts-simple-topo.json",
+  run: state_tracts_simple_topo =>
+    shell`toposimplify -p 1 -f --out ${state_tracts_simple_topo} ${state_tracts_topo}`
+});
+
+state_tracts_quantized_topo = task({
+  target: "state-tracts-quantized-topo.json",
+  run: state_tracts_quantized_topo =>
+    shell`topoquantize --out ${state_tracts_quantized_topo} 1e5 ${state_tracts_simple_topo}`
+});
+
+state_county_merge_topo = task({
+  target: "state-merge-topo.json",
+  run: state_county_merge_topo =>
+    shell`topomerge -k 'd.id.slice(0,3)' --out ${state_county_merge_topo} counties=tracts ${state_tracts_quantized_topo}`
+});
+
+state_topo = task({
+  target: "state-topo.json",
+  run: state_topo =>
+    shell`topomerge --mesh -f 'a !== b' --out ${state_topo} counties=counties ${state_county_merge_topo}`
+});
