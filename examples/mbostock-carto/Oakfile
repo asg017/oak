@@ -1,0 +1,34 @@
+fips = "06";
+
+raw_state_zip = task({
+  target: "raw_state.zip",
+  run: raw_state_zip =>
+    shell`wget -O ${raw_state_zip} 'http://www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_06_tract_500k.zip'`
+});
+
+raw_state_dir = task({
+  target: "raw_state",
+  run: raw_state_dir =>
+    shell`mkdir -p ${raw_state_dir} && unzip -d ${raw_state_dir} ${raw_state_zip}`
+});
+
+state_json = task({
+  target: "state.json",
+  run: state_json =>
+    shell`shp2json ${raw_state_dir}/cb_2014_06_tract_500k.shp -o ${state_json}`
+});
+
+projection =
+  "d3.geoConicEqualArea().parallels([34, 40.5]).rotate([120, 0]).fitSize([960, 960], d)";
+
+state_albers = task({
+  target: "state-albers.json",
+  run: state_albers =>
+    shell`geoproject --out ${state_albers} '${projection}' ${state_json}`
+});
+
+state_albers_svg = task({
+  target: "state-albers.svg",
+  run: state_albers_svg =>
+    shell`geo2svg --out ${state_albers_svg} -w 960 -h 960 ${state_albers}`
+});
