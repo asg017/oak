@@ -4,7 +4,13 @@ import pino from "pino";
 import { join } from "path";
 import { createWriteStream, createFileSync, readFileSync } from "fs-extra";
 
-async function runTask(cell, logFile: string): Promise<number> {
+async function runTask(
+  logger: pino.Logger,
+  cell: Task,
+  logFile: string
+): Promise<number> {
+  logger.info(`Running task for ${cell.target}. Logfile: ${logFile}`);
+
   const {
     process: childProcess,
     outStream: taskOutStream,
@@ -29,6 +35,7 @@ async function runTask(cell, logFile: string): Promise<number> {
 
   return new Promise((resolve, reject) => {
     childProcess.on("error", err => {
+      logger.error(`childProcess error event.`);
       logStream.end();
       reject(err);
     });
@@ -79,7 +86,7 @@ export default function(logger: pino.Logger, logDirectory: string) {
             `${formatPath(currCell.target)} - Doesn't exist - running recipe...`
           );
           const logFile = join(logDirectory, cellName);
-          await runTask(currCell, logFile);
+          await runTask(logger, currCell, logFile);
           currCell.stat = await getStat(currCell.target);
           return currCell;
         }
@@ -101,7 +108,7 @@ export default function(logger: pino.Logger, logDirectory: string) {
             logger.info(
               "oak-run decorator",
               `Cell Dependencies: ${outOfDateCellDependencies
-                .map(d => `\t${formatPath(d.path)}`)
+                .map(d => `\t${formatPath(d.target)}`)
                 .join(",")}`
             );
           if (outOfDateWatchFiles.length > 0)
@@ -113,7 +120,7 @@ export default function(logger: pino.Logger, logDirectory: string) {
             );
 
           const logFile = join(logDirectory, cellName);
-          await runTask(currCell, logFile);
+          await runTask(logger, currCell, logFile);
           currCell.stat = await getStat(currCell.target);
           return currCell;
         } else {
