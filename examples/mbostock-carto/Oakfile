@@ -122,3 +122,45 @@ state_topo = task({
   run: state_topo =>
     shell`topomerge --mesh -f 'a !== b' --out ${state_topo} counties=counties ${state_county_merge_topo}`
 });
+
+state_density_color_sqrt_svg = task({
+  target: "state-albers-color-sqrt.svg",
+  run: state_density_color_sqrt_svg => shell`topo2geo --in ${state_topo} tracts=- \
+  | ndjson-map -r d3 'z = d3.scaleSequential(d3.interpolateViridis).domain([0, 100]), d.features.forEach(f => f.properties.fill = z(Math.sqrt(f.properties.density))), d' \
+  | ndjson-split 'd.features' \
+  | geo2svg -n --stroke none -p 1 -w 960 -h 960 --out ${state_density_color_sqrt_svg}`
+});
+
+state_density_color_log_svg = task({
+  target: "state-albers-color-log.svg",
+  run: state_density_color_log_svg => shell`topo2geo --in ${state_topo} tracts=- \
+  | ndjson-map -r d3 'z = d3.scaleLog().domain(d3.extent(d.features.filter(f => f.properties.density), f => f.properties.density)).interpolate(() => d3.interpolateViridis), d.features.forEach(f => f.properties.fill = z(f.properties.density)), d'  \
+  | ndjson-split 'd.features' \
+  | geo2svg -n --stroke none -p 1 -w 960 -h 960 --out ${state_density_color_log_svg}`
+});
+
+state_density_color_quantile_svg = task({
+  target: "state-albers-color-quantile.svg",
+  run: state_density_color_quantile_svg => shell`topo2geo --in ${state_topo} tracts=- \
+  | ndjson-map -r d3 'z = d3.scaleQuantile().domain(d.features.map(f => f.properties.density)).range(d3.quantize(d3.interpolateViridis, 256)), d.features.forEach(f => f.properties.fill = z(f.properties.density)), d'  \
+  | ndjson-split 'd.features' \
+  | geo2svg -n --stroke none -p 1 -w 960 -h 960 --out ${state_density_color_quantile_svg}`
+});
+
+state_density_color_threshold_svg = task({
+  target: "state-albers-color-threshold.svg",
+  run: state_density_color_threshold_svg => shell`topo2geo --in ${state_topo} tracts=- \
+  | ndjson-map -r d3 -r d3-scale-chromatic 'z = d3.scaleThreshold().domain([1, 10, 50, 200, 500, 1000, 2000, 4000]).range(d3.schemeOrRd[9]), d.features.forEach(f => f.properties.fill = z(f.properties.density)), d'  \
+  | ndjson-split 'd.features' \
+  | geo2svg -n --stroke none -p 1 -w 960 -h 960 --out ${state_density_color_threshold_svg}`
+});
+
+state_svg = task({
+  target: "state.svg",
+  run: state_svg => shell`(topo2geo --in ${state_topo} tracts=- \
+  | ndjson-map -r d3 -r d3-scale-chromatic 'z = d3.scaleThreshold().domain([1, 10, 50, 200, 500, 1000, 2000, 4000]).range(d3.schemeOrRd[9]), d.features.forEach(f => f.properties.fill = z(f.properties.density)), d' \
+  | ndjson-split 'd.features'; \
+  topo2geo --in ${state_topo} counties=- \
+  | ndjson-map 'd.properties = {"stroke": "#000", "stroke-opacity": 0.3}, d')\
+  | geo2svg -n --stroke none -p 1 -w 960 -h 960 --out ${state_svg}`
+});
