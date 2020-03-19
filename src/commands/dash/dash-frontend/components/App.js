@@ -8,7 +8,6 @@ export default class App extends Component {
     return (
       <div>
         <Header />
-        <NavBar />
         <AppSection />
       </div>
     );

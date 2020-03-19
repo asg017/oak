@@ -1,8 +1,8 @@
 import { h, Component } from "preact";
 import { duration, bytesToSize } from "../utils/format";
-import "../style.less";
+import "./TaskGraphMeta.less";
 
-export default class TaskSidebar extends Component {
+export default class TaskGraphMeta extends Component {
   render() {
     const { dag, tasks, selectedTask } = this.props;
     if (selectedTask === null)

@@ -1,13 +1,15 @@
 import { h, Component } from "preact";
 import TaskGraph from "./TaskGraph";
-import TaskSidebar from "./TaskSidebar";
+import TaskGraphMeta from "./TaskGraphMeta";
+import TaskGraphControls from "./TaskGraphControls";
 import graphlib from "graphlib";
 import dagre from "dagre";
 import { getPulse } from "../utils/api";
+import "./TaskGraphSection.less";
 
-function createDag(tasks) {
+function createDag(tasks, controls) {
   const graph = new graphlib.Graph()
-    .setGraph({ rankdir: "TB" })
+    .setGraph({ rankdir: "TB", ...controls })
     .setDefaultEdgeLabel(() => ({}));
 
   let n = 0;
@@ -44,17 +46,17 @@ function createDag(tasks) {
 }
 
 export default class TaskGraphSection extends Component {
-  state = { tasks: null, selectedTask: null };
+  state = { tasks: null, selectedTask: null, controls: {} };
   componentDidMount() {
     getPulse().then(({ pulseResult }) =>
       this.setState({
         tasks: pulseResult.tasks,
-        dag: createDag(pulseResult.tasks),
+        dag: createDag(pulseResult.tasks, this.state.controls),
       })
     );
   }
   render() {
-    const { tasks, dag, selectedTask } = this.state;
+    const { tasks, dag, selectedTask, controls } = this.state;
     if (!tasks || !dag)
       return <div className="taskgraph-section">Loading...</div>;
     return (
@@ -65,7 +67,13 @@ export default class TaskGraphSection extends Component {
           onTaskSelect={selectedTask => this.setState({ selectedTask })}
           selectedTask={selectedTask}
         />
-        <TaskSidebar dag={dag} tasks={tasks} selectedTask={selectedTask} />
+        <TaskGraphControls
+          controls={controls}
+          onUpdate={controls =>
+            this.setState({ controls, dag: createDag(tasks, controls) })
+          }
+        />
+        <TaskGraphMeta dag={dag} tasks={tasks} selectedTask={selectedTask} />
       </div>
     );
   }

@@ -1,6 +1,6 @@
 import { h, createRef, Component } from "preact";
 import * as d3 from "d3";
-import "../style.less";
+import "./TaskGraphNode.less";
 import { duration, bytesToSize } from "../utils/format";
 import { colorVariable } from "../utils/colors";
 

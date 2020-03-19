@@ -117,762 +117,840 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"node_modules/preact/dist/preact.umd.js":[function(require,module,exports) {
-var define;
-var global = arguments[3];
-(function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-	typeof define === 'function' && define.amd ? define(['exports'], factory) :
-	(factory((global.preact = {})));
-}(this, (function (exports) { 'use strict';
-
-	var VNode = function VNode() {};
-
-	var options = {};
-
-	var stack = [];
-
-	var EMPTY_CHILDREN = [];
-
-	function h(nodeName, attributes) {
-		var children = EMPTY_CHILDREN,
-		    lastSimple = void 0,
-		    child = void 0,
-		    simple = void 0,
-		    i = void 0;
-		for (i = arguments.length; i-- > 2;) {
-			stack.push(arguments[i]);
-		}
-		if (attributes && attributes.children != null) {
-			if (!stack.length) stack.push(attributes.children);
-			delete attributes.children;
-		}
-		while (stack.length) {
-			if ((child = stack.pop()) && child.pop !== undefined) {
-				for (i = child.length; i--;) {
-					stack.push(child[i]);
-				}
-			} else {
-				if (typeof child === 'boolean') child = null;
-
-				if (simple = typeof nodeName !== 'function') {
-					if (child == null) child = '';else if (typeof child === 'number') child = String(child);else if (typeof child !== 'string') simple = false;
-				}
-
-				if (simple && lastSimple) {
-					children[children.length - 1] += child;
-				} else if (children === EMPTY_CHILDREN) {
-					children = [child];
-				} else {
-					children.push(child);
-				}
-
-				lastSimple = simple;
-			}
-		}
-
-		var p = new VNode();
-		p.nodeName = nodeName;
-		p.children = children;
-		p.attributes = attributes == null ? undefined : attributes;
-		p.key = attributes == null ? undefined : attributes.key;
-
-		if (options.vnode !== undefined) options.vnode(p);
-
-		return p;
-	}
-
-	function extend(obj, props) {
-	  for (var i in props) {
-	    obj[i] = props[i];
-	  }return obj;
-	}
-
-	function applyRef(ref, value) {
-	  if (ref) {
-	    if (typeof ref == 'function') ref(value);else ref.current = value;
-	  }
-	}
-
-	var defer = typeof Promise == 'function' ? Promise.resolve().then.bind(Promise.resolve()) : setTimeout;
-
-	function cloneElement(vnode, props) {
-	  return h(vnode.nodeName, extend(extend({}, vnode.attributes), props), arguments.length > 2 ? [].slice.call(arguments, 2) : vnode.children);
-	}
-
-	var NO_RENDER = 0;
-
-	var SYNC_RENDER = 1;
-
-	var FORCE_RENDER = 2;
-
-	var ASYNC_RENDER = 3;
-
-	var ATTR_KEY = '__preactattr_';
-
-	var IS_NON_DIMENSIONAL = /acit|ex(?:s|g|n|p|$)|rph|ows|mnc|ntw|ine[ch]|zoo|^ord/i;
-
-	var items = [];
-
-	function enqueueRender(component) {
-		if (!component._dirty && (component._dirty = true) && items.push(component) == 1) {
-			(options.debounceRendering || defer)(rerender);
-		}
-	}
-
-	function rerender() {
-		var p = void 0;
-		while (p = items.pop()) {
-			if (p._dirty) renderComponent(p);
-		}
-	}
-
-	function isSameNodeType(node, vnode, hydrating) {
-		if (typeof vnode === 'string' || typeof vnode === 'number') {
-			return node.splitText !== undefined;
-		}
-		if (typeof vnode.nodeName === 'string') {
-			return !node._componentConstructor && isNamedNode(node, vnode.nodeName);
-		}
-		return hydrating || node._componentConstructor === vnode.nodeName;
-	}
-
-	function isNamedNode(node, nodeName) {
-		return node.normalizedNodeName === nodeName || node.nodeName.toLowerCase() === nodeName.toLowerCase();
-	}
-
-	function getNodeProps(vnode) {
-		var props = extend({}, vnode.attributes);
-		props.children = vnode.children;
-
-		var defaultProps = vnode.nodeName.defaultProps;
-		if (defaultProps !== undefined) {
-			for (var i in defaultProps) {
-				if (props[i] === undefined) {
-					props[i] = defaultProps[i];
-				}
-			}
-		}
-
-		return props;
-	}
-
-	function createNode(nodeName, isSvg) {
-		var node = isSvg ? document.createElementNS('http://www.w3.org/2000/svg', nodeName) : document.createElement(nodeName);
-		node.normalizedNodeName = nodeName;
-		return node;
-	}
-
-	function removeNode(node) {
-		var parentNode = node.parentNode;
-		if (parentNode) parentNode.removeChild(node);
-	}
-
-	function setAccessor(node, name, old, value, isSvg) {
-		if (name === 'className') name = 'class';
-
-		if (name === 'key') {} else if (name === 'ref') {
-			applyRef(old, null);
-			applyRef(value, node);
-		} else if (name === 'class' && !isSvg) {
-			node.className = value || '';
-		} else if (name === 'style') {
-			if (!value || typeof value === 'string' || typeof old === 'string') {
-				node.style.cssText = value || '';
-			}
-			if (value && typeof value === 'object') {
-				if (typeof old !== 'string') {
-					for (var i in old) {
-						if (!(i in value)) node.style[i] = '';
-					}
-				}
-				for (var _i in value) {
-					node.style[_i] = typeof value[_i] === 'number' && IS_NON_DIMENSIONAL.test(_i) === false ? value[_i] + 'px' : value[_i];
-				}
-			}
-		} else if (name === 'dangerouslySetInnerHTML') {
-			if (value) node.innerHTML = value.__html || '';
-		} else if (name[0] == 'o' && name[1] == 'n') {
-			var useCapture = name !== (name = name.replace(/Capture$/, ''));
-			name = name.toLowerCase().substring(2);
-			if (value) {
-				if (!old) node.addEventListener(name, eventProxy, useCapture);
-			} else {
-				node.removeEventListener(name, eventProxy, useCapture);
-			}
-			(node._listeners || (node._listeners = {}))[name] = value;
-		} else if (name !== 'list' && name !== 'type' && !isSvg && name in node) {
-			try {
-				node[name] = value == null ? '' : value;
-			} catch (e) {}
-			if ((value == null || value === false) && name != 'spellcheck') node.removeAttribute(name);
-		} else {
-			var ns = isSvg && name !== (name = name.replace(/^xlink:?/, ''));
-
-			if (value == null || value === false) {
-				if (ns) node.removeAttributeNS('http://www.w3.org/1999/xlink', name.toLowerCase());else node.removeAttribute(name);
-			} else if (typeof value !== 'function') {
-				if (ns) node.setAttributeNS('http://www.w3.org/1999/xlink', name.toLowerCase(), value);else node.setAttribute(name, value);
-			}
-		}
-	}
-
-	function eventProxy(e) {
-		return this._listeners[e.type](options.event && options.event(e) || e);
-	}
-
-	var mounts = [];
-
-	var diffLevel = 0;
-
-	var isSvgMode = false;
-
-	var hydrating = false;
-
-	function flushMounts() {
-		var c = void 0;
-		while (c = mounts.shift()) {
-			if (options.afterMount) options.afterMount(c);
-			if (c.componentDidMount) c.componentDidMount();
-		}
-	}
-
-	function diff(dom, vnode, context, mountAll, parent, componentRoot) {
-		if (!diffLevel++) {
-			isSvgMode = parent != null && parent.ownerSVGElement !== undefined;
-
-			hydrating = dom != null && !(ATTR_KEY in dom);
-		}
-
-		var ret = idiff(dom, vnode, context, mountAll, componentRoot);
-
-		if (parent && ret.parentNode !== parent) parent.appendChild(ret);
-
-		if (! --diffLevel) {
-			hydrating = false;
-
-			if (!componentRoot) flushMounts();
-		}
-
-		return ret;
-	}
-
-	function idiff(dom, vnode, context, mountAll, componentRoot) {
-		var out = dom,
-		    prevSvgMode = isSvgMode;
-
-		if (vnode == null || typeof vnode === 'boolean') vnode = '';
-
-		if (typeof vnode === 'string' || typeof vnode === 'number') {
-			if (dom && dom.splitText !== undefined && dom.parentNode && (!dom._component || componentRoot)) {
-				if (dom.nodeValue != vnode) {
-					dom.nodeValue = vnode;
-				}
-			} else {
-				out = document.createTextNode(vnode);
-				if (dom) {
-					if (dom.parentNode) dom.parentNode.replaceChild(out, dom);
-					recollectNodeTree(dom, true);
-				}
-			}
-
-			out[ATTR_KEY] = true;
-
-			return out;
-		}
-
-		var vnodeName = vnode.nodeName;
-		if (typeof vnodeName === 'function') {
-			return buildComponentFromVNode(dom, vnode, context, mountAll);
-		}
-
-		isSvgMode = vnodeName === 'svg' ? true : vnodeName === 'foreignObject' ? false : isSvgMode;
-
-		vnodeName = String(vnodeName);
-		if (!dom || !isNamedNode(dom, vnodeName)) {
-			out = createNode(vnodeName, isSvgMode);
-
-			if (dom) {
-				while (dom.firstChild) {
-					out.appendChild(dom.firstChild);
-				}
-				if (dom.parentNode) dom.parentNode.replaceChild(out, dom);
-
-				recollectNodeTree(dom, true);
-			}
-		}
-
-		var fc = out.firstChild,
-		    props = out[ATTR_KEY],
-		    vchildren = vnode.children;
-
-		if (props == null) {
-			props = out[ATTR_KEY] = {};
-			for (var a = out.attributes, i = a.length; i--;) {
-				props[a[i].name] = a[i].value;
-			}
-		}
-
-		if (!hydrating && vchildren && vchildren.length === 1 && typeof vchildren[0] === 'string' && fc != null && fc.splitText !== undefined && fc.nextSibling == null) {
-			if (fc.nodeValue != vchildren[0]) {
-				fc.nodeValue = vchildren[0];
-			}
-		} else if (vchildren && vchildren.length || fc != null) {
-				innerDiffNode(out, vchildren, context, mountAll, hydrating || props.dangerouslySetInnerHTML != null);
-			}
-
-		diffAttributes(out, vnode.attributes, props);
-
-		isSvgMode = prevSvgMode;
-
-		return out;
-	}
-
-	function innerDiffNode(dom, vchildren, context, mountAll, isHydrating) {
-		var originalChildren = dom.childNodes,
-		    children = [],
-		    keyed = {},
-		    keyedLen = 0,
-		    min = 0,
-		    len = originalChildren.length,
-		    childrenLen = 0,
-		    vlen = vchildren ? vchildren.length : 0,
-		    j = void 0,
-		    c = void 0,
-		    f = void 0,
-		    vchild = void 0,
-		    child = void 0;
-
-		if (len !== 0) {
-			for (var i = 0; i < len; i++) {
-				var _child = originalChildren[i],
-				    props = _child[ATTR_KEY],
-				    key = vlen && props ? _child._component ? _child._component.__key : props.key : null;
-				if (key != null) {
-					keyedLen++;
-					keyed[key] = _child;
-				} else if (props || (_child.splitText !== undefined ? isHydrating ? _child.nodeValue.trim() : true : isHydrating)) {
-					children[childrenLen++] = _child;
-				}
-			}
-		}
-
-		if (vlen !== 0) {
-			for (var _i = 0; _i < vlen; _i++) {
-				vchild = vchildren[_i];
-				child = null;
-
-				var _key = vchild.key;
-				if (_key != null) {
-					if (keyedLen && keyed[_key] !== undefined) {
-						child = keyed[_key];
-						keyed[_key] = undefined;
-						keyedLen--;
-					}
-				} else if (min < childrenLen) {
-						for (j = min; j < childrenLen; j++) {
-							if (children[j] !== undefined && isSameNodeType(c = children[j], vchild, isHydrating)) {
-								child = c;
-								children[j] = undefined;
-								if (j === childrenLen - 1) childrenLen--;
-								if (j === min) min++;
-								break;
-							}
-						}
-					}
-
-				child = idiff(child, vchild, context, mountAll);
-
-				f = originalChildren[_i];
-				if (child && child !== dom && child !== f) {
-					if (f == null) {
-						dom.appendChild(child);
-					} else if (child === f.nextSibling) {
-						removeNode(f);
-					} else {
-						dom.insertBefore(child, f);
-					}
-				}
-			}
-		}
-
-		if (keyedLen) {
-			for (var _i2 in keyed) {
-				if (keyed[_i2] !== undefined) recollectNodeTree(keyed[_i2], false);
-			}
-		}
-
-		while (min <= childrenLen) {
-			if ((child = children[childrenLen--]) !== undefined) recollectNodeTree(child, false);
-		}
-	}
-
-	function recollectNodeTree(node, unmountOnly) {
-		var component = node._component;
-		if (component) {
-			unmountComponent(component);
-		} else {
-			if (node[ATTR_KEY] != null) applyRef(node[ATTR_KEY].ref, null);
-
-			if (unmountOnly === false || node[ATTR_KEY] == null) {
-				removeNode(node);
-			}
-
-			removeChildren(node);
-		}
-	}
-
-	function removeChildren(node) {
-		node = node.lastChild;
-		while (node) {
-			var next = node.previousSibling;
-			recollectNodeTree(node, true);
-			node = next;
-		}
-	}
-
-	function diffAttributes(dom, attrs, old) {
-		var name = void 0;
-
-		for (name in old) {
-			if (!(attrs && attrs[name] != null) && old[name] != null) {
-				setAccessor(dom, name, old[name], old[name] = undefined, isSvgMode);
-			}
-		}
-
-		for (name in attrs) {
-			if (name !== 'children' && name !== 'innerHTML' && (!(name in old) || attrs[name] !== (name === 'value' || name === 'checked' ? dom[name] : old[name]))) {
-				setAccessor(dom, name, old[name], old[name] = attrs[name], isSvgMode);
-			}
-		}
-	}
-
-	var recyclerComponents = [];
-
-	function createComponent(Ctor, props, context) {
-		var inst = void 0,
-		    i = recyclerComponents.length;
-
-		if (Ctor.prototype && Ctor.prototype.render) {
-			inst = new Ctor(props, context);
-			Component.call(inst, props, context);
-		} else {
-			inst = new Component(props, context);
-			inst.constructor = Ctor;
-			inst.render = doRender;
-		}
-
-		while (i--) {
-			if (recyclerComponents[i].constructor === Ctor) {
-				inst.nextBase = recyclerComponents[i].nextBase;
-				recyclerComponents.splice(i, 1);
-				return inst;
-			}
-		}
-
-		return inst;
-	}
-
-	function doRender(props, state, context) {
-		return this.constructor(props, context);
-	}
-
-	function setComponentProps(component, props, renderMode, context, mountAll) {
-		if (component._disable) return;
-		component._disable = true;
-
-		component.__ref = props.ref;
-		component.__key = props.key;
-		delete props.ref;
-		delete props.key;
-
-		if (typeof component.constructor.getDerivedStateFromProps === 'undefined') {
-			if (!component.base || mountAll) {
-				if (component.componentWillMount) component.componentWillMount();
-			} else if (component.componentWillReceiveProps) {
-				component.componentWillReceiveProps(props, context);
-			}
-		}
-
-		if (context && context !== component.context) {
-			if (!component.prevContext) component.prevContext = component.context;
-			component.context = context;
-		}
-
-		if (!component.prevProps) component.prevProps = component.props;
-		component.props = props;
-
-		component._disable = false;
-
-		if (renderMode !== NO_RENDER) {
-			if (renderMode === SYNC_RENDER || options.syncComponentUpdates !== false || !component.base) {
-				renderComponent(component, SYNC_RENDER, mountAll);
-			} else {
-				enqueueRender(component);
-			}
-		}
-
-		applyRef(component.__ref, component);
-	}
-
-	function renderComponent(component, renderMode, mountAll, isChild) {
-		if (component._disable) return;
-
-		var props = component.props,
-		    state = component.state,
-		    context = component.context,
-		    previousProps = component.prevProps || props,
-		    previousState = component.prevState || state,
-		    previousContext = component.prevContext || context,
-		    isUpdate = component.base,
-		    nextBase = component.nextBase,
-		    initialBase = isUpdate || nextBase,
-		    initialChildComponent = component._component,
-		    skip = false,
-		    snapshot = previousContext,
-		    rendered = void 0,
-		    inst = void 0,
-		    cbase = void 0;
-
-		if (component.constructor.getDerivedStateFromProps) {
-			state = extend(extend({}, state), component.constructor.getDerivedStateFromProps(props, state));
-			component.state = state;
-		}
-
-		if (isUpdate) {
-			component.props = previousProps;
-			component.state = previousState;
-			component.context = previousContext;
-			if (renderMode !== FORCE_RENDER && component.shouldComponentUpdate && component.shouldComponentUpdate(props, state, context) === false) {
-				skip = true;
-			} else if (component.componentWillUpdate) {
-				component.componentWillUpdate(props, state, context);
-			}
-			component.props = props;
-			component.state = state;
-			component.context = context;
-		}
-
-		component.prevProps = component.prevState = component.prevContext = component.nextBase = null;
-		component._dirty = false;
-
-		if (!skip) {
-			rendered = component.render(props, state, context);
-
-			if (component.getChildContext) {
-				context = extend(extend({}, context), component.getChildContext());
-			}
-
-			if (isUpdate && component.getSnapshotBeforeUpdate) {
-				snapshot = component.getSnapshotBeforeUpdate(previousProps, previousState);
-			}
-
-			var childComponent = rendered && rendered.nodeName,
-			    toUnmount = void 0,
-			    base = void 0;
-
-			if (typeof childComponent === 'function') {
-
-				var childProps = getNodeProps(rendered);
-				inst = initialChildComponent;
-
-				if (inst && inst.constructor === childComponent && childProps.key == inst.__key) {
-					setComponentProps(inst, childProps, SYNC_RENDER, context, false);
-				} else {
-					toUnmount = inst;
-
-					component._component = inst = createComponent(childComponent, childProps, context);
-					inst.nextBase = inst.nextBase || nextBase;
-					inst._parentComponent = component;
-					setComponentProps(inst, childProps, NO_RENDER, context, false);
-					renderComponent(inst, SYNC_RENDER, mountAll, true);
-				}
-
-				base = inst.base;
-			} else {
-				cbase = initialBase;
-
-				toUnmount = initialChildComponent;
-				if (toUnmount) {
-					cbase = component._component = null;
-				}
-
-				if (initialBase || renderMode === SYNC_RENDER) {
-					if (cbase) cbase._component = null;
-					base = diff(cbase, rendered, context, mountAll || !isUpdate, initialBase && initialBase.parentNode, true);
-				}
-			}
-
-			if (initialBase && base !== initialBase && inst !== initialChildComponent) {
-				var baseParent = initialBase.parentNode;
-				if (baseParent && base !== baseParent) {
-					baseParent.replaceChild(base, initialBase);
-
-					if (!toUnmount) {
-						initialBase._component = null;
-						recollectNodeTree(initialBase, false);
-					}
-				}
-			}
-
-			if (toUnmount) {
-				unmountComponent(toUnmount);
-			}
-
-			component.base = base;
-			if (base && !isChild) {
-				var componentRef = component,
-				    t = component;
-				while (t = t._parentComponent) {
-					(componentRef = t).base = base;
-				}
-				base._component = componentRef;
-				base._componentConstructor = componentRef.constructor;
-			}
-		}
-
-		if (!isUpdate || mountAll) {
-			mounts.push(component);
-		} else if (!skip) {
-
-			if (component.componentDidUpdate) {
-				component.componentDidUpdate(previousProps, previousState, snapshot);
-			}
-			if (options.afterUpdate) options.afterUpdate(component);
-		}
-
-		while (component._renderCallbacks.length) {
-			component._renderCallbacks.pop().call(component);
-		}if (!diffLevel && !isChild) flushMounts();
-	}
-
-	function buildComponentFromVNode(dom, vnode, context, mountAll) {
-		var c = dom && dom._component,
-		    originalComponent = c,
-		    oldDom = dom,
-		    isDirectOwner = c && dom._componentConstructor === vnode.nodeName,
-		    isOwner = isDirectOwner,
-		    props = getNodeProps(vnode);
-		while (c && !isOwner && (c = c._parentComponent)) {
-			isOwner = c.constructor === vnode.nodeName;
-		}
-
-		if (c && isOwner && (!mountAll || c._component)) {
-			setComponentProps(c, props, ASYNC_RENDER, context, mountAll);
-			dom = c.base;
-		} else {
-			if (originalComponent && !isDirectOwner) {
-				unmountComponent(originalComponent);
-				dom = oldDom = null;
-			}
-
-			c = createComponent(vnode.nodeName, props, context);
-			if (dom && !c.nextBase) {
-				c.nextBase = dom;
-
-				oldDom = null;
-			}
-			setComponentProps(c, props, SYNC_RENDER, context, mountAll);
-			dom = c.base;
-
-			if (oldDom && dom !== oldDom) {
-				oldDom._component = null;
-				recollectNodeTree(oldDom, false);
-			}
-		}
-
-		return dom;
-	}
-
-	function unmountComponent(component) {
-		if (options.beforeUnmount) options.beforeUnmount(component);
-
-		var base = component.base;
-
-		component._disable = true;
-
-		if (component.componentWillUnmount) component.componentWillUnmount();
-
-		component.base = null;
-
-		var inner = component._component;
-		if (inner) {
-			unmountComponent(inner);
-		} else if (base) {
-			if (base[ATTR_KEY] != null) applyRef(base[ATTR_KEY].ref, null);
-
-			component.nextBase = base;
-
-			removeNode(base);
-			recyclerComponents.push(component);
-
-			removeChildren(base);
-		}
-
-		applyRef(component.__ref, null);
-	}
-
-	function Component(props, context) {
-		this._dirty = true;
-
-		this.context = context;
-
-		this.props = props;
-
-		this.state = this.state || {};
-
-		this._renderCallbacks = [];
-	}
-
-	extend(Component.prototype, {
-		setState: function setState(state, callback) {
-			if (!this.prevState) this.prevState = this.state;
-			this.state = extend(extend({}, this.state), typeof state === 'function' ? state(this.state, this.props) : state);
-			if (callback) this._renderCallbacks.push(callback);
-			enqueueRender(this);
-		},
-		forceUpdate: function forceUpdate(callback) {
-			if (callback) this._renderCallbacks.push(callback);
-			renderComponent(this, FORCE_RENDER);
-		},
-		render: function render() {}
-	});
-
-	function render(vnode, parent, merge) {
-	  return diff(merge, vnode, {}, false, parent, false);
-	}
-
-	function createRef() {
-		return {};
-	}
-
-	var preact = {
-		h: h,
-		createElement: h,
-		cloneElement: cloneElement,
-		createRef: createRef,
-		Component: Component,
-		render: render,
-		rerender: rerender,
-		options: options
-	};
-
-	exports.default = preact;
-	exports.h = h;
-	exports.createElement = h;
-	exports.cloneElement = cloneElement;
-	exports.createRef = createRef;
-	exports.Component = Component;
-	exports.render = render;
-	exports.rerender = rerender;
-	exports.options = options;
-
-	Object.defineProperty(exports, '__esModule', { value: true });
-
-})));
-
-
-},{}],"utils/format.js":[function(require,module,exports) {
+})({"node_modules/preact/dist/preact.mjs":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.createElement = exports.h = h;
+exports.cloneElement = cloneElement;
+exports.createRef = createRef;
+exports.Component = Component;
+exports.render = render;
+exports.rerender = rerender;
+exports.options = exports.default = void 0;
+
+var VNode = function VNode() {};
+
+var options = {};
+exports.options = options;
+var stack = [];
+var EMPTY_CHILDREN = [];
+
+function h(nodeName, attributes) {
+  var children = EMPTY_CHILDREN,
+      lastSimple,
+      child,
+      simple,
+      i;
+
+  for (i = arguments.length; i-- > 2;) {
+    stack.push(arguments[i]);
+  }
+
+  if (attributes && attributes.children != null) {
+    if (!stack.length) stack.push(attributes.children);
+    delete attributes.children;
+  }
+
+  while (stack.length) {
+    if ((child = stack.pop()) && child.pop !== undefined) {
+      for (i = child.length; i--;) {
+        stack.push(child[i]);
+      }
+    } else {
+      if (typeof child === 'boolean') child = null;
+
+      if (simple = typeof nodeName !== 'function') {
+        if (child == null) child = '';else if (typeof child === 'number') child = String(child);else if (typeof child !== 'string') simple = false;
+      }
+
+      if (simple && lastSimple) {
+        children[children.length - 1] += child;
+      } else if (children === EMPTY_CHILDREN) {
+        children = [child];
+      } else {
+        children.push(child);
+      }
+
+      lastSimple = simple;
+    }
+  }
+
+  var p = new VNode();
+  p.nodeName = nodeName;
+  p.children = children;
+  p.attributes = attributes == null ? undefined : attributes;
+  p.key = attributes == null ? undefined : attributes.key;
+  if (options.vnode !== undefined) options.vnode(p);
+  return p;
+}
+
+function extend(obj, props) {
+  for (var i in props) {
+    obj[i] = props[i];
+  }
+
+  return obj;
+}
+
+function applyRef(ref, value) {
+  if (ref) {
+    if (typeof ref == 'function') ref(value);else ref.current = value;
+  }
+}
+
+var defer = typeof Promise == 'function' ? Promise.resolve().then.bind(Promise.resolve()) : setTimeout;
+
+function cloneElement(vnode, props) {
+  return h(vnode.nodeName, extend(extend({}, vnode.attributes), props), arguments.length > 2 ? [].slice.call(arguments, 2) : vnode.children);
+}
+
+var IS_NON_DIMENSIONAL = /acit|ex(?:s|g|n|p|$)|rph|ows|mnc|ntw|ine[ch]|zoo|^ord/i;
+var items = [];
+
+function enqueueRender(component) {
+  if (!component._dirty && (component._dirty = true) && items.push(component) == 1) {
+    (options.debounceRendering || defer)(rerender);
+  }
+}
+
+function rerender() {
+  var p;
+
+  while (p = items.pop()) {
+    if (p._dirty) renderComponent(p);
+  }
+}
+
+function isSameNodeType(node, vnode, hydrating) {
+  if (typeof vnode === 'string' || typeof vnode === 'number') {
+    return node.splitText !== undefined;
+  }
+
+  if (typeof vnode.nodeName === 'string') {
+    return !node._componentConstructor && isNamedNode(node, vnode.nodeName);
+  }
+
+  return hydrating || node._componentConstructor === vnode.nodeName;
+}
+
+function isNamedNode(node, nodeName) {
+  return node.normalizedNodeName === nodeName || node.nodeName.toLowerCase() === nodeName.toLowerCase();
+}
+
+function getNodeProps(vnode) {
+  var props = extend({}, vnode.attributes);
+  props.children = vnode.children;
+  var defaultProps = vnode.nodeName.defaultProps;
+
+  if (defaultProps !== undefined) {
+    for (var i in defaultProps) {
+      if (props[i] === undefined) {
+        props[i] = defaultProps[i];
+      }
+    }
+  }
+
+  return props;
+}
+
+function createNode(nodeName, isSvg) {
+  var node = isSvg ? document.createElementNS('http://www.w3.org/2000/svg', nodeName) : document.createElement(nodeName);
+  node.normalizedNodeName = nodeName;
+  return node;
+}
+
+function removeNode(node) {
+  var parentNode = node.parentNode;
+  if (parentNode) parentNode.removeChild(node);
+}
+
+function setAccessor(node, name, old, value, isSvg) {
+  if (name === 'className') name = 'class';
+
+  if (name === 'key') {} else if (name === 'ref') {
+    applyRef(old, null);
+    applyRef(value, node);
+  } else if (name === 'class' && !isSvg) {
+    node.className = value || '';
+  } else if (name === 'style') {
+    if (!value || typeof value === 'string' || typeof old === 'string') {
+      node.style.cssText = value || '';
+    }
+
+    if (value && typeof value === 'object') {
+      if (typeof old !== 'string') {
+        for (var i in old) {
+          if (!(i in value)) node.style[i] = '';
+        }
+      }
+
+      for (var i in value) {
+        node.style[i] = typeof value[i] === 'number' && IS_NON_DIMENSIONAL.test(i) === false ? value[i] + 'px' : value[i];
+      }
+    }
+  } else if (name === 'dangerouslySetInnerHTML') {
+    if (value) node.innerHTML = value.__html || '';
+  } else if (name[0] == 'o' && name[1] == 'n') {
+    var useCapture = name !== (name = name.replace(/Capture$/, ''));
+    name = name.toLowerCase().substring(2);
+
+    if (value) {
+      if (!old) node.addEventListener(name, eventProxy, useCapture);
+    } else {
+      node.removeEventListener(name, eventProxy, useCapture);
+    }
+
+    (node._listeners || (node._listeners = {}))[name] = value;
+  } else if (name !== 'list' && name !== 'type' && !isSvg && name in node) {
+    try {
+      node[name] = value == null ? '' : value;
+    } catch (e) {}
+
+    if ((value == null || value === false) && name != 'spellcheck') node.removeAttribute(name);
+  } else {
+    var ns = isSvg && name !== (name = name.replace(/^xlink:?/, ''));
+
+    if (value == null || value === false) {
+      if (ns) node.removeAttributeNS('http://www.w3.org/1999/xlink', name.toLowerCase());else node.removeAttribute(name);
+    } else if (typeof value !== 'function') {
+      if (ns) node.setAttributeNS('http://www.w3.org/1999/xlink', name.toLowerCase(), value);else node.setAttribute(name, value);
+    }
+  }
+}
+
+function eventProxy(e) {
+  return this._listeners[e.type](options.event && options.event(e) || e);
+}
+
+var mounts = [];
+var diffLevel = 0;
+var isSvgMode = false;
+var hydrating = false;
+
+function flushMounts() {
+  var c;
+
+  while (c = mounts.shift()) {
+    if (options.afterMount) options.afterMount(c);
+    if (c.componentDidMount) c.componentDidMount();
+  }
+}
+
+function diff(dom, vnode, context, mountAll, parent, componentRoot) {
+  if (!diffLevel++) {
+    isSvgMode = parent != null && parent.ownerSVGElement !== undefined;
+    hydrating = dom != null && !('__preactattr_' in dom);
+  }
+
+  var ret = idiff(dom, vnode, context, mountAll, componentRoot);
+  if (parent && ret.parentNode !== parent) parent.appendChild(ret);
+
+  if (! --diffLevel) {
+    hydrating = false;
+    if (!componentRoot) flushMounts();
+  }
+
+  return ret;
+}
+
+function idiff(dom, vnode, context, mountAll, componentRoot) {
+  var out = dom,
+      prevSvgMode = isSvgMode;
+  if (vnode == null || typeof vnode === 'boolean') vnode = '';
+
+  if (typeof vnode === 'string' || typeof vnode === 'number') {
+    if (dom && dom.splitText !== undefined && dom.parentNode && (!dom._component || componentRoot)) {
+      if (dom.nodeValue != vnode) {
+        dom.nodeValue = vnode;
+      }
+    } else {
+      out = document.createTextNode(vnode);
+
+      if (dom) {
+        if (dom.parentNode) dom.parentNode.replaceChild(out, dom);
+        recollectNodeTree(dom, true);
+      }
+    }
+
+    out['__preactattr_'] = true;
+    return out;
+  }
+
+  var vnodeName = vnode.nodeName;
+
+  if (typeof vnodeName === 'function') {
+    return buildComponentFromVNode(dom, vnode, context, mountAll);
+  }
+
+  isSvgMode = vnodeName === 'svg' ? true : vnodeName === 'foreignObject' ? false : isSvgMode;
+  vnodeName = String(vnodeName);
+
+  if (!dom || !isNamedNode(dom, vnodeName)) {
+    out = createNode(vnodeName, isSvgMode);
+
+    if (dom) {
+      while (dom.firstChild) {
+        out.appendChild(dom.firstChild);
+      }
+
+      if (dom.parentNode) dom.parentNode.replaceChild(out, dom);
+      recollectNodeTree(dom, true);
+    }
+  }
+
+  var fc = out.firstChild,
+      props = out['__preactattr_'],
+      vchildren = vnode.children;
+
+  if (props == null) {
+    props = out['__preactattr_'] = {};
+
+    for (var a = out.attributes, i = a.length; i--;) {
+      props[a[i].name] = a[i].value;
+    }
+  }
+
+  if (!hydrating && vchildren && vchildren.length === 1 && typeof vchildren[0] === 'string' && fc != null && fc.splitText !== undefined && fc.nextSibling == null) {
+    if (fc.nodeValue != vchildren[0]) {
+      fc.nodeValue = vchildren[0];
+    }
+  } else if (vchildren && vchildren.length || fc != null) {
+    innerDiffNode(out, vchildren, context, mountAll, hydrating || props.dangerouslySetInnerHTML != null);
+  }
+
+  diffAttributes(out, vnode.attributes, props);
+  isSvgMode = prevSvgMode;
+  return out;
+}
+
+function innerDiffNode(dom, vchildren, context, mountAll, isHydrating) {
+  var originalChildren = dom.childNodes,
+      children = [],
+      keyed = {},
+      keyedLen = 0,
+      min = 0,
+      len = originalChildren.length,
+      childrenLen = 0,
+      vlen = vchildren ? vchildren.length : 0,
+      j,
+      c,
+      f,
+      vchild,
+      child;
+
+  if (len !== 0) {
+    for (var i = 0; i < len; i++) {
+      var _child = originalChildren[i],
+          props = _child['__preactattr_'],
+          key = vlen && props ? _child._component ? _child._component.__key : props.key : null;
+
+      if (key != null) {
+        keyedLen++;
+        keyed[key] = _child;
+      } else if (props || (_child.splitText !== undefined ? isHydrating ? _child.nodeValue.trim() : true : isHydrating)) {
+        children[childrenLen++] = _child;
+      }
+    }
+  }
+
+  if (vlen !== 0) {
+    for (var i = 0; i < vlen; i++) {
+      vchild = vchildren[i];
+      child = null;
+      var key = vchild.key;
+
+      if (key != null) {
+        if (keyedLen && keyed[key] !== undefined) {
+          child = keyed[key];
+          keyed[key] = undefined;
+          keyedLen--;
+        }
+      } else if (min < childrenLen) {
+        for (j = min; j < childrenLen; j++) {
+          if (children[j] !== undefined && isSameNodeType(c = children[j], vchild, isHydrating)) {
+            child = c;
+            children[j] = undefined;
+            if (j === childrenLen - 1) childrenLen--;
+            if (j === min) min++;
+            break;
+          }
+        }
+      }
+
+      child = idiff(child, vchild, context, mountAll);
+      f = originalChildren[i];
+
+      if (child && child !== dom && child !== f) {
+        if (f == null) {
+          dom.appendChild(child);
+        } else if (child === f.nextSibling) {
+          removeNode(f);
+        } else {
+          dom.insertBefore(child, f);
+        }
+      }
+    }
+  }
+
+  if (keyedLen) {
+    for (var i in keyed) {
+      if (keyed[i] !== undefined) recollectNodeTree(keyed[i], false);
+    }
+  }
+
+  while (min <= childrenLen) {
+    if ((child = children[childrenLen--]) !== undefined) recollectNodeTree(child, false);
+  }
+}
+
+function recollectNodeTree(node, unmountOnly) {
+  var component = node._component;
+
+  if (component) {
+    unmountComponent(component);
+  } else {
+    if (node['__preactattr_'] != null) applyRef(node['__preactattr_'].ref, null);
+
+    if (unmountOnly === false || node['__preactattr_'] == null) {
+      removeNode(node);
+    }
+
+    removeChildren(node);
+  }
+}
+
+function removeChildren(node) {
+  node = node.lastChild;
+
+  while (node) {
+    var next = node.previousSibling;
+    recollectNodeTree(node, true);
+    node = next;
+  }
+}
+
+function diffAttributes(dom, attrs, old) {
+  var name;
+
+  for (name in old) {
+    if (!(attrs && attrs[name] != null) && old[name] != null) {
+      setAccessor(dom, name, old[name], old[name] = undefined, isSvgMode);
+    }
+  }
+
+  for (name in attrs) {
+    if (name !== 'children' && name !== 'innerHTML' && (!(name in old) || attrs[name] !== (name === 'value' || name === 'checked' ? dom[name] : old[name]))) {
+      setAccessor(dom, name, old[name], old[name] = attrs[name], isSvgMode);
+    }
+  }
+}
+
+var recyclerComponents = [];
+
+function createComponent(Ctor, props, context) {
+  var inst,
+      i = recyclerComponents.length;
+
+  if (Ctor.prototype && Ctor.prototype.render) {
+    inst = new Ctor(props, context);
+    Component.call(inst, props, context);
+  } else {
+    inst = new Component(props, context);
+    inst.constructor = Ctor;
+    inst.render = doRender;
+  }
+
+  while (i--) {
+    if (recyclerComponents[i].constructor === Ctor) {
+      inst.nextBase = recyclerComponents[i].nextBase;
+      recyclerComponents.splice(i, 1);
+      return inst;
+    }
+  }
+
+  return inst;
+}
+
+function doRender(props, state, context) {
+  return this.constructor(props, context);
+}
+
+function setComponentProps(component, props, renderMode, context, mountAll) {
+  if (component._disable) return;
+  component._disable = true;
+  component.__ref = props.ref;
+  component.__key = props.key;
+  delete props.ref;
+  delete props.key;
+
+  if (typeof component.constructor.getDerivedStateFromProps === 'undefined') {
+    if (!component.base || mountAll) {
+      if (component.componentWillMount) component.componentWillMount();
+    } else if (component.componentWillReceiveProps) {
+      component.componentWillReceiveProps(props, context);
+    }
+  }
+
+  if (context && context !== component.context) {
+    if (!component.prevContext) component.prevContext = component.context;
+    component.context = context;
+  }
+
+  if (!component.prevProps) component.prevProps = component.props;
+  component.props = props;
+  component._disable = false;
+
+  if (renderMode !== 0) {
+    if (renderMode === 1 || options.syncComponentUpdates !== false || !component.base) {
+      renderComponent(component, 1, mountAll);
+    } else {
+      enqueueRender(component);
+    }
+  }
+
+  applyRef(component.__ref, component);
+}
+
+function renderComponent(component, renderMode, mountAll, isChild) {
+  if (component._disable) return;
+  var props = component.props,
+      state = component.state,
+      context = component.context,
+      previousProps = component.prevProps || props,
+      previousState = component.prevState || state,
+      previousContext = component.prevContext || context,
+      isUpdate = component.base,
+      nextBase = component.nextBase,
+      initialBase = isUpdate || nextBase,
+      initialChildComponent = component._component,
+      skip = false,
+      snapshot = previousContext,
+      rendered,
+      inst,
+      cbase;
+
+  if (component.constructor.getDerivedStateFromProps) {
+    state = extend(extend({}, state), component.constructor.getDerivedStateFromProps(props, state));
+    component.state = state;
+  }
+
+  if (isUpdate) {
+    component.props = previousProps;
+    component.state = previousState;
+    component.context = previousContext;
+
+    if (renderMode !== 2 && component.shouldComponentUpdate && component.shouldComponentUpdate(props, state, context) === false) {
+      skip = true;
+    } else if (component.componentWillUpdate) {
+      component.componentWillUpdate(props, state, context);
+    }
+
+    component.props = props;
+    component.state = state;
+    component.context = context;
+  }
+
+  component.prevProps = component.prevState = component.prevContext = component.nextBase = null;
+  component._dirty = false;
+
+  if (!skip) {
+    rendered = component.render(props, state, context);
+
+    if (component.getChildContext) {
+      context = extend(extend({}, context), component.getChildContext());
+    }
+
+    if (isUpdate && component.getSnapshotBeforeUpdate) {
+      snapshot = component.getSnapshotBeforeUpdate(previousProps, previousState);
+    }
+
+    var childComponent = rendered && rendered.nodeName,
+        toUnmount,
+        base;
+
+    if (typeof childComponent === 'function') {
+      var childProps = getNodeProps(rendered);
+      inst = initialChildComponent;
+
+      if (inst && inst.constructor === childComponent && childProps.key == inst.__key) {
+        setComponentProps(inst, childProps, 1, context, false);
+      } else {
+        toUnmount = inst;
+        component._component = inst = createComponent(childComponent, childProps, context);
+        inst.nextBase = inst.nextBase || nextBase;
+        inst._parentComponent = component;
+        setComponentProps(inst, childProps, 0, context, false);
+        renderComponent(inst, 1, mountAll, true);
+      }
+
+      base = inst.base;
+    } else {
+      cbase = initialBase;
+      toUnmount = initialChildComponent;
+
+      if (toUnmount) {
+        cbase = component._component = null;
+      }
+
+      if (initialBase || renderMode === 1) {
+        if (cbase) cbase._component = null;
+        base = diff(cbase, rendered, context, mountAll || !isUpdate, initialBase && initialBase.parentNode, true);
+      }
+    }
+
+    if (initialBase && base !== initialBase && inst !== initialChildComponent) {
+      var baseParent = initialBase.parentNode;
+
+      if (baseParent && base !== baseParent) {
+        baseParent.replaceChild(base, initialBase);
+
+        if (!toUnmount) {
+          initialBase._component = null;
+          recollectNodeTree(initialBase, false);
+        }
+      }
+    }
+
+    if (toUnmount) {
+      unmountComponent(toUnmount);
+    }
+
+    component.base = base;
+
+    if (base && !isChild) {
+      var componentRef = component,
+          t = component;
+
+      while (t = t._parentComponent) {
+        (componentRef = t).base = base;
+      }
+
+      base._component = componentRef;
+      base._componentConstructor = componentRef.constructor;
+    }
+  }
+
+  if (!isUpdate || mountAll) {
+    mounts.push(component);
+  } else if (!skip) {
+    if (component.componentDidUpdate) {
+      component.componentDidUpdate(previousProps, previousState, snapshot);
+    }
+
+    if (options.afterUpdate) options.afterUpdate(component);
+  }
+
+  while (component._renderCallbacks.length) {
+    component._renderCallbacks.pop().call(component);
+  }
+
+  if (!diffLevel && !isChild) flushMounts();
+}
+
+function buildComponentFromVNode(dom, vnode, context, mountAll) {
+  var c = dom && dom._component,
+      originalComponent = c,
+      oldDom = dom,
+      isDirectOwner = c && dom._componentConstructor === vnode.nodeName,
+      isOwner = isDirectOwner,
+      props = getNodeProps(vnode);
+
+  while (c && !isOwner && (c = c._parentComponent)) {
+    isOwner = c.constructor === vnode.nodeName;
+  }
+
+  if (c && isOwner && (!mountAll || c._component)) {
+    setComponentProps(c, props, 3, context, mountAll);
+    dom = c.base;
+  } else {
+    if (originalComponent && !isDirectOwner) {
+      unmountComponent(originalComponent);
+      dom = oldDom = null;
+    }
+
+    c = createComponent(vnode.nodeName, props, context);
+
+    if (dom && !c.nextBase) {
+      c.nextBase = dom;
+      oldDom = null;
+    }
+
+    setComponentProps(c, props, 1, context, mountAll);
+    dom = c.base;
+
+    if (oldDom && dom !== oldDom) {
+      oldDom._component = null;
+      recollectNodeTree(oldDom, false);
+    }
+  }
+
+  return dom;
+}
+
+function unmountComponent(component) {
+  if (options.beforeUnmount) options.beforeUnmount(component);
+  var base = component.base;
+  component._disable = true;
+  if (component.componentWillUnmount) component.componentWillUnmount();
+  component.base = null;
+  var inner = component._component;
+
+  if (inner) {
+    unmountComponent(inner);
+  } else if (base) {
+    if (base['__preactattr_'] != null) applyRef(base['__preactattr_'].ref, null);
+    component.nextBase = base;
+    removeNode(base);
+    recyclerComponents.push(component);
+    removeChildren(base);
+  }
+
+  applyRef(component.__ref, null);
+}
+
+function Component(props, context) {
+  this._dirty = true;
+  this.context = context;
+  this.props = props;
+  this.state = this.state || {};
+  this._renderCallbacks = [];
+}
+
+extend(Component.prototype, {
+  setState: function setState(state, callback) {
+    if (!this.prevState) this.prevState = this.state;
+    this.state = extend(extend({}, this.state), typeof state === 'function' ? state(this.state, this.props) : state);
+    if (callback) this._renderCallbacks.push(callback);
+    enqueueRender(this);
+  },
+  forceUpdate: function forceUpdate(callback) {
+    if (callback) this._renderCallbacks.push(callback);
+    renderComponent(this, 2);
+  },
+  render: function render() {}
+});
+
+function render(vnode, parent, merge) {
+  return diff(merge, vnode, {}, false, parent, false);
+}
+
+function createRef() {
+  return {};
+}
+
+var preact = {
+  h: h,
+  createElement: h,
+  cloneElement: cloneElement,
+  createRef: createRef,
+  Component: Component,
+  render: render,
+  rerender: rerender,
+  options: options
+};
+var _default = preact;
+exports.default = _default;
+},{}],"node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+var bundleURL = null;
+
+function getBundleURLCached() {
+  if (!bundleURL) {
+    bundleURL = getBundleURL();
+  }
+
+  return bundleURL;
+}
+
+function getBundleURL() {
+  // Attempt to find the URL of the current script and use that as the base URL
+  try {
+    throw new Error();
+  } catch (err) {
+    var matches = ('' + err.stack).match(/(https?|file|ftp|chrome-extension|moz-extension):\/\/[^)\n]+/g);
+
+    if (matches) {
+      return getBaseURL(matches[0]);
+    }
+  }
+
+  return '/';
+}
+
+function getBaseURL(url) {
+  return ('' + url).replace(/^((?:https?|file|ftp|chrome-extension|moz-extension):\/\/.+)\/[^/]+$/, '$1') + '/';
+}
+
+exports.getBundleURL = getBundleURLCached;
+exports.getBaseURL = getBaseURL;
+},{}],"node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
+var bundle = require('./bundle-url');
+
+function updateLink(link) {
+  var newLink = link.cloneNode();
+
+  newLink.onload = function () {
+    link.remove();
+  };
+
+  newLink.href = link.href.split('?')[0] + '?' + Date.now();
+  link.parentNode.insertBefore(newLink, link.nextSibling);
+}
+
+var cssTimeout = null;
+
+function reloadCSS() {
+  if (cssTimeout) {
+    return;
+  }
+
+  cssTimeout = setTimeout(function () {
+    var links = document.querySelectorAll('link[rel="stylesheet"]');
+
+    for (var i = 0; i < links.length; i++) {
+      if (bundle.getBaseURL(links[i].href) === bundle.getBundleURL()) {
+        updateLink(links[i]);
+      }
+    }
+
+    cssTimeout = null;
+  }, 50);
+}
+
+module.exports = reloadCSS;
+},{"./bundle-url":"node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"components/NavBar.less":[function(require,module,exports) {
+var reloadCSS = require('_css_loader');
+
+module.hot.dispose(reloadCSS);
+module.hot.accept(reloadCSS);
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"components/NavBar.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = _default;
+
+var _preact = require("preact");
+
+require("./NavBar.less");
+
+function _default(props) {
+  return (0, _preact.h)("div", {
+    className: "navbar"
+  }, (0, _preact.h)("div", {
+    className: "navbar-item"
+  }, "Task Graph"), (0, _preact.h)("div", {
+    className: "navbar-item navbar-item--disabled"
+  }, "Code"), (0, _preact.h)("div", {
+    className: "navbar-item navbar-item--disabled"
+  }, "Runs"), (0, _preact.h)("div", {
+    className: "navbar-item navbar-item--disabled"
+  }, "Logs"));
+}
+},{"preact":"node_modules/preact/dist/preact.mjs","./NavBar.less":"components/NavBar.less"}],"utils/format.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -935,7 +1013,12 @@ function getPulse() {
     return r.json();
   });
 }
-},{}],"components/Header.js":[function(require,module,exports) {
+},{}],"components/Header.less":[function(require,module,exports) {
+var reloadCSS = require('_css_loader');
+
+module.hot.dispose(reloadCSS);
+module.hot.accept(reloadCSS);
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"components/Header.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -945,11 +1028,17 @@ exports.default = void 0;
 
 var _preact = require("preact");
 
+var _NavBar = _interopRequireDefault(require("./NavBar"));
+
 var _format = require("../utils/format");
 
 var _api = require("../utils/api");
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+require("./Header.less");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -969,9 +1058,7 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-var Header =
-/*#__PURE__*/
-function (_Component) {
+var Header = /*#__PURE__*/function (_Component) {
   _inherits(Header, _Component);
 
   function Header() {
@@ -1016,11 +1103,11 @@ function (_Component) {
         className: "header"
       }, (0, _preact.h)("div", {
         className: "header-title"
-      }, "Oak Dash"), (0, _preact.h)("div", null, (0, _preact.h)("span", {
+      }, "Oak Studio"), (0, _preact.h)("div", null, (0, _preact.h)("div", {
         className: "header-path"
-      }, meta.oakfilePath)), (0, _preact.h)("div", {
-        className: "header-timestamp"
-      }, "Last update: ".concat((0, _format.duration)(new Date(meta.stat.mtime)))));
+      }, (0, _preact.h)("div", {
+        className: "header-path-container"
+      }, (0, _preact.h)("span", null, meta.oakfilePath)))), (0, _preact.h)(_NavBar.default, null));
     }
   }]);
 
@@ -1028,30 +1115,7 @@ function (_Component) {
 }(_preact.Component);
 
 exports.default = Header;
-},{"preact":"node_modules/preact/dist/preact.umd.js","../utils/format":"utils/format.js","../utils/api":"utils/api.js"}],"components/NavBar.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = _default;
-
-var _preact = require("preact");
-
-function _default(props) {
-  return (0, _preact.h)("div", {
-    className: "navbar"
-  }, (0, _preact.h)("div", {
-    className: "navbar-item"
-  }, "Task Graph"), (0, _preact.h)("div", {
-    className: "navbar-item navbar-item--disabled"
-  }, "Code"), (0, _preact.h)("div", {
-    className: "navbar-item navbar-item--disabled"
-  }, "Runs"), (0, _preact.h)("div", {
-    className: "navbar-item navbar-item--disabled"
-  }, "Logs"));
-}
-},{"preact":"node_modules/preact/dist/preact.umd.js"}],"node_modules/d3/dist/package.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.mjs","./NavBar":"components/NavBar.js","../utils/format":"utils/format.js","../utils/api":"utils/api.js","./Header.less":"components/Header.less"}],"node_modules/d3/dist/package.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2251,7 +2315,9 @@ var _zip = _interopRequireDefault(require("./zip"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 },{"./bisect":"node_modules/d3-array/src/bisect.js","./ascending":"node_modules/d3-array/src/ascending.js","./bisector":"node_modules/d3-array/src/bisector.js","./cross":"node_modules/d3-array/src/cross.js","./descending":"node_modules/d3-array/src/descending.js","./deviation":"node_modules/d3-array/src/deviation.js","./extent":"node_modules/d3-array/src/extent.js","./histogram":"node_modules/d3-array/src/histogram.js","./threshold/freedmanDiaconis":"node_modules/d3-array/src/threshold/freedmanDiaconis.js","./threshold/scott":"node_modules/d3-array/src/threshold/scott.js","./threshold/sturges":"node_modules/d3-array/src/threshold/sturges.js","./max":"node_modules/d3-array/src/max.js","./mean":"node_modules/d3-array/src/mean.js","./median":"node_modules/d3-array/src/median.js","./merge":"node_modules/d3-array/src/merge.js","./min":"node_modules/d3-array/src/min.js","./pairs":"node_modules/d3-array/src/pairs.js","./permute":"node_modules/d3-array/src/permute.js","./quantile":"node_modules/d3-array/src/quantile.js","./range":"node_modules/d3-array/src/range.js","./scan":"node_modules/d3-array/src/scan.js","./shuffle":"node_modules/d3-array/src/shuffle.js","./sum":"node_modules/d3-array/src/sum.js","./ticks":"node_modules/d3-array/src/ticks.js","./transpose":"node_modules/d3-array/src/transpose.js","./variance":"node_modules/d3-array/src/variance.js","./zip":"node_modules/d3-array/src/zip.js"}],"node_modules/d3-axis/src/array.js":[function(require,module,exports) {
 "use strict";
 
@@ -4376,7 +4442,9 @@ var _event = _interopRequireDefault(require("./event.js"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 // Ignore right-click, since that should open the context menu.
 function defaultFilter() {
@@ -4586,7 +4654,9 @@ var _drag = _interopRequireDefault(require("./drag.js"));
 
 var _nodrag = _interopRequireWildcard(require("./nodrag.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 },{"./drag.js":"node_modules/d3-drag/src/drag.js","./nodrag.js":"node_modules/d3-drag/src/nodrag.js"}],"node_modules/d3-color/src/define.js":[function(require,module,exports) {
@@ -4628,7 +4698,9 @@ exports.brighter = exports.darker = void 0;
 
 var _define = _interopRequireWildcard(require("./define.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function Color() {}
 
@@ -5009,7 +5081,9 @@ var _color = require("./color.js");
 
 var _math = require("./math.js");
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 // https://observablehq.com/@mbostock/lab-and-rgb
 var K = 18,
@@ -5145,7 +5219,9 @@ var _color = require("./color.js");
 
 var _math = require("./math.js");
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 var A = -0.14861,
     B = +1.78277,
@@ -5263,7 +5339,9 @@ var _cubehelix = _interopRequireDefault(require("./cubehelix.js"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 },{"./color.js":"node_modules/d3-color/src/color.js","./lab.js":"node_modules/d3-color/src/lab.js","./cubehelix.js":"node_modules/d3-color/src/cubehelix.js"}],"node_modules/d3-interpolate/src/basis.js":[function(require,module,exports) {
 "use strict";
 
@@ -5381,7 +5459,9 @@ var _basisClosed = _interopRequireDefault(require("./basisClosed.js"));
 
 var _color = _interopRequireWildcard(require("./color.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -5478,7 +5558,9 @@ var _value = _interopRequireDefault(require("./value.js"));
 
 var _numberArray = _interopRequireWildcard(require("./numberArray.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -5673,7 +5755,9 @@ var _constant = _interopRequireDefault(require("./constant.js"));
 
 var _numberArray = _interopRequireWildcard(require("./numberArray.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -5771,7 +5855,9 @@ exports.parseSvg = parseSvg;
 
 var _decompose = _interopRequireWildcard(require("./decompose.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 var cssNode, cssRoot, cssView, svgNode;
 
@@ -5971,7 +6057,9 @@ var _d3Color = require("d3-color");
 
 var _color = _interopRequireWildcard(require("./color.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function hsl(hue) {
   return function (start, end) {
@@ -6033,7 +6121,9 @@ var _d3Color = require("d3-color");
 
 var _color = _interopRequireWildcard(require("./color.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function hcl(hue) {
   return function (start, end) {
@@ -6068,7 +6158,9 @@ var _d3Color = require("d3-color");
 
 var _color = _interopRequireWildcard(require("./color.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function cubehelix(hue) {
   return function cubehelixGamma(y) {
@@ -6345,7 +6437,9 @@ var _piecewise = _interopRequireDefault(require("./piecewise.js"));
 
 var _quantize = _interopRequireDefault(require("./quantize.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 },{"./value.js":"node_modules/d3-interpolate/src/value.js","./array.js":"node_modules/d3-interpolate/src/array.js","./basis.js":"node_modules/d3-interpolate/src/basis.js","./basisClosed.js":"node_modules/d3-interpolate/src/basisClosed.js","./date.js":"node_modules/d3-interpolate/src/date.js","./discrete.js":"node_modules/d3-interpolate/src/discrete.js","./hue.js":"node_modules/d3-interpolate/src/hue.js","./number.js":"node_modules/d3-interpolate/src/number.js","./numberArray.js":"node_modules/d3-interpolate/src/numberArray.js","./object.js":"node_modules/d3-interpolate/src/object.js","./round.js":"node_modules/d3-interpolate/src/round.js","./string.js":"node_modules/d3-interpolate/src/string.js","./transform/index.js":"node_modules/d3-interpolate/src/transform/index.js","./zoom.js":"node_modules/d3-interpolate/src/zoom.js","./rgb.js":"node_modules/d3-interpolate/src/rgb.js","./hsl.js":"node_modules/d3-interpolate/src/hsl.js","./lab.js":"node_modules/d3-interpolate/src/lab.js","./hcl.js":"node_modules/d3-interpolate/src/hcl.js","./cubehelix.js":"node_modules/d3-interpolate/src/cubehelix.js","./piecewise.js":"node_modules/d3-interpolate/src/piecewise.js","./quantize.js":"node_modules/d3-interpolate/src/quantize.js"}],"node_modules/d3-timer/src/timer.js":[function(require,module,exports) {
@@ -7236,7 +7330,9 @@ var _index = require("./index.js");
 
 var _schedule = _interopRequireWildcard(require("./schedule.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _default(select) {
   var name = this._name,
@@ -7269,7 +7365,9 @@ var _index = require("./index.js");
 
 var _schedule = _interopRequireWildcard(require("./schedule.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _default(select) {
   var name = this._name,
@@ -7493,7 +7591,9 @@ var _index = require("./index.js");
 
 var _schedule = _interopRequireWildcard(require("./schedule.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _default() {
   var name = this._name,
@@ -8428,7 +8528,9 @@ var _event = _interopRequireDefault(require("./event.js"));
 
 var _noevent = _interopRequireWildcard(require("./noevent.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -9048,7 +9150,9 @@ Object.defineProperty(exports, "brushSelection", {
 
 var _brush = _interopRequireWildcard(require("./brush.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 },{"./brush.js":"node_modules/d3-brush/src/brush.js"}],"node_modules/d3-chord/src/math.js":[function(require,module,exports) {
 "use strict";
 
@@ -9701,7 +9805,9 @@ exports.default = void 0;
 
 var _map = _interopRequireWildcard(require("./map"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function Set() {}
 
@@ -11061,7 +11167,9 @@ var _text = _interopRequireDefault(require("./text"));
 
 var _xml = _interopRequireWildcard(require("./xml"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 },{"./blob":"node_modules/d3-fetch/src/blob.js","./buffer":"node_modules/d3-fetch/src/buffer.js","./dsv":"node_modules/d3-fetch/src/dsv.js","./image":"node_modules/d3-fetch/src/image.js","./json":"node_modules/d3-fetch/src/json.js","./text":"node_modules/d3-fetch/src/text.js","./xml":"node_modules/d3-fetch/src/xml.js"}],"node_modules/d3-force/src/center.js":[function(require,module,exports) {
@@ -11623,7 +11731,9 @@ var _y = _interopRequireWildcard(require("./y.js"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function quadtree(nodes, x, y) {
   var tree = new Quadtree(x == null ? _x.defaultX : x, y == null ? _y.defaultY : y, NaN, NaN, NaN, NaN);
@@ -13057,7 +13167,9 @@ var _precisionRound = _interopRequireDefault(require("./precisionRound.js"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 },{"./defaultLocale.js":"node_modules/d3-format/src/defaultLocale.js","./locale.js":"node_modules/d3-format/src/locale.js","./formatSpecifier.js":"node_modules/d3-format/src/formatSpecifier.js","./precisionFixed.js":"node_modules/d3-format/src/precisionFixed.js","./precisionPrefix.js":"node_modules/d3-format/src/precisionPrefix.js","./precisionRound.js":"node_modules/d3-format/src/precisionRound.js"}],"node_modules/d3-geo/src/adder.js":[function(require,module,exports) {
 "use strict";
 
@@ -17430,7 +17542,9 @@ var _stream = _interopRequireDefault(require("./stream.js"));
 
 var _transform = _interopRequireDefault(require("./transform.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 },{"./area.js":"node_modules/d3-geo/src/area.js","./bounds.js":"node_modules/d3-geo/src/bounds.js","./centroid.js":"node_modules/d3-geo/src/centroid.js","./circle.js":"node_modules/d3-geo/src/circle.js","./clip/antimeridian.js":"node_modules/d3-geo/src/clip/antimeridian.js","./clip/circle.js":"node_modules/d3-geo/src/clip/circle.js","./clip/extent.js":"node_modules/d3-geo/src/clip/extent.js","./clip/rectangle.js":"node_modules/d3-geo/src/clip/rectangle.js","./contains.js":"node_modules/d3-geo/src/contains.js","./distance.js":"node_modules/d3-geo/src/distance.js","./graticule.js":"node_modules/d3-geo/src/graticule.js","./interpolate.js":"node_modules/d3-geo/src/interpolate.js","./length.js":"node_modules/d3-geo/src/length.js","./path/index.js":"node_modules/d3-geo/src/path/index.js","./projection/albers.js":"node_modules/d3-geo/src/projection/albers.js","./projection/albersUsa.js":"node_modules/d3-geo/src/projection/albersUsa.js","./projection/azimuthalEqualArea.js":"node_modules/d3-geo/src/projection/azimuthalEqualArea.js","./projection/azimuthalEquidistant.js":"node_modules/d3-geo/src/projection/azimuthalEquidistant.js","./projection/conicConformal.js":"node_modules/d3-geo/src/projection/conicConformal.js","./projection/conicEqualArea.js":"node_modules/d3-geo/src/projection/conicEqualArea.js","./projection/conicEquidistant.js":"node_modules/d3-geo/src/projection/conicEquidistant.js","./projection/equalEarth.js":"node_modules/d3-geo/src/projection/equalEarth.js","./projection/equirectangular.js":"node_modules/d3-geo/src/projection/equirectangular.js","./projection/gnomonic.js":"node_modules/d3-geo/src/projection/gnomonic.js","./projection/identity.js":"node_modules/d3-geo/src/projection/identity.js","./projection/index.js":"node_modules/d3-geo/src/projection/index.js","./projection/mercator.js":"node_modules/d3-geo/src/projection/mercator.js","./projection/naturalEarth1.js":"node_modules/d3-geo/src/projection/naturalEarth1.js","./projection/orthographic.js":"node_modules/d3-geo/src/projection/orthographic.js","./projection/stereographic.js":"node_modules/d3-geo/src/projection/stereographic.js","./projection/transverseMercator.js":"node_modules/d3-geo/src/projection/transverseMercator.js","./rotation.js":"node_modules/d3-geo/src/rotation.js","./stream.js":"node_modules/d3-geo/src/stream.js","./transform.js":"node_modules/d3-geo/src/transform.js"}],"node_modules/d3-hierarchy/src/cluster.js":[function(require,module,exports) {
@@ -18234,7 +18348,9 @@ var _accessors = require("../accessors.js");
 
 var _constant = _interopRequireWildcard(require("../constant.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function defaultRadius(d) {
   return Math.sqrt(d.value);
@@ -18874,7 +18990,9 @@ var _accessors = require("../accessors.js");
 
 var _constant = _interopRequireWildcard(require("../constant.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -20144,7 +20262,9 @@ var _tickFormat = _interopRequireDefault(require("./tickFormat"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function linearish(scale) {
   var domain = scale.domain;
@@ -21683,7 +21803,9 @@ var _utcMonth = _interopRequireWildcard(require("./utcMonth.js"));
 
 var _utcYear = _interopRequireWildcard(require("./utcYear.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 },{"./interval.js":"node_modules/d3-time/src/interval.js","./millisecond.js":"node_modules/d3-time/src/millisecond.js","./second.js":"node_modules/d3-time/src/second.js","./minute.js":"node_modules/d3-time/src/minute.js","./hour.js":"node_modules/d3-time/src/hour.js","./day.js":"node_modules/d3-time/src/day.js","./week.js":"node_modules/d3-time/src/week.js","./month.js":"node_modules/d3-time/src/month.js","./year.js":"node_modules/d3-time/src/year.js","./utcMinute.js":"node_modules/d3-time/src/utcMinute.js","./utcHour.js":"node_modules/d3-time/src/utcHour.js","./utcDay.js":"node_modules/d3-time/src/utcDay.js","./utcWeek.js":"node_modules/d3-time/src/utcWeek.js","./utcMonth.js":"node_modules/d3-time/src/utcMonth.js","./utcYear.js":"node_modules/d3-time/src/utcYear.js"}],"node_modules/d3-time-format/src/locale.js":[function(require,module,exports) {
@@ -22516,7 +22638,9 @@ var _isoParse = _interopRequireDefault(require("./isoParse.js"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 },{"./defaultLocale.js":"node_modules/d3-time-format/src/defaultLocale.js","./locale.js":"node_modules/d3-time-format/src/locale.js","./isoFormat.js":"node_modules/d3-time-format/src/isoFormat.js","./isoParse.js":"node_modules/d3-time-format/src/isoParse.js"}],"node_modules/d3-scale/src/time.js":[function(require,module,exports) {
 "use strict";
 
@@ -22542,7 +22666,9 @@ var _nice = _interopRequireDefault(require("./nice"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 var durationSecond = 1000,
     durationMinute = durationSecond * 60,
@@ -23127,7 +23253,9 @@ var _tickFormat = _interopRequireDefault(require("./tickFormat"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 },{"./band":"node_modules/d3-scale/src/band.js","./identity":"node_modules/d3-scale/src/identity.js","./linear":"node_modules/d3-scale/src/linear.js","./log":"node_modules/d3-scale/src/log.js","./symlog":"node_modules/d3-scale/src/symlog.js","./ordinal":"node_modules/d3-scale/src/ordinal.js","./pow":"node_modules/d3-scale/src/pow.js","./quantile":"node_modules/d3-scale/src/quantile.js","./quantize":"node_modules/d3-scale/src/quantize.js","./threshold":"node_modules/d3-scale/src/threshold.js","./time":"node_modules/d3-scale/src/time.js","./utcTime":"node_modules/d3-scale/src/utcTime.js","./sequential":"node_modules/d3-scale/src/sequential.js","./sequentialQuantile":"node_modules/d3-scale/src/sequentialQuantile.js","./diverging":"node_modules/d3-scale/src/diverging.js","./tickFormat":"node_modules/d3-scale/src/tickFormat.js"}],"node_modules/d3-scale-chromatic/src/colors.js":[function(require,module,exports) {
 "use strict";
 
@@ -24507,7 +24635,9 @@ var _turbo = _interopRequireDefault(require("./sequential-multi/turbo.js"));
 
 var _viridis = _interopRequireWildcard(require("./sequential-multi/viridis.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 },{"./categorical/category10.js":"node_modules/d3-scale-chromatic/src/categorical/category10.js","./categorical/Accent.js":"node_modules/d3-scale-chromatic/src/categorical/Accent.js","./categorical/Dark2.js":"node_modules/d3-scale-chromatic/src/categorical/Dark2.js","./categorical/Paired.js":"node_modules/d3-scale-chromatic/src/categorical/Paired.js","./categorical/Pastel1.js":"node_modules/d3-scale-chromatic/src/categorical/Pastel1.js","./categorical/Pastel2.js":"node_modules/d3-scale-chromatic/src/categorical/Pastel2.js","./categorical/Set1.js":"node_modules/d3-scale-chromatic/src/categorical/Set1.js","./categorical/Set2.js":"node_modules/d3-scale-chromatic/src/categorical/Set2.js","./categorical/Set3.js":"node_modules/d3-scale-chromatic/src/categorical/Set3.js","./categorical/Tableau10.js":"node_modules/d3-scale-chromatic/src/categorical/Tableau10.js","./diverging/BrBG.js":"node_modules/d3-scale-chromatic/src/diverging/BrBG.js","./diverging/PRGn.js":"node_modules/d3-scale-chromatic/src/diverging/PRGn.js","./diverging/PiYG.js":"node_modules/d3-scale-chromatic/src/diverging/PiYG.js","./diverging/PuOr.js":"node_modules/d3-scale-chromatic/src/diverging/PuOr.js","./diverging/RdBu.js":"node_modules/d3-scale-chromatic/src/diverging/RdBu.js","./diverging/RdGy.js":"node_modules/d3-scale-chromatic/src/diverging/RdGy.js","./diverging/RdYlBu.js":"node_modules/d3-scale-chromatic/src/diverging/RdYlBu.js","./diverging/RdYlGn.js":"node_modules/d3-scale-chromatic/src/diverging/RdYlGn.js","./diverging/Spectral.js":"node_modules/d3-scale-chromatic/src/diverging/Spectral.js","./sequential-multi/BuGn.js":"node_modules/d3-scale-chromatic/src/sequential-multi/BuGn.js","./sequential-multi/BuPu.js":"node_modules/d3-scale-chromatic/src/sequential-multi/BuPu.js","./sequential-multi/GnBu.js":"node_modules/d3-scale-chromatic/src/sequential-multi/GnBu.js","./sequential-multi/OrRd.js":"node_modules/d3-scale-chromatic/src/sequential-multi/OrRd.js","./sequential-multi/PuBuGn.js":"node_modules/d3-scale-chromatic/src/sequential-multi/PuBuGn.js","./sequential-multi/PuBu.js":"node_modules/d3-scale-chromatic/src/sequential-multi/PuBu.js","./sequential-multi/PuRd.js":"node_modules/d3-scale-chromatic/src/sequential-multi/PuRd.js","./sequential-multi/RdPu.js":"node_modules/d3-scale-chromatic/src/sequential-multi/RdPu.js","./sequential-multi/YlGnBu.js":"node_modules/d3-scale-chromatic/src/sequential-multi/YlGnBu.js","./sequential-multi/YlGn.js":"node_modules/d3-scale-chromatic/src/sequential-multi/YlGn.js","./sequential-multi/YlOrBr.js":"node_modules/d3-scale-chromatic/src/sequential-multi/YlOrBr.js","./sequential-multi/YlOrRd.js":"node_modules/d3-scale-chromatic/src/sequential-multi/YlOrRd.js","./sequential-single/Blues.js":"node_modules/d3-scale-chromatic/src/sequential-single/Blues.js","./sequential-single/Greens.js":"node_modules/d3-scale-chromatic/src/sequential-single/Greens.js","./sequential-single/Greys.js":"node_modules/d3-scale-chromatic/src/sequential-single/Greys.js","./sequential-single/Purples.js":"node_modules/d3-scale-chromatic/src/sequential-single/Purples.js","./sequential-single/Reds.js":"node_modules/d3-scale-chromatic/src/sequential-single/Reds.js","./sequential-single/Oranges.js":"node_modules/d3-scale-chromatic/src/sequential-single/Oranges.js","./sequential-multi/cividis.js":"node_modules/d3-scale-chromatic/src/sequential-multi/cividis.js","./sequential-multi/cubehelix.js":"node_modules/d3-scale-chromatic/src/sequential-multi/cubehelix.js","./sequential-multi/rainbow.js":"node_modules/d3-scale-chromatic/src/sequential-multi/rainbow.js","./sequential-multi/sinebow.js":"node_modules/d3-scale-chromatic/src/sequential-multi/sinebow.js","./sequential-multi/turbo.js":"node_modules/d3-scale-chromatic/src/sequential-multi/turbo.js","./sequential-multi/viridis.js":"node_modules/d3-scale-chromatic/src/sequential-multi/viridis.js"}],"node_modules/d3-shape/src/constant.js":[function(require,module,exports) {
@@ -25240,7 +25370,9 @@ var _line = _interopRequireDefault(require("./line.js"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function lineRadial(l) {
   var c = l.curve;
@@ -25273,7 +25405,9 @@ var _lineRadial = require("./lineRadial.js");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _default() {
   var a = (0, _area.default)().curve(_radial.curveRadialLinear),
@@ -27607,7 +27741,9 @@ var _none2 = _interopRequireDefault(require("./order/none.js"));
 
 var _reverse = _interopRequireDefault(require("./order/reverse.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 },{"./arc.js":"node_modules/d3-shape/src/arc.js","./area.js":"node_modules/d3-shape/src/area.js","./line.js":"node_modules/d3-shape/src/line.js","./pie.js":"node_modules/d3-shape/src/pie.js","./areaRadial.js":"node_modules/d3-shape/src/areaRadial.js","./lineRadial.js":"node_modules/d3-shape/src/lineRadial.js","./pointRadial.js":"node_modules/d3-shape/src/pointRadial.js","./link/index.js":"node_modules/d3-shape/src/link/index.js","./symbol.js":"node_modules/d3-shape/src/symbol.js","./symbol/circle.js":"node_modules/d3-shape/src/symbol/circle.js","./symbol/cross.js":"node_modules/d3-shape/src/symbol/cross.js","./symbol/diamond.js":"node_modules/d3-shape/src/symbol/diamond.js","./symbol/square.js":"node_modules/d3-shape/src/symbol/square.js","./symbol/star.js":"node_modules/d3-shape/src/symbol/star.js","./symbol/triangle.js":"node_modules/d3-shape/src/symbol/triangle.js","./symbol/wye.js":"node_modules/d3-shape/src/symbol/wye.js","./curve/basisClosed.js":"node_modules/d3-shape/src/curve/basisClosed.js","./curve/basisOpen.js":"node_modules/d3-shape/src/curve/basisOpen.js","./curve/basis.js":"node_modules/d3-shape/src/curve/basis.js","./curve/bundle.js":"node_modules/d3-shape/src/curve/bundle.js","./curve/cardinalClosed.js":"node_modules/d3-shape/src/curve/cardinalClosed.js","./curve/cardinalOpen.js":"node_modules/d3-shape/src/curve/cardinalOpen.js","./curve/cardinal.js":"node_modules/d3-shape/src/curve/cardinal.js","./curve/catmullRomClosed.js":"node_modules/d3-shape/src/curve/catmullRomClosed.js","./curve/catmullRomOpen.js":"node_modules/d3-shape/src/curve/catmullRomOpen.js","./curve/catmullRom.js":"node_modules/d3-shape/src/curve/catmullRom.js","./curve/linearClosed.js":"node_modules/d3-shape/src/curve/linearClosed.js","./curve/linear.js":"node_modules/d3-shape/src/curve/linear.js","./curve/monotone.js":"node_modules/d3-shape/src/curve/monotone.js","./curve/natural.js":"node_modules/d3-shape/src/curve/natural.js","./curve/step.js":"node_modules/d3-shape/src/curve/step.js","./stack.js":"node_modules/d3-shape/src/stack.js","./offset/expand.js":"node_modules/d3-shape/src/offset/expand.js","./offset/diverging.js":"node_modules/d3-shape/src/offset/diverging.js","./offset/none.js":"node_modules/d3-shape/src/offset/none.js","./offset/silhouette.js":"node_modules/d3-shape/src/offset/silhouette.js","./offset/wiggle.js":"node_modules/d3-shape/src/offset/wiggle.js","./order/appearance.js":"node_modules/d3-shape/src/order/appearance.js","./order/ascending.js":"node_modules/d3-shape/src/order/ascending.js","./order/descending.js":"node_modules/d3-shape/src/order/descending.js","./order/insideOut.js":"node_modules/d3-shape/src/order/insideOut.js","./order/none.js":"node_modules/d3-shape/src/order/none.js","./order/reverse.js":"node_modules/d3-shape/src/order/reverse.js"}],"node_modules/d3-voronoi/src/constant.js":[function(require,module,exports) {
@@ -28678,7 +28814,9 @@ var _point = require("./point");
 
 var _Diagram = _interopRequireWildcard(require("./Diagram"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -28875,7 +29013,9 @@ var _transform = require("./transform.js");
 
 var _noevent = _interopRequireWildcard(require("./noevent.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -29317,7 +29457,9 @@ var _zoom = _interopRequireDefault(require("./zoom.js"));
 
 var _transform = _interopRequireWildcard(require("./transform.js"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 },{"./zoom.js":"node_modules/d3-zoom/src/zoom.js","./transform.js":"node_modules/d3-zoom/src/transform.js"}],"node_modules/d3/index.js":[function(require,module,exports) {
@@ -29740,74 +29882,7 @@ Object.keys(_d3Zoom).forEach(function (key) {
     }
   });
 });
-},{"./dist/package.js":"node_modules/d3/dist/package.js","d3-array":"node_modules/d3-array/src/index.js","d3-axis":"node_modules/d3-axis/src/index.js","d3-brush":"node_modules/d3-brush/src/index.js","d3-chord":"node_modules/d3-chord/src/index.js","d3-collection":"node_modules/d3-collection/src/index.js","d3-color":"node_modules/d3-color/src/index.js","d3-contour":"node_modules/d3-contour/src/index.js","d3-dispatch":"node_modules/d3-dispatch/src/index.js","d3-drag":"node_modules/d3-drag/src/index.js","d3-dsv":"node_modules/d3-dsv/src/index.js","d3-ease":"node_modules/d3-ease/src/index.js","d3-fetch":"node_modules/d3-fetch/src/index.js","d3-force":"node_modules/d3-force/src/index.js","d3-format":"node_modules/d3-format/src/index.js","d3-geo":"node_modules/d3-geo/src/index.js","d3-hierarchy":"node_modules/d3-hierarchy/src/index.js","d3-interpolate":"node_modules/d3-interpolate/src/index.js","d3-path":"node_modules/d3-path/src/index.js","d3-polygon":"node_modules/d3-polygon/src/index.js","d3-quadtree":"node_modules/d3-quadtree/src/index.js","d3-random":"node_modules/d3-random/src/index.js","d3-scale":"node_modules/d3-scale/src/index.js","d3-scale-chromatic":"node_modules/d3-scale-chromatic/src/index.js","d3-selection":"node_modules/d3-selection/src/index.js","d3-shape":"node_modules/d3-shape/src/index.js","d3-time":"node_modules/d3-time/src/index.js","d3-time-format":"node_modules/d3-time-format/src/index.js","d3-timer":"node_modules/d3-timer/src/index.js","d3-transition":"node_modules/d3-transition/src/index.js","d3-voronoi":"node_modules/d3-voronoi/src/index.js","d3-zoom":"node_modules/d3-zoom/src/index.js"}],"node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
-var bundleURL = null;
-
-function getBundleURLCached() {
-  if (!bundleURL) {
-    bundleURL = getBundleURL();
-  }
-
-  return bundleURL;
-}
-
-function getBundleURL() {
-  // Attempt to find the URL of the current script and use that as the base URL
-  try {
-    throw new Error();
-  } catch (err) {
-    var matches = ('' + err.stack).match(/(https?|file|ftp|chrome-extension|moz-extension):\/\/[^)\n]+/g);
-
-    if (matches) {
-      return getBaseURL(matches[0]);
-    }
-  }
-
-  return '/';
-}
-
-function getBaseURL(url) {
-  return ('' + url).replace(/^((?:https?|file|ftp|chrome-extension|moz-extension):\/\/.+)\/[^/]+$/, '$1') + '/';
-}
-
-exports.getBundleURL = getBundleURLCached;
-exports.getBaseURL = getBaseURL;
-},{}],"node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
-var bundle = require('./bundle-url');
-
-function updateLink(link) {
-  var newLink = link.cloneNode();
-
-  newLink.onload = function () {
-    link.remove();
-  };
-
-  newLink.href = link.href.split('?')[0] + '?' + Date.now();
-  link.parentNode.insertBefore(newLink, link.nextSibling);
-}
-
-var cssTimeout = null;
-
-function reloadCSS() {
-  if (cssTimeout) {
-    return;
-  }
-
-  cssTimeout = setTimeout(function () {
-    var links = document.querySelectorAll('link[rel="stylesheet"]');
-
-    for (var i = 0; i < links.length; i++) {
-      if (bundle.getBaseURL(links[i].href) === bundle.getBundleURL()) {
-        updateLink(links[i]);
-      }
-    }
-
-    cssTimeout = null;
-  }, 50);
-}
-
-module.exports = reloadCSS;
-},{"./bundle-url":"node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"style.less":[function(require,module,exports) {
+},{"./dist/package.js":"node_modules/d3/dist/package.js","d3-array":"node_modules/d3-array/src/index.js","d3-axis":"node_modules/d3-axis/src/index.js","d3-brush":"node_modules/d3-brush/src/index.js","d3-chord":"node_modules/d3-chord/src/index.js","d3-collection":"node_modules/d3-collection/src/index.js","d3-color":"node_modules/d3-color/src/index.js","d3-contour":"node_modules/d3-contour/src/index.js","d3-dispatch":"node_modules/d3-dispatch/src/index.js","d3-drag":"node_modules/d3-drag/src/index.js","d3-dsv":"node_modules/d3-dsv/src/index.js","d3-ease":"node_modules/d3-ease/src/index.js","d3-fetch":"node_modules/d3-fetch/src/index.js","d3-force":"node_modules/d3-force/src/index.js","d3-format":"node_modules/d3-format/src/index.js","d3-geo":"node_modules/d3-geo/src/index.js","d3-hierarchy":"node_modules/d3-hierarchy/src/index.js","d3-interpolate":"node_modules/d3-interpolate/src/index.js","d3-path":"node_modules/d3-path/src/index.js","d3-polygon":"node_modules/d3-polygon/src/index.js","d3-quadtree":"node_modules/d3-quadtree/src/index.js","d3-random":"node_modules/d3-random/src/index.js","d3-scale":"node_modules/d3-scale/src/index.js","d3-scale-chromatic":"node_modules/d3-scale-chromatic/src/index.js","d3-selection":"node_modules/d3-selection/src/index.js","d3-shape":"node_modules/d3-shape/src/index.js","d3-time":"node_modules/d3-time/src/index.js","d3-time-format":"node_modules/d3-time-format/src/index.js","d3-timer":"node_modules/d3-timer/src/index.js","d3-transition":"node_modules/d3-transition/src/index.js","d3-voronoi":"node_modules/d3-voronoi/src/index.js","d3-zoom":"node_modules/d3-zoom/src/index.js"}],"components/TaskGraphNode.less":[function(require,module,exports) {
 var reloadCSS = require('_css_loader');
 
 module.hot.dispose(reloadCSS);
@@ -29835,15 +29910,17 @@ var _preact = require("preact");
 
 var d3 = _interopRequireWildcard(require("d3"));
 
-require("../style.less");
+require("./TaskGraphNode.less");
 
 var _format = require("../utils/format");
 
 var _colors = require("../utils/colors");
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -29925,9 +30002,7 @@ function TaskGraphNodeTargetSize(props) {
   }, (0, _preact.h)("text", null, (0, _format.bytesToSize)(node.bytes)));
 }
 
-var TaskGraphNodeName =
-/*#__PURE__*/
-function (_Component) {
+var TaskGraphNodeName = /*#__PURE__*/function (_Component) {
   _inherits(TaskGraphNodeName, _Component);
 
   function TaskGraphNodeName() {
@@ -29988,9 +30063,7 @@ function (_Component) {
   return TaskGraphNodeName;
 }(_preact.Component);
 
-var TaskGraphNode =
-/*#__PURE__*/
-function (_Component2) {
+var TaskGraphNode = /*#__PURE__*/function (_Component2) {
   _inherits(TaskGraphNode, _Component2);
 
   function TaskGraphNode() {
@@ -30061,7 +30134,12 @@ function (_Component2) {
 }(_preact.Component);
 
 exports.default = TaskGraphNode;
-},{"preact":"node_modules/preact/dist/preact.umd.js","d3":"node_modules/d3/index.js","../style.less":"style.less","../utils/format":"utils/format.js","../utils/colors":"utils/colors.js"}],"components/TaskGraphEdge.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.mjs","d3":"node_modules/d3/index.js","./TaskGraphNode.less":"components/TaskGraphNode.less","../utils/format":"utils/format.js","../utils/colors":"utils/colors.js"}],"components/TaskGraphEdge.less":[function(require,module,exports) {
+var reloadCSS = require('_css_loader');
+
+module.hot.dispose(reloadCSS);
+module.hot.accept(reloadCSS);
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"components/TaskGraphEdge.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -30075,7 +30153,7 @@ var _d = require("d3");
 
 var _colors = require("../utils/colors");
 
-require("../style.less");
+require("./TaskGraphEdge.less");
 
 var l = (0, _d.line)().x(function (d) {
   return d.x;
@@ -30131,7 +30209,12 @@ function TaskGraphEdge(props) {
     edge: edge
   }));
 }
-},{"preact":"node_modules/preact/dist/preact.umd.js","d3":"node_modules/d3/index.js","../utils/colors":"utils/colors.js","../style.less":"style.less"}],"components/TaskGraph.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.mjs","d3":"node_modules/d3/index.js","../utils/colors":"utils/colors.js","./TaskGraphEdge.less":"components/TaskGraphEdge.less"}],"components/TaskGraph.less":[function(require,module,exports) {
+var reloadCSS = require('_css_loader');
+
+module.hot.dispose(reloadCSS);
+module.hot.accept(reloadCSS);
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"components/TaskGraph.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -30147,11 +30230,15 @@ var _TaskGraphEdge = _interopRequireDefault(require("./TaskGraphEdge"));
 
 var d3 = _interopRequireWildcard(require("d3"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+require("./TaskGraph.less");
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -30171,9 +30258,7 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-var TaskGraph =
-/*#__PURE__*/
-function (_Component) {
+var TaskGraph = /*#__PURE__*/function (_Component) {
   _inherits(TaskGraph, _Component);
 
   function TaskGraph() {
@@ -30246,7 +30331,12 @@ function (_Component) {
 }(_preact.Component);
 
 exports.default = TaskGraph;
-},{"preact":"node_modules/preact/dist/preact.umd.js","./TaskGraphNode":"components/TaskGraphNode.js","./TaskGraphEdge":"components/TaskGraphEdge.js","d3":"node_modules/d3/index.js"}],"components/TaskSidebar.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.mjs","./TaskGraphNode":"components/TaskGraphNode.js","./TaskGraphEdge":"components/TaskGraphEdge.js","d3":"node_modules/d3/index.js","./TaskGraph.less":"components/TaskGraph.less"}],"components/TaskGraphMeta.less":[function(require,module,exports) {
+var reloadCSS = require('_css_loader');
+
+module.hot.dispose(reloadCSS);
+module.hot.accept(reloadCSS);
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"components/TaskGraphMeta.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -30258,9 +30348,9 @@ var _preact = require("preact");
 
 var _format = require("../utils/format");
 
-require("../style.less");
+require("./TaskGraphMeta.less");
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -30278,18 +30368,16 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
-var TaskSidebar =
-/*#__PURE__*/
-function (_Component) {
-  _inherits(TaskSidebar, _Component);
+var TaskGraphMeta = /*#__PURE__*/function (_Component) {
+  _inherits(TaskGraphMeta, _Component);
 
-  function TaskSidebar() {
-    _classCallCheck(this, TaskSidebar);
+  function TaskGraphMeta() {
+    _classCallCheck(this, TaskGraphMeta);
 
-    return _possibleConstructorReturn(this, _getPrototypeOf(TaskSidebar).apply(this, arguments));
+    return _possibleConstructorReturn(this, _getPrototypeOf(TaskGraphMeta).apply(this, arguments));
   }
 
-  _createClass(TaskSidebar, [{
+  _createClass(TaskGraphMeta, [{
     key: "render",
     value: function render() {
       var _this$props = this.props,
@@ -30311,11 +30399,68 @@ function (_Component) {
     }
   }]);
 
-  return TaskSidebar;
+  return TaskGraphMeta;
 }(_preact.Component);
 
-exports.default = TaskSidebar;
-},{"preact":"node_modules/preact/dist/preact.umd.js","../utils/format":"utils/format.js","../style.less":"style.less"}],"node_modules/lodash/_listCacheClear.js":[function(require,module,exports) {
+exports.default = TaskGraphMeta;
+},{"preact":"node_modules/preact/dist/preact.mjs","../utils/format":"utils/format.js","./TaskGraphMeta.less":"components/TaskGraphMeta.less"}],"components/TaskGraphControls.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _preact = require("preact");
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+var TaskGraphControls = /*#__PURE__*/function (_Component) {
+  _inherits(TaskGraphControls, _Component);
+
+  function TaskGraphControls() {
+    _classCallCheck(this, TaskGraphControls);
+
+    return _possibleConstructorReturn(this, _getPrototypeOf(TaskGraphControls).apply(this, arguments));
+  }
+
+  _createClass(TaskGraphControls, [{
+    key: "render",
+    value: function render() {
+      var _this$props = this.props,
+          controls = _this$props.controls,
+          onUpdate = _this$props.onUpdate;
+      return (0, _preact.h)("div", null, (0, _preact.h)("div", null, "rankdir"), (0, _preact.h)("select", {
+        onChange: function onChange(e) {
+          return onUpdate(Object.assign(controls, {
+            rankdir: e.target.value
+          }));
+        }
+      }, (0, _preact.h)("option", null, "TB"), (0, _preact.h)("option", null, "LR")));
+    }
+  }]);
+
+  return TaskGraphControls;
+}(_preact.Component);
+
+exports.default = TaskGraphControls;
+},{"preact":"node_modules/preact/dist/preact.mjs"}],"node_modules/lodash/_listCacheClear.js":[function(require,module,exports) {
 /**
  * Removes all key-value entries from the list cache.
  *
@@ -41800,7 +41945,12 @@ module.exports = {
   version: require("./lib/version")
 };
 
-},{"./lib/graphlib":"node_modules/dagre/lib/graphlib.js","./lib/layout":"node_modules/dagre/lib/layout.js","./lib/debug":"node_modules/dagre/lib/debug.js","./lib/util":"node_modules/dagre/lib/util.js","./lib/version":"node_modules/dagre/lib/version.js"}],"components/TaskGraphSection.js":[function(require,module,exports) {
+},{"./lib/graphlib":"node_modules/dagre/lib/graphlib.js","./lib/layout":"node_modules/dagre/lib/layout.js","./lib/debug":"node_modules/dagre/lib/debug.js","./lib/util":"node_modules/dagre/lib/util.js","./lib/version":"node_modules/dagre/lib/version.js"}],"components/TaskGraphSection.less":[function(require,module,exports) {
+var reloadCSS = require('_css_loader');
+
+module.hot.dispose(reloadCSS);
+module.hot.accept(reloadCSS);
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"components/TaskGraphSection.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -41812,7 +41962,9 @@ var _preact = require("preact");
 
 var _TaskGraph = _interopRequireDefault(require("./TaskGraph"));
 
-var _TaskSidebar = _interopRequireDefault(require("./TaskSidebar"));
+var _TaskGraphMeta = _interopRequireDefault(require("./TaskGraphMeta"));
+
+var _TaskGraphControls = _interopRequireDefault(require("./TaskGraphControls"));
 
 var _graphlib = _interopRequireDefault(require("graphlib"));
 
@@ -41820,9 +41972,11 @@ var _dagre = _interopRequireDefault(require("dagre"));
 
 var _api = require("../utils/api");
 
+require("./TaskGraphSection.less");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -41842,14 +41996,14 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-function createDag(tasks) {
-  var graph = new _graphlib.default.Graph().setGraph({
+function createDag(tasks, controls) {
+  var graph = new _graphlib.default.Graph().setGraph(_objectSpread({
     rankdir: "TB"
-  }).setDefaultEdgeLabel(function () {
+  }, controls)).setDefaultEdgeLabel(function () {
     return {};
   });
   var n = 0;
@@ -41883,9 +42037,7 @@ function createDag(tasks) {
   return graph;
 }
 
-var TaskGraphSection =
-/*#__PURE__*/
-function (_Component) {
+var TaskGraphSection = /*#__PURE__*/function (_Component) {
   _inherits(TaskGraphSection, _Component);
 
   function TaskGraphSection() {
@@ -41903,7 +42055,8 @@ function (_Component) {
 
     _defineProperty(_assertThisInitialized(_this), "state", {
       tasks: null,
-      selectedTask: null
+      selectedTask: null,
+      controls: {}
     });
 
     return _this;
@@ -41918,7 +42071,7 @@ function (_Component) {
         var pulseResult = _ref.pulseResult;
         return _this2.setState({
           tasks: pulseResult.tasks,
-          dag: createDag(pulseResult.tasks)
+          dag: createDag(pulseResult.tasks, _this2.state.controls)
         });
       });
     }
@@ -41930,7 +42083,8 @@ function (_Component) {
       var _this$state = this.state,
           tasks = _this$state.tasks,
           dag = _this$state.dag,
-          selectedTask = _this$state.selectedTask;
+          selectedTask = _this$state.selectedTask,
+          controls = _this$state.controls;
       if (!tasks || !dag) return (0, _preact.h)("div", {
         className: "taskgraph-section"
       }, "Loading...");
@@ -41945,7 +42099,15 @@ function (_Component) {
           });
         },
         selectedTask: selectedTask
-      }), (0, _preact.h)(_TaskSidebar.default, {
+      }), (0, _preact.h)(_TaskGraphControls.default, {
+        controls: controls,
+        onUpdate: function onUpdate(controls) {
+          return _this3.setState({
+            controls: controls,
+            dag: createDag(tasks, controls)
+          });
+        }
+      }), (0, _preact.h)(_TaskGraphMeta.default, {
         dag: dag,
         tasks: tasks,
         selectedTask: selectedTask
@@ -41957,7 +42119,41 @@ function (_Component) {
 }(_preact.Component);
 
 exports.default = TaskGraphSection;
-},{"preact":"node_modules/preact/dist/preact.umd.js","./TaskGraph":"components/TaskGraph.js","./TaskSidebar":"components/TaskSidebar.js","graphlib":"node_modules/graphlib/index.js","dagre":"node_modules/dagre/index.js","../utils/api":"utils/api.js"}],"components/App.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.mjs","./TaskGraph":"components/TaskGraph.js","./TaskGraphMeta":"components/TaskGraphMeta.js","./TaskGraphControls":"components/TaskGraphControls.js","graphlib":"node_modules/graphlib/index.js","dagre":"node_modules/dagre/index.js","../utils/api":"utils/api.js","./TaskGraphSection.less":"components/TaskGraphSection.less"}],"components/AppSection.less":[function(require,module,exports) {
+var reloadCSS = require('_css_loader');
+
+module.hot.dispose(reloadCSS);
+module.hot.accept(reloadCSS);
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"components/AppSection.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = AppSection;
+
+var _preact = require("preact");
+
+var _TaskGraphSection = _interopRequireDefault(require("./TaskGraphSection"));
+
+require("./AppSection.less");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function AppSection(props) {
+  var section = "task-graph";
+
+  switch (section) {
+    case "task-graph":
+      return (0, _preact.h)("div", {
+        class: "app-section"
+      }, (0, _preact.h)(_TaskGraphSection.default, null));
+
+    default:
+      throw Error("".concat(section, " not defined in AppSection."));
+  }
+}
+},{"preact":"node_modules/preact/dist/preact.mjs","./TaskGraphSection":"components/TaskGraphSection.js","./AppSection.less":"components/AppSection.less"}],"components/App.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -41971,11 +42167,11 @@ var _Header = _interopRequireDefault(require("./Header"));
 
 var _NavBar = _interopRequireDefault(require("./NavBar"));
 
-var _TaskGraphSection = _interopRequireDefault(require("./TaskGraphSection"));
+var _AppSection = _interopRequireDefault(require("./AppSection"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -41993,9 +42189,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
-var App =
-/*#__PURE__*/
-function (_Component) {
+var App = /*#__PURE__*/function (_Component) {
   _inherits(App, _Component);
 
   function App() {
@@ -42007,7 +42201,7 @@ function (_Component) {
   _createClass(App, [{
     key: "render",
     value: function render() {
-      return (0, _preact.h)("div", null, (0, _preact.h)(_Header.default, null), (0, _preact.h)(_NavBar.default, null), (0, _preact.h)(_TaskGraphSection.default, null));
+      return (0, _preact.h)("div", null, (0, _preact.h)(_Header.default, null), (0, _preact.h)(_AppSection.default, null));
     }
   }]);
 
@@ -42015,7 +42209,7 @@ function (_Component) {
 }(_preact.Component);
 
 exports.default = App;
-},{"preact":"node_modules/preact/dist/preact.umd.js","./Header":"components/Header.js","./NavBar":"components/NavBar.js","./TaskGraphSection":"components/TaskGraphSection.js"}],"main.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.mjs","./Header":"components/Header.js","./NavBar":"components/NavBar.js","./AppSection":"components/AppSection.js"}],"main.js":[function(require,module,exports) {
 "use strict";
 
 var _App = _interopRequireDefault(require("./components/App"));
@@ -42025,7 +42219,7 @@ var _preact = require("preact");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 (0, _preact.render)((0, _preact.h)(_App.default, null), document.querySelector("#main"));
-},{"./components/App":"components/App.js","preact":"node_modules/preact/dist/preact.umd.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./components/App":"components/App.js","preact":"node_modules/preact/dist/preact.mjs"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -42053,7 +42247,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "45725" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "8888" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
@@ -42084,8 +42278,9 @@ if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
         assetsToAccept.forEach(function (v) {
           hmrAcceptRun(v[0], v[1]);
         });
-      } else {
-        window.location.reload();
+      } else if (location.reload) {
+        // `location` global exists in a web worker context but lacks `.reload()` function.
+        location.reload();
       }
     }
 

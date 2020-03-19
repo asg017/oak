@@ -1,0 +1,17 @@
+@import "../defintions.less";
+
+.navbar {
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    &-item {
+        height: @header-height;
+        line-height: @header-height;
+        text-align: center;
+        font-size: 24px;
+        display: flex;
+        align-items: flex-end;
+        &--disabled {
+            color: gray;
+        }
+    }
+}
