@@ -1,5 +1,6 @@
 import { h } from "preact";
 import TaskGraphSection from "./TaskGraphSection";
+import "./AppSection.less";
 
 export default function AppSection(props) {
   const section = "task-graph";

@@ -1,4 +1,5 @@
 import { h } from "preact";
+import "./NavBar.less";
 
 export default function(props) {
   return (

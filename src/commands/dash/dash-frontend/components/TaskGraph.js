@@ -2,6 +2,7 @@ import { h, createRef, Component } from "preact";
 import TaskGraphNode from "./TaskGraphNode";
 import TaskGraphEdge from "./TaskGraphEdge";
 import * as d3 from "d3";
+import "./TaskGraph.less";
 
 export default class TaskGraph extends Component {
   svgRef = createRef();
