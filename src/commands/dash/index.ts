@@ -1,15 +1,69 @@
 import express from "express";
-import { createReadStream } from "fs";
+import { createReadStream, watch } from "fs";
 import { join } from "path";
 import { getPulse } from "../../commands/pulse";
 import { fileArgument } from "../../cli-utils";
 import cors from "cors";
 import { networkInterfaces } from "os";
 import { getStat } from "../../utils";
+import { Server } from "http";
+import socketio from "socket.io";
+
+type OakfileEvent = "oakfile" | "target";
+
+// Watch for all changes that could happen to the Oakfile, or the
+// targets that the Oakfile cares about.
+async function watchOakfileEvents(
+  oakfilePath: string,
+  callback: (type: string, data: { pulse: any }) => void
+) {
+  let targetWatchers: () => void;
+
+  function watchOakfile(oakfilePath: string) {
+    const oakfileWatcher = watch(
+      oakfilePath,
+      { persistent: false },
+      async (eventType, filename) => {
+        const pulse = await getPulse(oakfilePath);
+        targetWatchers(); // close the target watchers;
+
+        targetWatchers = watchTargets(pulse.tasks.map(task => task.target));
+        callback("oakfile", { pulse });
+      }
+    );
+    return () => {
+      oakfileWatcher.close();
+    };
+  }
+  function watchTargets(targets: string[]) {
+    const taskWatchers = [];
+    for (let target of targets) {
+      const watcher = watch(target, { persistent: false }, async () => {
+        const pulse = await getPulse(oakfilePath);
+        callback("target", { pulse });
+      });
+      taskWatchers.push(watcher);
+    }
+    return () => {
+      taskWatchers.map(watcher => watcher.close());
+    };
+  }
+
+  const pulseResult = await getPulse(oakfilePath);
+  targetWatchers = watchTargets(pulseResult.tasks.map(task => task.target));
+  const oakfileWatcher = watchOakfile(oakfilePath);
+
+  return () => {
+    oakfileWatcher(); // close oakfile watcher
+    targetWatchers(); // close target watchers
+  };
+}
 
 export default function oak_dash(args: { filename: string; port: string }) {
   const oakfilePath = fileArgument(args.filename);
   const app = express();
+  const server = new Server(app);
+  const io = socketio(server);
   app.get("/api/oakfile", (req, res) => {
     createReadStream(oakfilePath).pipe(res);
   });
@@ -22,9 +76,20 @@ export default function oak_dash(args: { filename: string; port: string }) {
     res.json({ ACK: true, oakfilePath, stat });
   });
 
-  app.listen(args.port);
-
   app.use(express.static(join(__dirname, "dash-frontend", "dist")));
+
+  io.on("connection", socket => {
+    console.log("io connection");
+    watchOakfileEvents(
+      oakfilePath,
+      (changeType: OakfileEvent, data: { pulse: any }) => {
+        socket.emit("oakfile", { changeType, pulse: data.pulse });
+      }
+    );
+  });
+
+  server.listen(args.port);
+
   const ifaces = networkInterfaces();
 
   console.log(`Listening on:`);
