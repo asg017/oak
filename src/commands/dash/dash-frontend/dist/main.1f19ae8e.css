@@ -97,6 +97,22 @@
   height: 80vh;
 }
 
+.taskgraphmeta {
+  width: 650px;
+  margin: auto;
+  border: 1px solid red;
+}
+.taskgraphmeta-name {
+  font-size: 1.5rem;
+  font-weight: 650;
+}
+.taskgraphmeta-table {
+  font-size: 1.1rem;
+  border: 1px solid green;
+  width: 600px;
+  margin: 0 auto;
+}
+
 .taskgraph-section {
   display: grid;
   grid-template-columns: auto;
