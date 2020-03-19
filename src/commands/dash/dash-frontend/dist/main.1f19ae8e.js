@@ -30385,13 +30385,17 @@ var TaskGraphMeta = /*#__PURE__*/function (_Component) {
           tasks = _this$props.tasks,
           selectedTask = _this$props.selectedTask;
       if (selectedTask === null) return (0, _preact.h)("div", {
-        className: "tasksidebar"
+        className: "taskgraphmeta"
       }, (0, _preact.h)("div", null, "none selected"));
       var task = dag.node(selectedTask);
       console.log(task);
       return (0, _preact.h)("div", {
-        className: "tasksidebar"
-      }, (0, _preact.h)("div", null, task.label), (0, _preact.h)("table", null, (0, _preact.h)("tr", null, (0, _preact.h)("td", null, "Path"), (0, _preact.h)("td", {
+        className: "taskgraphmeta"
+      }, (0, _preact.h)("div", {
+        className: "taskgraphmeta-name"
+      }, task.label), (0, _preact.h)("table", {
+        className: "taskgraphmeta-table"
+      }, (0, _preact.h)("tr", null, (0, _preact.h)("td", null, "Path"), (0, _preact.h)("td", {
         style: {
           overflow: "ellipses"
         }
@@ -30446,13 +30450,19 @@ var TaskGraphControls = /*#__PURE__*/function (_Component) {
       var _this$props = this.props,
           controls = _this$props.controls,
           onUpdate = _this$props.onUpdate;
-      return (0, _preact.h)("div", null, (0, _preact.h)("div", null, "rankdir"), (0, _preact.h)("select", {
+      return (0, _preact.h)("div", null, (0, _preact.h)("div", null, (0, _preact.h)("div", null, "rankdir"), (0, _preact.h)("select", {
         onChange: function onChange(e) {
           return onUpdate(Object.assign(controls, {
             rankdir: e.target.value
           }));
         }
-      }, (0, _preact.h)("option", null, "TB"), (0, _preact.h)("option", null, "LR")));
+      }, (0, _preact.h)("option", null, "TB"), (0, _preact.h)("option", null, "LR"))), (0, _preact.h)("div", null, (0, _preact.h)("div", null, "align"), (0, _preact.h)("select", {
+        onChange: function onChange(e) {
+          return onUpdate(Object.assign(controls, {
+            align: e.target.value === "none" ? null : e.target.value
+          }));
+        }
+      }, (0, _preact.h)("option", null, "none"), (0, _preact.h)("option", null, "UL"), (0, _preact.h)("option", null, "UR"), (0, _preact.h)("option", null, "DL"), (0, _preact.h)("option", null, "DR"))));
     }
   }]);
 

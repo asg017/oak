@@ -7,16 +7,16 @@ export default class TaskGraphMeta extends Component {
     const { dag, tasks, selectedTask } = this.props;
     if (selectedTask === null)
       return (
-        <div className="tasksidebar">
+        <div className="taskgraphmeta">
           <div>{"none selected"}</div>
         </div>
       );
     const task = dag.node(selectedTask);
     console.log(task);
     return (
-      <div className="tasksidebar">
-        <div>{task.label}</div>
-        <table>
+      <div className="taskgraphmeta">
+        <div className="taskgraphmeta-name">{task.label}</div>
+        <table className="taskgraphmeta-table">
           <tr>
             <td>Path</td>
             <td style={{ overflow: "ellipses" }}>{task.target}</td>
