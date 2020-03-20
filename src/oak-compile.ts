@@ -1,6 +1,6 @@
 // Modified https://github.com/asg017/unofficial-observablehq-compiler/blob/master/src/compiler.js
 
-import { parseOakfile, getBaseFileHashes } from "./utils";
+import { parseOakfile, getBaseFileHashes, ParseOakfileResults } from "./utils";
 import { dirname, join } from "path";
 import {
   InjectingSource,
@@ -75,7 +75,7 @@ async function createOakDefinition(
         cells: localSpecifiers,
       };
     const c = new OakCompiler();
-    const fromModule = await c.file(
+    const { define: fromModule } = await c.file(
       outsideModulePath,
       decorator,
       localInjectingSource
@@ -163,23 +163,25 @@ async function createOakDefinition(
   };
 }
 
+type Define = (runtime: any, observer: any) => any;
 export class OakCompiler {
   constructor() {}
   async file(
     path: string,
     decorator?: Decorator,
     injectingSource?: InjectingSource
-  ): Promise<(runtime: any, observer: any) => any> {
+  ): Promise<{ define: Define; parseResults: ParseOakfileResults }> {
     const parseResults = await parseOakfile(path).catch(err => {
       throw Error(`Error parsing Oakfile at ${path} ${err}`);
     });
 
-    return await createOakDefinition(
+    const define = await createOakDefinition(
       path,
       parseResults.contents,
       parseResults.module,
       decorator,
       injectingSource
     );
+    return { define, parseResults };
   }
 }

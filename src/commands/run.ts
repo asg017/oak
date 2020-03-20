@@ -36,7 +36,7 @@ export async function oak_run(args: {
   mkdirsSync(runDirectory);
 
   const logDirectory = join(runDirectory, "logs");
-  const define = await compiler.file(
+  const { define } = await compiler.file(
     oakfilePath,
     runCellDecorator(logger, logDirectory),
     null

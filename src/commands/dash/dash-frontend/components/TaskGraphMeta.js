@@ -30,6 +30,9 @@ export default class TaskGraphMeta extends Component {
             <td>{task.mtime ? duration(new Date(task.mtime)) : "-"}</td>
           </tr>
         </table>
+        <code>
+          <pre>{task.cellCode}</pre>
+        </code>
       </div>
     );
   }

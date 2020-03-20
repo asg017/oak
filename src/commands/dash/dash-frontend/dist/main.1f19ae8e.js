@@ -30399,7 +30399,7 @@ var TaskGraphMeta = /*#__PURE__*/function (_Component) {
         style: {
           overflow: "ellipses"
         }
-      }, task.target)), (0, _preact.h)("tr", null, (0, _preact.h)("td", null, "Size"), (0, _preact.h)("td", null, (0, _format.bytesToSize)(task.bytes))), (0, _preact.h)("tr", null, (0, _preact.h)("td", null, "Last Modified"), (0, _preact.h)("td", null, task.mtime ? (0, _format.duration)(new Date(task.mtime)) : "-"))));
+      }, task.target)), (0, _preact.h)("tr", null, (0, _preact.h)("td", null, "Size"), (0, _preact.h)("td", null, (0, _format.bytesToSize)(task.bytes))), (0, _preact.h)("tr", null, (0, _preact.h)("td", null, "Last Modified"), (0, _preact.h)("td", null, task.mtime ? (0, _format.duration)(new Date(task.mtime)) : "-"))), (0, _preact.h)("code", null, (0, _preact.h)("pre", null, task.cellCode)));
     }
   }]);
 
