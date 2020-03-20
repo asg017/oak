@@ -1,6 +1,6 @@
 import express from "express";
-import { createReadStream, watch } from "fs";
-import { join } from "path";
+import { createReadStream } from "fs";
+import { dirname, join } from "path";
 import { getPulse } from "../../commands/pulse";
 import { fileArgument } from "../../cli-utils";
 import cors from "cors";
@@ -8,6 +8,7 @@ import { networkInterfaces } from "os";
 import { getStat } from "../../utils";
 import { Server } from "http";
 import socketio from "socket.io";
+import chokidar from "chokidar";
 
 type OakfileEvent = "oakfile" | "target";
 
@@ -15,11 +16,30 @@ type OakfileEvent = "oakfile" | "target";
 // targets that the Oakfile cares about.
 async function watchOakfileEvents(
   oakfilePath: string,
-  callback: (type: string, data: { pulse: any }) => void
+  callback: (type: string) => void
 ) {
-  let targetWatchers: () => void;
-
-  function watchOakfile(oakfilePath: string) {
+  let targets = [];
+  const oakdatadir = join(dirname(oakfilePath), "oak_data");
+  const watcher = chokidar
+    .watch("file or dir")
+    .on("all", async (eventName, path, stats) => {
+      if (path.includes(oakdatadir) && eventName === "add") {
+        callback("target");
+      }
+      if (path === oakfilePath) {
+        watcher.unwatch(targets);
+        const pulse = await getPulse(oakfilePath);
+        targets = pulse.tasks.map(task => task.target);
+        watcher.add(targets);
+        callback("oakfile");
+        return;
+      }
+      callback("target");
+    });
+  watcher.add(oakfilePath);
+  watcher.add(oakdatadir);
+  /*function watchOakfile(oakfilePath: string) {
+    console.log("watchOakfile");
     const oakfileWatcher = watch(
       oakfilePath,
       { persistent: false },
@@ -28,7 +48,7 @@ async function watchOakfileEvents(
         targetWatchers(); // close the target watchers;
 
         targetWatchers = watchTargets(pulse.tasks.map(task => task.target));
-        callback("oakfile", { pulse });
+        callback("oakfile");
       }
     );
     return () => {
@@ -36,11 +56,11 @@ async function watchOakfileEvents(
     };
   }
   function watchTargets(targets: string[]) {
+    console.log("watchTarget");
     const taskWatchers = [];
     for (let target of targets) {
       const watcher = watch(target, { persistent: false }, async () => {
-        const pulse = await getPulse(oakfilePath);
-        callback("target", { pulse });
+        callback("target");
       });
       taskWatchers.push(watcher);
     }
@@ -56,7 +76,7 @@ async function watchOakfileEvents(
   return () => {
     oakfileWatcher(); // close oakfile watcher
     targetWatchers(); // close target watchers
-  };
+  };*/
 }
 
 export default function oak_dash(args: { filename: string; port: string }) {
@@ -80,12 +100,10 @@ export default function oak_dash(args: { filename: string; port: string }) {
 
   io.on("connection", socket => {
     console.log("io connection");
-    watchOakfileEvents(
-      oakfilePath,
-      (changeType: OakfileEvent, data: { pulse: any }) => {
-        socket.emit("oakfile", { changeType, pulse: data.pulse });
-      }
-    );
+    watchOakfileEvents(oakfilePath, async (changeType: OakfileEvent) => {
+      const pulse = await getPulse(oakfilePath);
+      socket.emit("oakfile", { changeType, pulse });
+    });
   });
 
   server.listen(args.port);

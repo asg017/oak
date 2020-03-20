@@ -6,6 +6,7 @@ import graphlib from "graphlib";
 import dagre from "dagre";
 import { getPulse } from "../utils/api";
 import "./TaskGraphSection.less";
+import io from "socket.io-client";
 
 function createDag(tasks, controls) {
   const graph = new graphlib.Graph()
@@ -48,6 +49,15 @@ function createDag(tasks, controls) {
 export default class TaskGraphSection extends Component {
   state = { tasks: null, selectedTask: null, controls: {} };
   componentDidMount() {
+    const socket = io.connect("/");
+    socket.on("oakfile", data => {
+      console.log("socket.on oakfile", data);
+      const { pulse } = data;
+      this.setState({
+        tasks: pulse.tasks,
+        dag: createDag(pulse.tasks, this.state.controls),
+      });
+    });
     getPulse().then(({ pulseResult }) =>
       this.setState({
         tasks: pulseResult.tasks,

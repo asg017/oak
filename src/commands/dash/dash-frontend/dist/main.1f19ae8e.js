@@ -41960,210 +41960,7 @@ var reloadCSS = require('_css_loader');
 
 module.hot.dispose(reloadCSS);
 module.hot.accept(reloadCSS);
-},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"components/TaskGraphSection.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _preact = require("preact");
-
-var _TaskGraph = _interopRequireDefault(require("./TaskGraph"));
-
-var _TaskGraphMeta = _interopRequireDefault(require("./TaskGraphMeta"));
-
-var _TaskGraphControls = _interopRequireDefault(require("./TaskGraphControls"));
-
-var _graphlib = _interopRequireDefault(require("graphlib"));
-
-var _dagre = _interopRequireDefault(require("dagre"));
-
-var _api = require("../utils/api");
-
-require("./TaskGraphSection.less");
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
-
-function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
-
-function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
-
-function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
-
-function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
-
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-function createDag(tasks, controls) {
-  var graph = new _graphlib.default.Graph().setGraph(_objectSpread({
-    rankdir: "TB"
-  }, controls)).setDefaultEdgeLabel(function () {
-    return {};
-  });
-  var n = 0;
-  var nodeMap = new Map(); // create nodes
-
-  tasks.map(function (cell, i) {
-    nodeMap.set(cell.name, n);
-    graph.setNode(n++, _objectSpread({
-      label: cell.name,
-      taskIndex: i
-    }, cell, {
-      width: 275,
-      height: 75
-    }));
-  }); // create edges
-
-  tasks.map(function (cell) {
-    (cell.taskDeps || []).map(function (dep) {
-      if (!nodeMap.has(cell.name) || !nodeMap.has(dep)) throw Error("".concat(cell.name, " or ").concat(dep, " not in nodeMap. ").concat(nodeMap.keys()));
-      graph.setEdge(nodeMap.get(dep), nodeMap.get(cell.name), {
-        fromStatus: graph.node(nodeMap.get(dep)).status,
-        toStatus: graph.node(nodeMap.get(cell.name)).status,
-        fromWidth: graph.node(nodeMap.get(dep)).width,
-        fromHeight: graph.node(nodeMap.get(dep)).height
-      });
-    });
-  });
-
-  _dagre.default.layout(graph);
-
-  return graph;
-}
-
-var TaskGraphSection = /*#__PURE__*/function (_Component) {
-  _inherits(TaskGraphSection, _Component);
-
-  function TaskGraphSection() {
-    var _getPrototypeOf2;
-
-    var _this;
-
-    _classCallCheck(this, TaskGraphSection);
-
-    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-      args[_key] = arguments[_key];
-    }
-
-    _this = _possibleConstructorReturn(this, (_getPrototypeOf2 = _getPrototypeOf(TaskGraphSection)).call.apply(_getPrototypeOf2, [this].concat(args)));
-
-    _defineProperty(_assertThisInitialized(_this), "state", {
-      tasks: null,
-      selectedTask: null,
-      controls: {}
-    });
-
-    return _this;
-  }
-
-  _createClass(TaskGraphSection, [{
-    key: "componentDidMount",
-    value: function componentDidMount() {
-      var _this2 = this;
-
-      (0, _api.getPulse)().then(function (_ref) {
-        var pulseResult = _ref.pulseResult;
-        return _this2.setState({
-          tasks: pulseResult.tasks,
-          dag: createDag(pulseResult.tasks, _this2.state.controls)
-        });
-      });
-    }
-  }, {
-    key: "render",
-    value: function render() {
-      var _this3 = this;
-
-      var _this$state = this.state,
-          tasks = _this$state.tasks,
-          dag = _this$state.dag,
-          selectedTask = _this$state.selectedTask,
-          controls = _this$state.controls;
-      if (!tasks || !dag) return (0, _preact.h)("div", {
-        className: "taskgraph-section"
-      }, "Loading...");
-      return (0, _preact.h)("div", {
-        className: "taskgraph-section"
-      }, (0, _preact.h)(_TaskGraph.default, {
-        dag: dag,
-        tasks: tasks,
-        onTaskSelect: function onTaskSelect(selectedTask) {
-          return _this3.setState({
-            selectedTask: selectedTask
-          });
-        },
-        selectedTask: selectedTask
-      }), (0, _preact.h)(_TaskGraphControls.default, {
-        controls: controls,
-        onUpdate: function onUpdate(controls) {
-          return _this3.setState({
-            controls: controls,
-            dag: createDag(tasks, controls)
-          });
-        }
-      }), (0, _preact.h)(_TaskGraphMeta.default, {
-        dag: dag,
-        tasks: tasks,
-        selectedTask: selectedTask
-      }));
-    }
-  }]);
-
-  return TaskGraphSection;
-}(_preact.Component);
-
-exports.default = TaskGraphSection;
-},{"preact":"node_modules/preact/dist/preact.mjs","./TaskGraph":"components/TaskGraph.js","./TaskGraphMeta":"components/TaskGraphMeta.js","./TaskGraphControls":"components/TaskGraphControls.js","graphlib":"node_modules/graphlib/index.js","dagre":"node_modules/dagre/index.js","../utils/api":"utils/api.js","./TaskGraphSection.less":"components/TaskGraphSection.less"}],"components/AppSection.less":[function(require,module,exports) {
-var reloadCSS = require('_css_loader');
-
-module.hot.dispose(reloadCSS);
-module.hot.accept(reloadCSS);
-},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"components/AppSection.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = AppSection;
-
-var _preact = require("preact");
-
-var _TaskGraphSection = _interopRequireDefault(require("./TaskGraphSection"));
-
-require("./AppSection.less");
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function AppSection(props) {
-  var section = "task-graph";
-
-  switch (section) {
-    case "task-graph":
-      return (0, _preact.h)("div", {
-        class: "app-section"
-      }, (0, _preact.h)(_TaskGraphSection.default, null));
-
-    default:
-      throw Error("".concat(section, " not defined in AppSection."));
-  }
-}
-},{"preact":"node_modules/preact/dist/preact.mjs","./TaskGraphSection":"components/TaskGraphSection.js","./AppSection.less":"components/AppSection.less"}],"node_modules/parseuri/index.js":[function(require,module,exports) {
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"node_modules/parseuri/index.js":[function(require,module,exports) {
 /**
  * Parses an URI
  *
@@ -51229,7 +51026,223 @@ exports.connect = lookup;
 exports.Manager = require('./manager');
 exports.Socket = require('./socket');
 
-},{"./url":"node_modules/socket.io-client/lib/url.js","socket.io-parser":"node_modules/socket.io-parser/index.js","./manager":"node_modules/socket.io-client/lib/manager.js","debug":"node_modules/debug/src/browser.js","./socket":"node_modules/socket.io-client/lib/socket.js"}],"components/App.js":[function(require,module,exports) {
+},{"./url":"node_modules/socket.io-client/lib/url.js","socket.io-parser":"node_modules/socket.io-parser/index.js","./manager":"node_modules/socket.io-client/lib/manager.js","debug":"node_modules/debug/src/browser.js","./socket":"node_modules/socket.io-client/lib/socket.js"}],"components/TaskGraphSection.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _preact = require("preact");
+
+var _TaskGraph = _interopRequireDefault(require("./TaskGraph"));
+
+var _TaskGraphMeta = _interopRequireDefault(require("./TaskGraphMeta"));
+
+var _TaskGraphControls = _interopRequireDefault(require("./TaskGraphControls"));
+
+var _graphlib = _interopRequireDefault(require("graphlib"));
+
+var _dagre = _interopRequireDefault(require("dagre"));
+
+var _api = require("../utils/api");
+
+require("./TaskGraphSection.less");
+
+var _socket = _interopRequireDefault(require("socket.io-client"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function createDag(tasks, controls) {
+  var graph = new _graphlib.default.Graph().setGraph(_objectSpread({
+    rankdir: "TB"
+  }, controls)).setDefaultEdgeLabel(function () {
+    return {};
+  });
+  var n = 0;
+  var nodeMap = new Map(); // create nodes
+
+  tasks.map(function (cell, i) {
+    nodeMap.set(cell.name, n);
+    graph.setNode(n++, _objectSpread({
+      label: cell.name,
+      taskIndex: i
+    }, cell, {
+      width: 275,
+      height: 75
+    }));
+  }); // create edges
+
+  tasks.map(function (cell) {
+    (cell.taskDeps || []).map(function (dep) {
+      if (!nodeMap.has(cell.name) || !nodeMap.has(dep)) throw Error("".concat(cell.name, " or ").concat(dep, " not in nodeMap. ").concat(nodeMap.keys()));
+      graph.setEdge(nodeMap.get(dep), nodeMap.get(cell.name), {
+        fromStatus: graph.node(nodeMap.get(dep)).status,
+        toStatus: graph.node(nodeMap.get(cell.name)).status,
+        fromWidth: graph.node(nodeMap.get(dep)).width,
+        fromHeight: graph.node(nodeMap.get(dep)).height
+      });
+    });
+  });
+
+  _dagre.default.layout(graph);
+
+  return graph;
+}
+
+var TaskGraphSection = /*#__PURE__*/function (_Component) {
+  _inherits(TaskGraphSection, _Component);
+
+  function TaskGraphSection() {
+    var _getPrototypeOf2;
+
+    var _this;
+
+    _classCallCheck(this, TaskGraphSection);
+
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    _this = _possibleConstructorReturn(this, (_getPrototypeOf2 = _getPrototypeOf(TaskGraphSection)).call.apply(_getPrototypeOf2, [this].concat(args)));
+
+    _defineProperty(_assertThisInitialized(_this), "state", {
+      tasks: null,
+      selectedTask: null,
+      controls: {}
+    });
+
+    return _this;
+  }
+
+  _createClass(TaskGraphSection, [{
+    key: "componentDidMount",
+    value: function componentDidMount() {
+      var _this2 = this;
+
+      var socket = _socket.default.connect("/");
+
+      socket.on("oakfile", function (data) {
+        console.log("socket.on oakfile", data);
+        var pulse = data.pulse;
+
+        _this2.setState({
+          tasks: pulse.tasks,
+          dag: createDag(pulse.tasks, _this2.state.controls)
+        });
+      });
+      (0, _api.getPulse)().then(function (_ref) {
+        var pulseResult = _ref.pulseResult;
+        return _this2.setState({
+          tasks: pulseResult.tasks,
+          dag: createDag(pulseResult.tasks, _this2.state.controls)
+        });
+      });
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      var _this3 = this;
+
+      var _this$state = this.state,
+          tasks = _this$state.tasks,
+          dag = _this$state.dag,
+          selectedTask = _this$state.selectedTask,
+          controls = _this$state.controls;
+      if (!tasks || !dag) return (0, _preact.h)("div", {
+        className: "taskgraph-section"
+      }, "Loading...");
+      return (0, _preact.h)("div", {
+        className: "taskgraph-section"
+      }, (0, _preact.h)(_TaskGraph.default, {
+        dag: dag,
+        tasks: tasks,
+        onTaskSelect: function onTaskSelect(selectedTask) {
+          return _this3.setState({
+            selectedTask: selectedTask
+          });
+        },
+        selectedTask: selectedTask
+      }), (0, _preact.h)(_TaskGraphControls.default, {
+        controls: controls,
+        onUpdate: function onUpdate(controls) {
+          return _this3.setState({
+            controls: controls,
+            dag: createDag(tasks, controls)
+          });
+        }
+      }), (0, _preact.h)(_TaskGraphMeta.default, {
+        dag: dag,
+        tasks: tasks,
+        selectedTask: selectedTask
+      }));
+    }
+  }]);
+
+  return TaskGraphSection;
+}(_preact.Component);
+
+exports.default = TaskGraphSection;
+},{"preact":"node_modules/preact/dist/preact.mjs","./TaskGraph":"components/TaskGraph.js","./TaskGraphMeta":"components/TaskGraphMeta.js","./TaskGraphControls":"components/TaskGraphControls.js","graphlib":"node_modules/graphlib/index.js","dagre":"node_modules/dagre/index.js","../utils/api":"utils/api.js","./TaskGraphSection.less":"components/TaskGraphSection.less","socket.io-client":"node_modules/socket.io-client/lib/index.js"}],"components/AppSection.less":[function(require,module,exports) {
+var reloadCSS = require('_css_loader');
+
+module.hot.dispose(reloadCSS);
+module.hot.accept(reloadCSS);
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"components/AppSection.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = AppSection;
+
+var _preact = require("preact");
+
+var _TaskGraphSection = _interopRequireDefault(require("./TaskGraphSection"));
+
+require("./AppSection.less");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function AppSection(props) {
+  var section = "task-graph";
+
+  switch (section) {
+    case "task-graph":
+      return (0, _preact.h)("div", {
+        class: "app-section"
+      }, (0, _preact.h)(_TaskGraphSection.default, null));
+
+    default:
+      throw Error("".concat(section, " not defined in AppSection."));
+  }
+}
+},{"preact":"node_modules/preact/dist/preact.mjs","./TaskGraphSection":"components/TaskGraphSection.js","./AppSection.less":"components/AppSection.less"}],"components/App.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -51242,8 +51255,6 @@ var _preact = require("preact");
 var _Header = _interopRequireDefault(require("./Header"));
 
 var _AppSection = _interopRequireDefault(require("./AppSection"));
-
-var _socket = _interopRequireDefault(require("socket.io-client"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -51276,13 +51287,7 @@ var App = /*#__PURE__*/function (_Component) {
 
   _createClass(App, [{
     key: "componentDidMount",
-    value: function componentDidMount() {
-      var socket = _socket.default.connect("/");
-
-      socket.on("oakfile", function (data) {
-        console.log("socket.on oakfile", data);
-      });
-    }
+    value: function componentDidMount() {}
   }, {
     key: "render",
     value: function render() {
@@ -51294,7 +51299,7 @@ var App = /*#__PURE__*/function (_Component) {
 }(_preact.Component);
 
 exports.default = App;
-},{"preact":"node_modules/preact/dist/preact.mjs","./Header":"components/Header.js","./AppSection":"components/AppSection.js","socket.io-client":"node_modules/socket.io-client/lib/index.js"}],"main.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.mjs","./Header":"components/Header.js","./AppSection":"components/AppSection.js"}],"main.js":[function(require,module,exports) {
 "use strict";
 
 var _App = _interopRequireDefault(require("./components/App"));
