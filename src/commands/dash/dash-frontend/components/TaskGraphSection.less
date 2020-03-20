@@ -4,3 +4,10 @@
     display: grid;
     grid-template-columns: auto;
   }
+
+@media screen and (min-width: 1000px) {
+  .taskgraph-section {
+    display: grid;
+    grid-template-columns: auto @taskgraphmeta-width;
+  }
+}
