@@ -94,13 +94,12 @@
 }
 .taskgraph > svg {
   width: 100%;
-  height: 80vh;
+  height: 60vh;
 }
 
 .taskgraphmeta {
-  width: 650px;
+  width: 600px;
   margin: auto;
-  border: 1px solid red;
 }
 .taskgraphmeta-name {
   font-size: 1.5rem;
@@ -108,18 +107,45 @@
 }
 .taskgraphmeta-table {
   font-size: 1.1rem;
-  border: 1px solid green;
   width: 600px;
   margin: 0 auto;
+}
+.taskgraphmeta-code {
+  width: 600px;
+  border-radius: 1rem;
+}
+.taskgraphmeta-code-header {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+.CodeMirror {
+  border-radius: 0.2rem;
+}
+@media screen and (min-width: 1000px) {
+  .taskgraphmeta {
+    margin-left: 1rem;
+  }
 }
 
 .taskgraph-section {
   display: grid;
   grid-template-columns: auto;
 }
+@media screen and (min-width: 1000px) {
+  .taskgraph-section {
+    display: grid;
+    grid-template-columns: auto 600px;
+  }
+}
 
 .app-section {
   margin: 4rem 4rem;
+}
+@media screen and (min-width: 1000px) {
+  .app-section {
+    margin: 4rem 0;
+  }
 }
 
 

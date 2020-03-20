@@ -7,6 +7,7 @@
     "start": "parcel index.html"
   },
   "dependencies": {
+    "codemirror": "^5.52.0",
     "d3": "^5.15.0",
     "dagre": "^0.8.5",
     "graphlib": "^2.1.8",

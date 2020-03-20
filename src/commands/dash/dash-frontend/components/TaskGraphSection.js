@@ -47,7 +47,7 @@ function createDag(tasks, controls) {
 }
 
 export default class TaskGraphSection extends Component {
-  state = { tasks: null, selectedTask: null, controls: {} };
+  state = { tasks: null, selectedTask: 0, controls: {} };
   componentDidMount() {
     const socket = io.connect("/");
     socket.on("oakfile", data => {
@@ -71,18 +71,20 @@ export default class TaskGraphSection extends Component {
       return <div className="taskgraph-section">Loading...</div>;
     return (
       <div className="taskgraph-section">
-        <TaskGraph
-          dag={dag}
-          tasks={tasks}
-          onTaskSelect={selectedTask => this.setState({ selectedTask })}
-          selectedTask={selectedTask}
-        />
-        <TaskGraphControls
-          controls={controls}
-          onUpdate={controls =>
-            this.setState({ controls, dag: createDag(tasks, controls) })
-          }
-        />
+        <div>
+          <TaskGraph
+            dag={dag}
+            tasks={tasks}
+            onTaskSelect={selectedTask => this.setState({ selectedTask })}
+            selectedTask={selectedTask}
+          />
+          <TaskGraphControls
+            controls={controls}
+            onUpdate={controls =>
+              this.setState({ controls, dag: createDag(tasks, controls) })
+            }
+          />
+        </div>
         <TaskGraphMeta dag={dag} tasks={tasks} selectedTask={selectedTask} />
       </div>
     );
