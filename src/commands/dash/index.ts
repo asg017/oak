@@ -17,7 +17,7 @@ type OakfileEvent = "oakfile" | "target";
 async function watchOakfileEvents(
   oakfilePath: string,
   callback: (type: string) => void
-) {
+): Promise<() => Promise<void>> {
   let targets = [];
   const oakdatadir = join(dirname(oakfilePath), "oak_data");
   const watcher = chokidar
@@ -38,45 +38,9 @@ async function watchOakfileEvents(
     });
   watcher.add(oakfilePath);
   watcher.add(oakdatadir);
-  /*function watchOakfile(oakfilePath: string) {
-    console.log("watchOakfile");
-    const oakfileWatcher = watch(
-      oakfilePath,
-      { persistent: false },
-      async (eventType, filename) => {
-        const pulse = await getPulse(oakfilePath);
-        targetWatchers(); // close the target watchers;
-
-        targetWatchers = watchTargets(pulse.tasks.map(task => task.target));
-        callback("oakfile");
-      }
-    );
-    return () => {
-      oakfileWatcher.close();
-    };
-  }
-  function watchTargets(targets: string[]) {
-    console.log("watchTarget");
-    const taskWatchers = [];
-    for (let target of targets) {
-      const watcher = watch(target, { persistent: false }, async () => {
-        callback("target");
-      });
-      taskWatchers.push(watcher);
-    }
-    return () => {
-      taskWatchers.map(watcher => watcher.close());
-    };
-  }
-
-  const pulseResult = await getPulse(oakfilePath);
-  targetWatchers = watchTargets(pulseResult.tasks.map(task => task.target));
-  const oakfileWatcher = watchOakfile(oakfilePath);
-
-  return () => {
-    oakfileWatcher(); // close oakfile watcher
-    targetWatchers(); // close target watchers
-  };*/
+  return function cleanUpWatcher() {
+    return watcher.close();
+  };
 }
 
 export default function oak_dash(args: { filename: string; port: string }) {
@@ -98,11 +62,16 @@ export default function oak_dash(args: { filename: string; port: string }) {
 
   app.use(express.static(join(__dirname, "dash-frontend", "dist")));
 
-  io.on("connection", socket => {
-    console.log("io connection");
-    watchOakfileEvents(oakfilePath, async (changeType: OakfileEvent) => {
-      const pulse = await getPulse(oakfilePath);
-      socket.emit("oakfile", { changeType, pulse });
+  io.on("connection", async socket => {
+    const cleanUpWatcher = await watchOakfileEvents(
+      oakfilePath,
+      async (changeType: OakfileEvent) => {
+        const pulse = await getPulse(oakfilePath);
+        socket.emit("oakfile", { changeType, pulse });
+      }
+    );
+    socket.on("disconnect", () => {
+      cleanUpWatcher();
     });
   });
 

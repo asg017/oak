@@ -4,7 +4,7 @@ import { Library } from "../Library";
 import { default as pulseCellDecorator } from "../decorators/pulse";
 import pino from "pino";
 import { fileArgument } from "../cli-utils";
-import { bytesToSize, duration } from "../utils";
+import { bytesToSize, duration, OakCell } from "../utils";
 
 const logger = pino();
 
@@ -31,8 +31,15 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
     })
   );
   const compiler = new OakCompiler();
-  const define = await compiler.file(oakfilePath, pulseCellDecorator, null);
-
+  const { parseResults, define } = await compiler.file(
+    oakfilePath,
+    pulseCellDecorator,
+    null
+  );
+  const parseResultsMap: Map<string, OakCell> = new Map();
+  for (let cell of parseResults.module.cells) {
+    if (cell.id?.name) parseResultsMap.set(cell.id?.name, cell);
+  }
   const tasks: any[] = [];
   const cells: Set<string> = new Set();
   const m1 = runtime.module(define, name => {
@@ -40,7 +47,13 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
     return {
       pending() {},
       fulfilled(value) {
-        if (value && value.__task) tasks.push(value);
+        if (value && value.__task) {
+          if (parseResultsMap.has(value.name)) {
+            const cell = parseResultsMap.get(value.name);
+            const cellCode = cell.input.substring(cell.start, cell.end);
+            tasks.push(Object.assign(value, { cellCode }));
+          } else tasks.push(value);
+        }
       },
       rejected(error) {
         logger.error("rejected", name, error);

@@ -71,8 +71,42 @@ export const getStat = (filename: string): Promise<Stats | null> =>
     });
   });
 
+export type OakCell = {
+  start: number;
+  end: number;
+  input: string;
+  id?: {
+    type: string;
+    name?: string;
+    // used only for viewof and mutable i believe
+    id?: {
+      type: string;
+      start: number;
+      end: number;
+      name: string;
+    };
+  };
+  body: {
+    type: string;
+    start: number;
+    end: number;
+    specifiers?: any[]; // import only
+    source?: {
+      // import only
+      type: string;
+      start: number;
+      end: number;
+      value: string;
+      raw: string;
+    };
+  };
+  async: boolean;
+  generator: boolean;
+};
 export type ParseOakfileResults = {
-  module: any;
+  module: {
+    cells: OakCell[];
+  };
   contents: string;
 };
 
