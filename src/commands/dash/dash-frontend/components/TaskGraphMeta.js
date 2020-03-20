@@ -3,6 +3,8 @@ import { duration, bytesToSize } from "../utils/format";
 import "./TaskGraphMeta.less";
 import CodeMirror from "codemirror";
 import jsMode from "codemirror/mode/javascript/javascript";
+import scrollbar from "codemirror/addon/scroll/simplescrollbars";
+import scrollbarCSS from "codemirror/addon/scroll/simplescrollbars.css";
 
 export default class TaskGraphMeta extends Component {
   codemirrorRef = createRef();
@@ -17,13 +19,18 @@ export default class TaskGraphMeta extends Component {
       theme: "twilight",
       readOnly: true,
       lineNumbers: true,
+      scrollbarStyle: "simple",
     });
+    // omg very hack pls fix
+    this.codemirror.setSize(580, task.cellCode.split("\n").length * 20);
   }
   componentDidUpdate(prevProp) {
     const { dag, selectedTask } = this.props;
     if (prevProp.selectedTask !== selectedTask) {
       const task = dag.node(selectedTask);
       this.codemirror.setValue(task.cellCode);
+      // omg very hack pls fix
+      this.codemirror.setSize(580, task.cellCode.split("\n").length * 20);
     }
   }
   render() {
