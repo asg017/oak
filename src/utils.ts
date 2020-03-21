@@ -75,6 +75,12 @@ export type OakCell = {
   start: number;
   end: number;
   input: string;
+  references: {
+    type: string;
+    start: number;
+    end: number;
+    name: string;
+  }[];
   id?: {
     type: string;
     name?: string;

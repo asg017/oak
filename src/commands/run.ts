@@ -1,7 +1,13 @@
 import { Runtime } from "@observablehq/runtime";
 import { Library } from "../Library";
 import { OakCompiler } from "../oak-compile";
-import { formatCellName, formatPath, hashFile, hashString } from "../utils";
+import {
+  formatCellName,
+  formatPath,
+  hashFile,
+  hashString,
+  getStat,
+} from "../utils";
 import { dirname, join } from "path";
 import { EventEmitter } from "events";
 import { default as runCellDecorator } from "../decorators/run";
@@ -18,6 +24,7 @@ export async function oak_run(args: {
 
   const targetSet = new Set(args.targets);
   const oakfilePath = fileArgument(args.filename);
+  const oakfileStat = await getStat(oakfilePath);
   const oakDB = new OakDB(oakfilePath);
 
   const runtime = new Runtime(new Library());
@@ -36,14 +43,23 @@ export async function oak_run(args: {
   mkdirsSync(runDirectory);
 
   const logDirectory = join(runDirectory, "logs");
-  const { define } = await compiler.file(
+  const { define, parseResults } = await compiler.file(
     oakfilePath,
     runCellDecorator(logger, logDirectory),
     null
   );
 
   // on succesful compile, add to oak db
-  oakDB.addOakfile(oakfilePath);
+  await oakDB.registerOakfile(
+    oakfileHash,
+    oakfileStat.mtime.getTime(),
+    parseResults
+  );
+  await oakDB.addRun(
+    oakfileHash,
+    new Date().getTime(),
+    JSON.stringify(args.targets)
+  );
 
   const events = [];
   const origDir = process.cwd();
@@ -88,6 +104,5 @@ export async function oak_run(args: {
   await Promise.all(Array.from(cells).map(cell => m1.value(cell)));
   runtime.dispose();
   process.chdir(origDir);
-
   writeFileSync(join(runDirectory, "events.json"), events);
 }
