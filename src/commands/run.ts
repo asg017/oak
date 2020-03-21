@@ -8,6 +8,7 @@ import { default as runCellDecorator } from "../decorators/run";
 import pino from "pino";
 import { fileArgument } from "../cli-utils";
 import { writeFileSync, mkdirsSync } from "fs-extra";
+import { OakDB } from "../db";
 
 export async function oak_run(args: {
   filename: string;
@@ -17,6 +18,7 @@ export async function oak_run(args: {
 
   const targetSet = new Set(args.targets);
   const oakfilePath = fileArgument(args.filename);
+  const oakDB = new OakDB(oakfilePath);
 
   const runtime = new Runtime(new Library());
   const compiler = new OakCompiler();
@@ -39,6 +41,9 @@ export async function oak_run(args: {
     runCellDecorator(logger, logDirectory),
     null
   );
+
+  // on succesful compile, add to oak db
+  oakDB.addOakfile(oakfilePath);
 
   const events = [];
   const origDir = process.cwd();
