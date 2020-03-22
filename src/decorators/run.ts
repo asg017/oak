@@ -3,6 +3,7 @@ import { formatPath, getStat } from "../utils";
 import pino from "pino";
 import { join } from "path";
 import { createWriteStream, createFileSync, readFileSync } from "fs-extra";
+import { OakDB } from "../db";
 
 async function runTask(
   logger: pino.Logger,
@@ -51,7 +52,12 @@ async function runTask(
   });
 }
 
-export default function(logger: pino.Logger, logDirectory: string) {
+export default function(
+  runHash: string,
+  logger: pino.Logger,
+  logDirectory: string,
+  oakDB: OakDB
+) {
   return function(
     cellFunction: (...any) => any,
     cellName: string,
@@ -85,7 +91,8 @@ export default function(logger: pino.Logger, logDirectory: string) {
             "oak-run decorator",
             `${formatPath(currCell.target)} - Doesn't exist - running recipe...`
           );
-          const logFile = join(logDirectory, cellName);
+          const logFile = join(logDirectory, `${cellName}.log`);
+          await oakDB.addLog(runHash, cellName, logFile, new Date().getTime());
           await runTask(logger, currCell, logFile);
           currCell.stat = await getStat(currCell.target);
           return currCell;

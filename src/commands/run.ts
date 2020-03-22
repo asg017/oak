@@ -27,25 +27,23 @@ export async function oak_run(args: {
   const oakfileStat = await getStat(oakfilePath);
   const oakDB = new OakDB(oakfilePath);
 
+  const startTime = new Date();
+
   const runtime = new Runtime(new Library());
   const compiler = new OakCompiler();
   const oakfileHash = hashFile(oakfilePath);
-  const runHash = hashString(`${new Date()}${Math.random()}`);
-
-  const runDirectory = join(
+  const runHash = hashString(`${startTime.getTime()}`);
+  const logDirectory = join(
     dirname(oakfilePath),
     ".oak",
-    "oakfiles",
-    oakfileHash,
-    "runs",
-    runHash
+    "logs",
+    `${oakfileHash}-${startTime.getTime()}`
   );
-  mkdirsSync(runDirectory);
+  mkdirsSync(logDirectory);
 
-  const logDirectory = join(runDirectory, "logs");
   const { define, parseResults } = await compiler.file(
     oakfilePath,
-    runCellDecorator(logger, logDirectory),
+    runCellDecorator(runHash, logger, logDirectory, oakDB),
     null
   );
 
@@ -57,7 +55,8 @@ export async function oak_run(args: {
   );
   await oakDB.addRun(
     oakfileHash,
-    new Date().getTime(),
+    runHash,
+    startTime.getTime(),
     JSON.stringify(args.targets)
   );
 
@@ -104,5 +103,5 @@ export async function oak_run(args: {
   await Promise.all(Array.from(cells).map(cell => m1.value(cell)));
   runtime.dispose();
   process.chdir(origDir);
-  writeFileSync(join(runDirectory, "events.json"), events);
+  // writeFileSync(join(runDirectory, "events.json"), events);
 }

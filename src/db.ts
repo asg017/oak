@@ -34,6 +34,23 @@ export class OakDB {
   getDb(): sqlite3.Database {
     return new (sqlite3.verbose().Database)(this.dbPath);
   }
+  async addLog(
+    runHash: string,
+    cellName: string,
+    logPath: string,
+    time: number
+  ) {
+    const db = this.getDb();
+    db.serialize(() => {
+      db.run(
+        `INSERT INTO Logs VALUES (?, ?, ?, ?)`,
+        [runHash, cellName, logPath, time],
+        (err, data) => {
+          db.close();
+        }
+      );
+    });
+  }
   async registerOakfile(
     oakfileHash: string,
     mtime: number,
@@ -74,13 +91,18 @@ export class OakDB {
       );
     });
   }
-  async addRun(oakfileHash: string, mtime: number, args: string) {
+  async addRun(
+    oakfileHash: string,
+    runHash: string,
+    mtime: number,
+    args: string
+  ) {
     const db = this.getDb();
     return new Promise((resolve, reject) => {
       db.serialize(() => {
         db.run(
-          `INSERT INTO Runs VALUES (?, ?, ?)`,
-          [oakfileHash, mtime, args],
+          `INSERT INTO Runs VALUES (?, ?, ?, ?)`,
+          [runHash, oakfileHash, mtime, args],
           (err, data) => {
             db.close();
             if (err) reject(err);
@@ -95,7 +117,7 @@ export class OakDB {
     return new Promise((resolve, reject) => {
       db.serialize(() => {
         for (let cell of parseResults.module.cells) {
-          if (cell?.id.name) {
+          if (cell?.id?.name) {
             const cellName = cell.id.name;
             const cellRefs = cell.references.map(ref => ref.name);
             const cellContents = cell.input.substring(cell.start, cell.end);
@@ -116,14 +138,11 @@ export class OakDB {
     });
   }
 }
-const db = new OakDB(":memory:");
-db.addOakfile("asdf", 23434);
-
 function initDb(db: sqlite3.Database) {
   db.serialize(() => {
     db.run(
       `CREATE TABLE Oakfiles(
-          hash TEXT, 
+          hash TEXT PRIMARY KEY, 
           mtime INTEGER,
           UNIQUE(hash)
       ); `
@@ -139,27 +158,27 @@ function initDb(db: sqlite3.Database) {
     );
     db.run(
       `CREATE TABLE Runs(
+            hash TEXT PRIMARY KEY,
             oakfile TEXT,
             time INTEGER,
             arguments TEXT,
-            FOREIGN KEY (oakfile) REFERENCES Oakfiles(hash)
-        ); `
+            FOREIGN KEY (oakfile) REFERENCES Oakfiles(hash)        ); `
     );
     db.run(
       `CREATE TABLE Logs(
-          RunId INTEGER,
+          run TEXT,
           cellName TEXT,
           path TEXT,
-          hash TEXT,
-          FOREIGN KEY (RunId) REFERENCES Runs(rowid)
+          time INTEGER,
+          FOREIGN KEY (run) REFERENCES Runs(hash)
       ); `
     );
     db.run(
       `CREATE TABLE Events(
-          RunId INTEGER,
+          run INTEGER,
           type TEXT,
           time INTEGER,
-          FOREIGN KEY (RunId) REFERENCES Runs(rowid)
+          FOREIGN KEY (run) REFERENCES Runs(hash)
       ); `
     );
   });
