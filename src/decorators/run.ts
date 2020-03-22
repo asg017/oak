@@ -6,11 +6,16 @@ import { createWriteStream, createFileSync, readFileSync } from "fs-extra";
 import { OakDB } from "../db";
 
 async function runTask(
+  runHash: string,
+  cellName: string,
+  oakDB: OakDB,
   logger: pino.Logger,
   cell: Task,
-  logFile: string
+  logDirectory: string
 ): Promise<number> {
+  const logFile = join(logDirectory, `${cellName}.log`);
   logger.info(`Running task for ${cell.target}. Logfile: ${logFile}`);
+  await oakDB.addLog(runHash, cellName, logFile, new Date().getTime());
 
   const {
     process: childProcess,
@@ -91,9 +96,14 @@ export default function(
             "oak-run decorator",
             `${formatPath(currCell.target)} - Doesn't exist - running recipe...`
           );
-          const logFile = join(logDirectory, `${cellName}.log`);
-          await oakDB.addLog(runHash, cellName, logFile, new Date().getTime());
-          await runTask(logger, currCell, logFile);
+          await runTask(
+            runHash,
+            cellName,
+            oakDB,
+            logger,
+            currCell,
+            logDirectory
+          );
           currCell.stat = await getStat(currCell.target);
           return currCell;
         }
@@ -126,10 +136,24 @@ export default function(
                 .join(",")}`
             );
 
-          const logFile = join(logDirectory, cellName);
-          await runTask(logger, currCell, logFile);
+          await runTask(
+            runHash,
+            cellName,
+            oakDB,
+            logger,
+            currCell,
+            logDirectory
+          );
           currCell.stat = await getStat(currCell.target);
           return currCell;
+        } else if (false) {
+          //oakDB.
+          logger.info(
+            "oak-run decorator",
+            `${formatPath(
+              currCell.target
+            )} - out of date because direct cell defintion changed since last Oakfile.`
+          );
         } else {
           logger.info(
             "oak-run decorator",
