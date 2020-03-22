@@ -63,7 +63,8 @@
     "read-package-json": "^2.1.0",
     "socket.io": "^2.3.0",
     "socketio-jwt": "^4.5.0",
-    "sqlite3": "^4.1.1",
+    "sql-template-strings": "^2.2.2",
+    "sqlite": "^3.0.3",
     "untildify": "^4.0.0",
     "yn": "^3.1.1"
   },
@@ -72,7 +73,6 @@
     "@types/fs-extra": "^8.1.0",
     "@types/graphviz": "^0.0.30",
     "@types/pino": "^5.17.0",
-    "@types/sqlite3": "^3.1.6",
     "@types/socket.io": "^2.1.4",
     "mock-fs": "^4.10.1",
     "prettier": "^1.19.1",
