@@ -33,6 +33,18 @@ export class OakDB {
     return db;
   }
 
+  async findMostRecentCellHash(cellHash: string): Promise<{ mtime: number }> {
+    const db = await this.getDb();
+    const result = await db.get(SQL`SELECT Cells.hash, Oakfiles.mtime
+    FROM Cells
+    INNER JOIN Oakfiles ON Cells.oakfile = Oakfiles.hash
+    WHERE Cells.hash = ${cellHash}
+    ORDER BY Oakfiles.mtime ASC
+    LIMIT 1`);
+    await db.close();
+    console.log(result);
+    return result;
+  }
   async addLog(
     runHash: string,
     cellName: string,
@@ -48,14 +60,14 @@ export class OakDB {
   async registerOakfile(
     oakfileHash: string,
     mtime: number,
-    parseResults: ParseOakfileResults
+    cellHashMap: Map<string, { cellHash: string; ancestorHash: string }>
   ): Promise<void> {
     const oakRow = await this.getOakfile(oakfileHash);
     // this could be problematic. imagine addOakfile works, but addCells fails.
     // then addCells would never be retried since this if statement only checks for the oakfile.
     if (!oakRow) {
       await this.addOakfile(oakfileHash, mtime);
-      await this.addCells(oakfileHash, parseResults);
+      await this.addCells(oakfileHash, cellHashMap);
     }
   }
   async getOakfile(oakfileHash: string): Promise<DBOakfile> {
@@ -83,25 +95,21 @@ export class OakDB {
     );
     await db.close();
   }
-  async addCells(oakfileHash: string, parseResults: ParseOakfileResults) {
+  async addCells(
+    oakfileHash: string,
+    cellHashMap: Map<string, { cellHash: string; ancestorHash: string }>
+  ) {
     const db = await this.getDb();
-    const cellsWithNames = parseResults.module.cells.filter(
-      cell => cell?.id?.name
-    );
-    await Promise.all(
-      cellsWithNames.map(cell => {
-        const cellName = cell.id.name;
-        const cellRefs = cell.references.map(ref => ref.name);
-        const cellContents = cell.input.substring(cell.start, cell.end);
-        const hashContents = `${cellName}${cellContents}`;
-        const hash = hashString(hashContents);
+    Promise.all(
+      Array.from(cellHashMap).map(([cellName, { ancestorHash }]) => {
         return db.run(
-          SQL`INSERT INTO Cells VALUES (${oakfileHash}, ${hash}, ${cellName}, ${JSON.stringify(
-            cellRefs
+          SQL`INSERT INTO Cells VALUES (${oakfileHash}, ${ancestorHash}, ${cellName}, ${JSON.stringify(
+            { "shit gotta do this": 3 }
           )})`
         );
       })
     );
+
     db.close();
   }
 }

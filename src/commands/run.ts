@@ -7,8 +7,11 @@ import {
   hashFile,
   hashString,
   getStat,
+  ParseOakfileResults,
+  OakCell,
+  parsedCellHashMap,
 } from "../utils";
-import { dirname, join } from "path";
+import { dirname, join, parse } from "path";
 import { EventEmitter } from "events";
 import { default as runCellDecorator } from "../decorators/run";
 import pino from "pino";
@@ -40,18 +43,23 @@ export async function oak_run(args: {
     `${oakfileHash}-${startTime.getTime()}`
   );
   mkdirsSync(logDirectory);
+  let cellHashMap: Map<string, { cellHash: string; ancestorHash: string }>;
 
+  function getHash(cellName: string) {
+    return cellHashMap.get(cellName);
+  }
   const { define, parseResults } = await compiler.file(
     oakfilePath,
-    runCellDecorator(runHash, logger, logDirectory, oakDB),
+    runCellDecorator(runHash, logger, logDirectory, oakDB, getHash),
     null
   );
-
+  cellHashMap = parsedCellHashMap(parseResults);
   // on succesful compile, add to oak db
+
   await oakDB.registerOakfile(
     oakfileHash,
     oakfileStat.mtime.getTime(),
-    parseResults
+    cellHashMap
   );
   await oakDB.addRun(
     oakfileHash,

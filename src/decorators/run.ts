@@ -61,7 +61,8 @@ export default function(
   runHash: string,
   logger: pino.Logger,
   logDirectory: string,
-  oakDB: OakDB
+  oakDB: OakDB,
+  getHash: (cellName: string) => { cellHash: string; ancestorHash: string }
 ) {
   return function(
     cellFunction: (...any) => any,
@@ -146,14 +147,31 @@ export default function(
           );
           currCell.stat = await getStat(currCell.target);
           return currCell;
-        } else if (false) {
-          //oakDB.
+        }
+
+        const cellHashLookup = await oakDB.findMostRecentCellHash(
+          getHash(cellName).ancestorHash
+        );
+        if (
+          !cellHashLookup ||
+          cellHashLookup.mtime > currCell.stat.mtime.getTime()
+        ) {
           logger.info(
             "oak-run decorator",
             `${formatPath(
               currCell.target
             )} - out of date because direct cell defintion changed since last Oakfile.`
           );
+          await runTask(
+            runHash,
+            cellName,
+            oakDB,
+            logger,
+            currCell,
+            logDirectory
+          );
+          currCell.stat = await getStat(currCell.target);
+          return currCell;
         } else {
           logger.info(
             "oak-run decorator",
