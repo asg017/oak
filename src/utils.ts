@@ -26,10 +26,7 @@ export function parsedCellHashMap(
     string,
     { cellHash: string; cellRefs: string[] }
   > = new Map();
-  const map: Map<
-    string,
-    { cellHash: string; cellRefs: string[]; ancestorHash: string }
-  > = new Map();
+  const map: Map<string, CellSignature> = new Map();
   const cellsWithNames = parseResults.module.cells.filter(
     cell => cell?.id?.name
   );
