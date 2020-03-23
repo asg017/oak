@@ -1,5 +1,5 @@
 import Task from "../Task";
-import { formatPath, getStat } from "../utils";
+import { formatPath, getStat, CellSignature } from "../utils";
 import pino from "pino";
 import { join } from "path";
 import { createWriteStream, createFileSync, readFileSync } from "fs-extra";
@@ -61,13 +61,13 @@ export default function(
   runHash: string,
   logger: pino.Logger,
   logDirectory: string,
-  oakDB: OakDB,
-  getHash: (cellName: string) => { cellHash: string; ancestorHash: string }
+  oakDB: OakDB
 ) {
   return function(
     cellFunction: (...any) => any,
     cellName: string,
     cellReferences: string[],
+    cellHashMap: Map<string, CellSignature>,
     baseModuleDir: string
   ): (...any) => any {
     return async function(...dependencies) {
@@ -150,7 +150,7 @@ export default function(
         }
 
         const cellHashLookup = await oakDB.findMostRecentCellHash(
-          getHash(cellName).ancestorHash
+          cellHashMap.get(cellName).ancestorHash
         );
         if (
           !cellHashLookup ||

@@ -14,9 +14,14 @@ type DirStat = {
   mtimeRecursive: number;
 };
 
+export type CellSignature = {
+  cellHash: string;
+  cellRefs: string[];
+  ancestorHash: string;
+};
 export function parsedCellHashMap(
   parseResults: ParseOakfileResults
-): Map<string, { cellHash: string; cellRefs: string[]; ancestorHash: string }> {
+): Map<string, CellSignature> {
   const initMap: Map<
     string,
     { cellHash: string; cellRefs: string[] }

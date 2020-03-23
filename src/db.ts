@@ -1,7 +1,7 @@
 import sqlite, { Database } from "sqlite";
 import { dirname, join } from "path";
 import { mkdirsSync, existsSync } from "fs-extra";
-import { ParseOakfileResults, hashString } from "./utils";
+import { ParseOakfileResults, hashString, CellSignature } from "./utils";
 import SQL from "sql-template-strings";
 
 type DBOakfile = {
@@ -76,7 +76,7 @@ export class OakDB {
   async registerOakfile(
     oakfileHash: string,
     mtime: number,
-    cellHashMap: Map<string, { cellHash: string; ancestorHash: string }>
+    cellHashMap: Map<string, CellSignature>
   ): Promise<void> {
     const oakRow = await this.getOakfile(oakfileHash);
     // this could be problematic. imagine addOakfile works, but addCells fails.
@@ -111,19 +111,18 @@ export class OakDB {
     );
     await db.close();
   }
-  async addCells(
-    oakfileHash: string,
-    cellHashMap: Map<string, { cellHash: string; ancestorHash: string }>
-  ) {
+  async addCells(oakfileHash: string, cellHashMap: Map<string, CellSignature>) {
     const db = await this.getDb();
     Promise.all(
-      Array.from(cellHashMap).map(([cellName, { ancestorHash }]) => {
-        return db.run(
-          SQL`INSERT INTO Cells VALUES (${oakfileHash}, ${ancestorHash}, ${cellName}, ${JSON.stringify(
-            { "shit gotta do this": 3 }
-          )})`
-        );
-      })
+      Array.from(cellHashMap).map(
+        ([cellName, { cellHash, ancestorHash, cellRefs }]) => {
+          return db.run(
+            SQL`INSERT INTO Cells VALUES (${oakfileHash}, ${ancestorHash}, ${cellName}, ${JSON.stringify(
+              cellRefs
+            )})`
+          );
+        }
+      )
     );
 
     db.close();

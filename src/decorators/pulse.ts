@@ -1,10 +1,11 @@
 import Task from "../Task";
-import { getStat } from "../utils";
+import { getStat, CellSignature } from "../utils";
 
 export default function(
   cellFunction: (...args: any) => any,
   cellName: string,
   cellReferences: string[],
+  cellHashMap: Map<string, CellSignature>,
   baseModuleDir: string
 ): (...any) => any {
   return async function(...dependencies) {

@@ -43,17 +43,11 @@ export async function oak_run(args: {
     `${oakfileHash}-${startTime.getTime()}`
   );
   mkdirsSync(logDirectory);
-  let cellHashMap: Map<string, { cellHash: string; ancestorHash: string }>;
-
-  function getHash(cellName: string) {
-    return cellHashMap.get(cellName);
-  }
-  const { define, parseResults } = await compiler.file(
+  const { define, cellHashMap } = await compiler.file(
     oakfilePath,
-    runCellDecorator(runHash, logger, logDirectory, oakDB, getHash),
+    runCellDecorator(runHash, logger, logDirectory, oakDB),
     null
   );
-  cellHashMap = parsedCellHashMap(parseResults);
   // on succesful compile, add to oak db
 
   await oakDB.registerOakfile(

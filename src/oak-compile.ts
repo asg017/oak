@@ -1,6 +1,12 @@
 // Modified https://github.com/asg017/unofficial-observablehq-compiler/blob/master/src/compiler.js
 
-import { parseOakfile, getBaseFileHashes, ParseOakfileResults } from "./utils";
+import {
+  parseOakfile,
+  getBaseFileHashes,
+  ParseOakfileResults,
+  parsedCellHashMap,
+  CellSignature,
+} from "./utils";
 import { dirname, join } from "path";
 import {
   InjectingSource,
@@ -50,6 +56,7 @@ async function createOakDefinition(
   path: string, // absolute path to the oakfile
   source: string,
   module: any,
+  cellHashMap: Map<string, CellSignature>,
   decorator: Decorator,
   injectingSource?: InjectingSource
 ) {
@@ -155,7 +162,13 @@ async function createOakDefinition(
           cellName,
           cellReferences,
           decorator
-            ? decorator(cellFunction, cellName, cellReferences, baseModuleDir)
+            ? decorator(
+                cellFunction,
+                cellName,
+                cellReferences,
+                cellHashMap,
+                baseModuleDir
+              )
             : cellFunction
         );
     });
@@ -170,18 +183,25 @@ export class OakCompiler {
     path: string,
     decorator?: Decorator,
     injectingSource?: InjectingSource
-  ): Promise<{ define: Define; parseResults: ParseOakfileResults }> {
+  ): Promise<{
+    define: Define;
+    cellHashMap: Map<string, CellSignature>;
+    parseResults: ParseOakfileResults;
+  }> {
     const parseResults = await parseOakfile(path).catch(err => {
       throw Error(`Error parsing Oakfile at ${path} ${err}`);
     });
+
+    const cellHashMap = parsedCellHashMap(parseResults);
 
     const define = await createOakDefinition(
       path,
       parseResults.contents,
       parseResults.module,
+      cellHashMap,
       decorator,
       injectingSource
     );
-    return { define, parseResults };
+    return { define, cellHashMap, parseResults };
   }
 }
