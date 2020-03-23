@@ -49,12 +49,14 @@ export class OakDB {
 
     await db.close();
   }
-  async findMostRecentCellHash(cellHash: string): Promise<{ mtime: number }> {
+  async findMostRecentCellHash(
+    ancestorHash: string
+  ): Promise<{ mtime: number }> {
     const db = await this.getDb();
     const result = await db.get(SQL`SELECT Cells.hash, Oakfiles.mtime
     FROM Cells
     INNER JOIN Oakfiles ON Cells.oakfile = Oakfiles.hash
-    WHERE Cells.hash = ${cellHash}
+    WHERE Cells.ancestorHash = ${ancestorHash}
     ORDER BY Oakfiles.mtime ASC
     LIMIT 1`);
     await db.close();
@@ -117,7 +119,7 @@ export class OakDB {
       Array.from(cellHashMap).map(
         ([cellName, { cellHash, ancestorHash, cellRefs }]) => {
           return db.run(
-            SQL`INSERT INTO Cells VALUES (${oakfileHash}, ${ancestorHash}, ${cellName}, ${JSON.stringify(
+            SQL`INSERT INTO Cells VALUES (${oakfileHash}, ${cellHash}, ${ancestorHash}, ${cellName}, ${JSON.stringify(
               cellRefs
             )})`
           );
@@ -141,6 +143,7 @@ async function initDb(db: Database) {
       `CREATE TABLE Cells(
             oakfile TEXT,
             hash TEXT,
+            ancestorHash TEXT,
             name TEXT,
             refs TEXT,
             FOREIGN KEY (oakfile) REFERENCES Oakfiles(hash)

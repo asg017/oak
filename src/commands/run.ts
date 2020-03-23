@@ -7,16 +7,13 @@ import {
   hashFile,
   hashString,
   getStat,
-  ParseOakfileResults,
-  OakCell,
-  parsedCellHashMap,
 } from "../utils";
-import { dirname, join, parse } from "path";
+import { dirname, join } from "path";
 import { EventEmitter } from "events";
 import { default as runCellDecorator } from "../decorators/run";
 import pino from "pino";
 import { fileArgument } from "../cli-utils";
-import { writeFileSync, mkdirsSync } from "fs-extra";
+import { mkdirsSync } from "fs-extra";
 import { OakDB } from "../db";
 
 export async function oak_run(args: {
