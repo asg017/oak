@@ -68,7 +68,12 @@ export async function oak_run(args: {
     JSON.stringify(args.targets)
   );
 
-  const events = [];
+  const events: {
+    type: string;
+    name: string;
+    time: number;
+    meta?: string;
+  }[] = [];
   const origDir = process.cwd();
   process.chdir(dirname(oakfilePath));
 
@@ -83,9 +88,24 @@ export async function oak_run(args: {
     }`
   );
   const ee = new EventEmitter();
-  ee.on("pending", name => logger.debug("pending", name));
-  ee.on("fulfilled", name => logger.debug("fulfilled", name));
-  ee.on("rejected", name => logger.error("rejected", name));
+
+  ee.on("pending", name => {
+    logger.debug("pending", name);
+    events.push({ type: "pending", name, time: new Date().getTime() });
+  });
+  ee.on("fulfilled", name => {
+    logger.debug("fulfilled", name);
+    events.push({ type: "fulfilled", name, time: new Date().getTime() });
+  });
+  ee.on("rejected", (name, error) => {
+    logger.error("rejected", name);
+    events.push({
+      type: "rejected",
+      name,
+      time: new Date().getTime(),
+      meta: error,
+    });
+  });
 
   const cells: Set<string> = new Set();
   const m1 = runtime.module(define, name => {
@@ -93,15 +113,12 @@ export async function oak_run(args: {
       cells.add(name);
       return {
         pending() {
-          events.push({ type: "pending", name, time: new Date().getTime() });
           ee.emit("pending", name);
         },
         fulfilled(value) {
-          events.push({ type: "fulfilled", name, time: new Date().getTime() });
           ee.emit("fulfilled", name, value);
         },
         rejected(error) {
-          events.push({ type: "rejected", name, time: new Date().getTime() });
           ee.emit("rejected", name, error);
         },
       };
@@ -111,5 +128,5 @@ export async function oak_run(args: {
   await Promise.all(Array.from(cells).map(cell => m1.value(cell)));
   runtime.dispose();
   process.chdir(origDir);
-  // writeFileSync(join(runDirectory, "events.json"), events);
+  await oakDB.addEvents(runHash, events);
 }

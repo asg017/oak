@@ -32,7 +32,23 @@ export class OakDB {
     }
     return db;
   }
+  async addEvents(
+    runHash: string,
+    events: { type: string; name: string; time: number; meta?: string }[]
+  ) {
+    const db = await this.getDb();
 
+    await Promise.all(
+      events.map(event => {
+        const { type, name, time, meta } = event;
+        db.run(
+          SQL`INSERT INTO Events VALUES (${runHash}, ${type}, ${name}, ${time}, ${meta})`
+        );
+      })
+    );
+
+    await db.close();
+  }
   async findMostRecentCellHash(cellHash: string): Promise<{ mtime: number }> {
     const db = await this.getDb();
     const result = await db.get(SQL`SELECT Cells.hash, Oakfiles.mtime
@@ -114,7 +130,6 @@ export class OakDB {
   }
 }
 async function initDb(db: Database) {
-  console.log("initting");
   await db.run(
     `CREATE TABLE Oakfiles(
           hash TEXT PRIMARY KEY, 
@@ -122,7 +137,6 @@ async function initDb(db: Database) {
           UNIQUE(hash)
       ); `
   );
-  console.log("initting 2");
   await Promise.all([
     db.run(
       `CREATE TABLE Cells(
@@ -142,7 +156,6 @@ async function initDb(db: Database) {
             FOREIGN KEY (oakfile) REFERENCES Oakfiles(hash)        ); `
     ),
   ]);
-  console.log("initting 3");
   await Promise.all([
     db.run(
       `CREATE TABLE Logs(
@@ -155,9 +168,11 @@ async function initDb(db: Database) {
     ),
     db.run(
       `CREATE TABLE Events(
-            run INTEGER,
+            run TEXT,
             type TEXT,
+            name TEXT,
             time INTEGER,
+            meta TEXT,
             FOREIGN KEY (run) REFERENCES Runs(hash)
         ); `
     ),
