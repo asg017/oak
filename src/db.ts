@@ -49,6 +49,18 @@ export class OakDB {
 
     await db.close();
   }
+
+  /*async getLog(oakfil) {
+    const db = await this.getDb();
+    const directMatch = await db.get(SQL`SELECT *
+    FROM Logs
+    WHERE Cells.ancestorHash = ${ancestorHash}
+    ORDER BY Oakfiles.mtime ASC
+    LIMIT 1`);
+    await db.close();
+    console.log(result);
+    return result;
+  }*/
   async findMostRecentCellHash(
     ancestorHash: string
   ): Promise<{ mtime: number }> {
@@ -60,18 +72,18 @@ export class OakDB {
     ORDER BY Oakfiles.mtime ASC
     LIMIT 1`);
     await db.close();
-    console.log(result);
     return result;
   }
   async addLog(
+    oakfileHash: string,
     runHash: string,
-    cellName: string,
+    ancestorHash: string,
     logPath: string,
     time: number
   ) {
     const db = await this.getDb();
     await db.run(
-      SQL`INSERT INTO Logs VALUES (${runHash}, ${cellName}, ${logPath}, ${time})`
+      SQL`INSERT INTO Logs VALUES (${oakfileHash}, ${runHash}, ${ancestorHash}, ${logPath}, ${time})`
     );
     await db.close();
   }
@@ -155,16 +167,19 @@ async function initDb(db: Database) {
             oakfile TEXT,
             time INTEGER,
             arguments TEXT,
-            FOREIGN KEY (oakfile) REFERENCES Oakfiles(hash)        ); `
+            FOREIGN KEY (oakfile) REFERENCES Oakfiles(hash)
+        ); `
     ),
   ]);
   await Promise.all([
     db.run(
       `CREATE TABLE Logs(
+            oakfile TEXT,
             run TEXT,
-            cellName TEXT,
+            cellAncestorHash TEXT,
             path TEXT,
             time INTEGER,
+            FOREIGN KEY (oakfile) REFERENCES Oakfiles(hash),
             FOREIGN KEY (run) REFERENCES Runs(hash)
         ); `
     ),

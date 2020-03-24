@@ -1,0 +1,17 @@
+
+text = "newText"
+
+a = task({
+    target: "a",
+    run: a => shell`echo "Running a...";     echo -n "${text}" > ${a}`
+})
+
+b = task({
+    target: "b",
+    run: b => shell`echo "Running b...";     echo -n "newB" > ${b}`
+})
+
+c = task({
+    target: "c",
+    run: c => shell`echo "Running c...";     cat ${a} ${b} > ${c}`
+})

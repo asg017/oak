@@ -16,66 +16,6 @@ test.onFinish(() => {
 });
 
 cleanUp();
-/*
-
-
-===================================================
-text = "originalText"
-
-a = task({
-    target: "a",
-    run: a => shell`Running a...; \
-    echo -n "${text}" > ${a}`
-})
-
-b = task({
-    target: "b",
-    run: b => shell`Running b...; \
-    echo -n "newB" > ${a}`
-})
-
-c = task({
-    target: "x",
-    run: c => shell`Running x...; \
-    cat ${a} ${b} > ${c}`
-})
-===================================================
-a.content === "originalText"
-b.content === "newB"
-c.content === "originalTextnewB"
-orig_a.stat.mtime === a .stat.mtime
-orig_c.stat.mtime < c.state.mtime
-orig_b.stat.mtime < b.state.mtime
-===================================================
-text = "newText"
-
-a = task({
-    target: "a",
-    run: a => shell`Running a...; \
-    echo -n "${text}" > ${a}`
-})
-
-b = task({
-    target: "b",
-    run: b => shell`Running b...; \
-    echo -n "newB" > ${a}`
-})
-
-c = task({
-    target: "x",
-    run: c => shell`Running x...; \
-    cat ${a} ${b} > ${c}`
-})
-===================================================
-a.content === "newText"
-b.content === "newB"
-c.content === "newTextnewB"
-a2.stat.mtime <= a3.stat.mtime
-b2.stat.mtime === b3.stat.mtime
-c2.stat.mtime < c3.stat.mtime
-===================================================
-*/
-
 function writeOakfile(contents: string) {
   writeFileSync(env("Oakfile"), contents, "utf8");
 }

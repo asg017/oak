@@ -42,7 +42,7 @@ export async function oak_run(args: {
   mkdirsSync(logDirectory);
   const { define, cellHashMap } = await compiler.file(
     oakfilePath,
-    runCellDecorator(runHash, logger, logDirectory, oakDB),
+    runCellDecorator(oakfileHash, runHash, logger, logDirectory, oakDB),
     null
   );
   // on succesful compile, add to oak db

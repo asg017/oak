@@ -6,16 +6,24 @@ import { createWriteStream, createFileSync, readFileSync } from "fs-extra";
 import { OakDB } from "../db";
 
 async function runTask(
+  oakfileHash: string,
   runHash: string,
   cellName: string,
   oakDB: OakDB,
   logger: pino.Logger,
   cell: Task,
-  logDirectory: string
+  logDirectory: string,
+  ancestorHash: string
 ): Promise<number> {
   const logFile = join(logDirectory, `${cellName}.log`);
   logger.info(`Running task for ${cell.target}. Logfile: ${logFile}`);
-  await oakDB.addLog(runHash, cellName, logFile, new Date().getTime());
+  await oakDB.addLog(
+    oakfileHash,
+    runHash,
+    ancestorHash,
+    logFile,
+    new Date().getTime()
+  );
 
   const {
     process: childProcess,
@@ -58,6 +66,7 @@ async function runTask(
 }
 
 export default function(
+  oakfileHash: string,
   runHash: string,
   logger: pino.Logger,
   logDirectory: string,
@@ -98,12 +107,14 @@ export default function(
             `${formatPath(currCell.target)} - Doesn't exist - running recipe...`
           );
           await runTask(
+            oakfileHash,
             runHash,
             cellName,
             oakDB,
             logger,
             currCell,
-            logDirectory
+            logDirectory,
+            cellHashMap.get(cellName).ancestorHash
           );
           currCell.stat = await getStat(currCell.target);
           return currCell;
@@ -138,12 +149,14 @@ export default function(
             );
 
           await runTask(
+            oakfileHash,
             runHash,
             cellName,
             oakDB,
             logger,
             currCell,
-            logDirectory
+            logDirectory,
+            cellHashMap.get(cellName).ancestorHash
           );
           currCell.stat = await getStat(currCell.target);
           return currCell;
@@ -163,12 +176,14 @@ export default function(
             )} - out of date because direct cell defintion changed since last Oakfile.`
           );
           await runTask(
+            oakfileHash,
             runHash,
             cellName,
             oakDB,
             logger,
             currCell,
-            logDirectory
+            logDirectory,
+            cellHashMap.get(cellName).ancestorHash
           );
           currCell.stat = await getStat(currCell.target);
           return currCell;
