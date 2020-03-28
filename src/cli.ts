@@ -15,7 +15,7 @@ import {
   CommandLineAction,
   CommandLineParser,
   CommandLineFlagParameter,
-} from "@microsoft/ts-command-line";
+} from "@rushstack/ts-command-line";
 
 class CleanAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
