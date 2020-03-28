@@ -50,6 +50,7 @@
     "chokidar": "^3.3.1",
     "cors": "^2.8.5",
     "d3-array": "^2.2.0",
+    "dockerode": "^3.1.0",
     "express": "^4.17.1",
     "express-jwt": "^5.3.1",
     "fs-extra": "^8.1.0",
@@ -69,6 +70,7 @@
     "yn": "^3.1.1"
   },
   "devDependencies": {
+    "@types/dockerode": "^2.5.26",
     "@types/express": "^4.17.2",
     "@types/fs-extra": "^8.1.0",
     "@types/graphviz": "^0.0.30",
