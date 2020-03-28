@@ -1,4 +1,4 @@
-const BASE = "http://abc.alxg.xyz:3000";
+const BASE = "";
 export function getMeta() {
   return fetch(`${BASE}/api/meta`).then(r => r.json());
 }
