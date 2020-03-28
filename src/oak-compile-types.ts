@@ -1,3 +1,5 @@
+import { CellSignature } from "./utils";
+
 export type InjectingSource = {
   sourcePath: string;
   cells: string[];
@@ -7,6 +9,7 @@ export type Decorator = (
   cellFunction: (...any) => any,
   cellName: string,
   cellReferences: string[],
+  cellHashMap: Map<string, CellSignature>,
   baseModuleDir: string
 ) => (...any) => any;
 

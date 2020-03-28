@@ -1,27 +1,30 @@
 import { h, Component } from "preact";
+import NavBar from "./NavBar";
 import { duration } from "../utils/format";
+import { getMeta } from "../utils/api";
+import "./Header.less";
 
 export default class Header extends Component {
   state = {
     meta: null,
   };
   componentDidMount() {
-    fetch(`/api/meta`)
-      .then(r => r.json())
-      .then(meta => this.setState({ meta }));
+    getMeta().then(meta => this.setState({ meta }));
   }
   render() {
     const { meta } = this.state;
     if (!meta) return <div className="header">Loading...</div>;
     return (
       <div className="header">
-        <div className="header-title">Oak Dash</div>
+        <div className="header-title">Oak Studio</div>
         <div>
-          <span className="header-path">{meta.oakfilePath}</span>
+          <div className="header-path">
+            <div className="header-path-container">
+              <span>{meta.oakfilePath}</span>
+            </div>
+          </div>
         </div>
-        <div className="header-timestamp">{`Last update: ${duration(
-          new Date(meta.stat.mtime)
-        )}`}</div>
+        <NavBar />
       </div>
     );
   }

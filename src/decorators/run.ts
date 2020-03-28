@@ -1,15 +1,21 @@
 import Task from "../Task";
-import { formatPath, getStat } from "../utils";
+import { formatPath, getStat, CellSignature } from "../utils";
 import pino from "pino";
 import { join } from "path";
 import { createWriteStream, createFileSync, readFileSync } from "fs-extra";
+import { OakDB } from "../db";
 
 async function runTask(
+  runHash: string,
+  cellName: string,
+  oakDB: OakDB,
   logger: pino.Logger,
   cell: Task,
-  logFile: string
+  logDirectory: string
 ): Promise<number> {
+  const logFile = join(logDirectory, `${cellName}.log`);
   logger.info(`Running task for ${cell.target}. Logfile: ${logFile}`);
+  await oakDB.addLog(runHash, cellName, logFile, new Date().getTime());
 
   const {
     process: childProcess,
@@ -51,11 +57,17 @@ async function runTask(
   });
 }
 
-export default function(logger: pino.Logger, logDirectory: string) {
+export default function(
+  runHash: string,
+  logger: pino.Logger,
+  logDirectory: string,
+  oakDB: OakDB
+) {
   return function(
     cellFunction: (...any) => any,
     cellName: string,
     cellReferences: string[],
+    cellHashMap: Map<string, CellSignature>,
     baseModuleDir: string
   ): (...any) => any {
     return async function(...dependencies) {
@@ -85,8 +97,14 @@ export default function(logger: pino.Logger, logDirectory: string) {
             "oak-run decorator",
             `${formatPath(currCell.target)} - Doesn't exist - running recipe...`
           );
-          const logFile = join(logDirectory, cellName);
-          await runTask(logger, currCell, logFile);
+          await runTask(
+            runHash,
+            cellName,
+            oakDB,
+            logger,
+            currCell,
+            logDirectory
+          );
           currCell.stat = await getStat(currCell.target);
           return currCell;
         }
@@ -119,8 +137,39 @@ export default function(logger: pino.Logger, logDirectory: string) {
                 .join(",")}`
             );
 
-          const logFile = join(logDirectory, cellName);
-          await runTask(logger, currCell, logFile);
+          await runTask(
+            runHash,
+            cellName,
+            oakDB,
+            logger,
+            currCell,
+            logDirectory
+          );
+          currCell.stat = await getStat(currCell.target);
+          return currCell;
+        }
+
+        const cellHashLookup = await oakDB.findMostRecentCellHash(
+          cellHashMap.get(cellName).ancestorHash
+        );
+        if (
+          !cellHashLookup ||
+          cellHashLookup.mtime > currCell.stat.mtime.getTime()
+        ) {
+          logger.info(
+            "oak-run decorator",
+            `${formatPath(
+              currCell.target
+            )} - out of date because direct cell defintion changed since last Oakfile.`
+          );
+          await runTask(
+            runHash,
+            cellName,
+            oakDB,
+            logger,
+            currCell,
+            logDirectory
+          );
           currCell.stat = await getStat(currCell.target);
           return currCell;
         } else {

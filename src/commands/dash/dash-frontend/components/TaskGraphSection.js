@@ -1,12 +1,16 @@
 import { h, Component } from "preact";
 import TaskGraph from "./TaskGraph";
-import TaskSidebar from "./TaskSidebar";
+import TaskGraphMeta from "./TaskGraphMeta";
+import TaskGraphControls from "./TaskGraphControls";
 import graphlib from "graphlib";
 import dagre from "dagre";
+import { getPulse } from "../utils/api";
+import "./TaskGraphSection.less";
+import io from "socket.io-client";
 
-function createDag(tasks) {
+function createDag(tasks, controls) {
   const graph = new graphlib.Graph()
-    .setGraph({ rankdir: "TB" })
+    .setGraph({ rankdir: "TB", ...controls })
     .setDefaultEdgeLabel(() => ({}));
 
   let n = 0;
@@ -43,30 +47,45 @@ function createDag(tasks) {
 }
 
 export default class TaskGraphSection extends Component {
-  state = { tasks: null, selectedTask: null };
+  state = { tasks: null, selectedTask: 0, controls: {} };
   componentDidMount() {
-    fetch("api/pulse")
-      .then(r => r.json())
-      .then(({ pulseResult }) =>
-        this.setState({
-          tasks: pulseResult.tasks,
-          dag: createDag(pulseResult.tasks),
-        })
-      );
+    const socket = io.connect("/");
+    socket.on("oakfile", data => {
+      console.log("socket.on oakfile", data);
+      const { pulse } = data;
+      this.setState({
+        tasks: pulse.tasks,
+        dag: createDag(pulse.tasks, this.state.controls),
+      });
+    });
+    getPulse().then(({ pulseResult }) =>
+      this.setState({
+        tasks: pulseResult.tasks,
+        dag: createDag(pulseResult.tasks, this.state.controls),
+      })
+    );
   }
   render() {
-    const { tasks, dag, selectedTask } = this.state;
+    const { tasks, dag, selectedTask, controls } = this.state;
     if (!tasks || !dag)
       return <div className="taskgraph-section">Loading...</div>;
     return (
       <div className="taskgraph-section">
-        <TaskGraph
-          dag={dag}
-          tasks={tasks}
-          onTaskSelect={selectedTask => this.setState({ selectedTask })}
-          selectedTask={selectedTask}
-        />
-        <TaskSidebar dag={dag} tasks={tasks} selectedTask={selectedTask} />
+        <div>
+          <TaskGraph
+            dag={dag}
+            tasks={tasks}
+            onTaskSelect={selectedTask => this.setState({ selectedTask })}
+            selectedTask={selectedTask}
+          />
+          <TaskGraphControls
+            controls={controls}
+            onUpdate={controls =>
+              this.setState({ controls, dag: createDag(tasks, controls) })
+            }
+          />
+        </div>
+        <TaskGraphMeta dag={dag} tasks={tasks} selectedTask={selectedTask} />
       </div>
     );
   }

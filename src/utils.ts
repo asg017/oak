@@ -4,6 +4,7 @@ import chalk from "chalk";
 import { dirname, join } from "path";
 import { merge } from "d3-array";
 import hasha from "hasha";
+import { LibraryKeys } from "./Library";
 
 export const formatPath = (s: string) => chalk.black.bgWhiteBright.bold(s);
 export const formatCellName = (s: string) => chalk.black.bgCyanBright.bold(s);
@@ -12,6 +13,44 @@ type DirStat = {
   dirStat: Stats;
   mtimeRecursive: number;
 };
+
+export type CellSignature = {
+  cellHash: string;
+  cellRefs: string[];
+  ancestorHash: string;
+};
+export function parsedCellHashMap(
+  parseResults: ParseOakfileResults
+): Map<string, CellSignature> {
+  const initMap: Map<
+    string,
+    { cellHash: string; cellRefs: string[] }
+  > = new Map();
+  const map: Map<string, CellSignature> = new Map();
+  const cellsWithNames = parseResults.module.cells.filter(
+    cell => cell?.id?.name
+  );
+  for (let cell of cellsWithNames) {
+    const cellName = cell.id.name;
+    const cellRefs = cell.references
+      .map(ref => ref.name)
+      .filter(ref => !LibraryKeys.has(ref));
+    const cellContents = cell.input.substring(cell.start, cell.end);
+    const hashContents = `${cellContents}`;
+    const cellHash = hashString(hashContents);
+    initMap.set(cellName, { cellHash, cellRefs });
+  }
+  for (let [cellName, { cellHash, cellRefs }] of initMap) {
+    const refHashes = cellRefs
+      .map(ref => initMap.get(ref))
+      .filter(ref => ref)
+      .map(ref => ref.cellHash);
+    const ancestorHash = hashString(`${cellHash}${refHashes.join("")}`);
+    map.set(cellName, { cellHash, cellRefs, ancestorHash });
+  }
+  return map;
+}
+
 export async function getDirectoryStat(
   directoryPath: string,
   directoryStat: Stats
@@ -71,8 +110,48 @@ export const getStat = (filename: string): Promise<Stats | null> =>
     });
   });
 
+export type OakCell = {
+  start: number;
+  end: number;
+  input: string;
+  references: {
+    type: string;
+    start: number;
+    end: number;
+    name: string;
+  }[];
+  id?: {
+    type: string;
+    name?: string;
+    // used only for viewof and mutable i believe
+    id?: {
+      type: string;
+      start: number;
+      end: number;
+      name: string;
+    };
+  };
+  body: {
+    type: string;
+    start: number;
+    end: number;
+    specifiers?: any[]; // import only
+    source?: {
+      // import only
+      type: string;
+      start: number;
+      end: number;
+      value: string;
+      raw: string;
+    };
+  };
+  async: boolean;
+  generator: boolean;
+};
 export type ParseOakfileResults = {
-  module: any;
+  module: {
+    cells: OakCell[];
+  };
   contents: string;
 };
 

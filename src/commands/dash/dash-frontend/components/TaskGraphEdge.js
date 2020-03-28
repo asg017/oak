@@ -1,7 +1,7 @@
 import { h, Component } from "preact";
 import { line, curveCardinal } from "d3";
 import { colorVariable } from "../utils/colors";
-import "../style.less";
+import "./TaskGraphEdge.less";
 
 const l = line()
   .x(d => d.x)

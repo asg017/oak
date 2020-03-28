@@ -1,0 +1,35 @@
+@import "../defintions.less";
+
+.taskgraphmeta {
+    width: @taskgraphmeta-width;
+    margin: auto;
+    &-name {
+        font-size: 1.5rem;
+        font-weight: 650;
+    }
+    &-table {
+        font-size: 1.1rem;
+        width: @taskgraphmeta-width;
+        margin: 0 auto;
+    }
+    &-code {
+        width: @taskgraphmeta-width;
+        border-radius: 1rem;
+        
+    }
+    &-code-header {
+        margin-top: 1rem;
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+}
+
+.CodeMirror {
+    border-radius: .2rem;
+}
+
+@media screen and (min-width: 1000px) {
+    .taskgraphmeta {
+        margin-left: 1rem;
+    }
+}
