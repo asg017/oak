@@ -1,6 +1,6 @@
 {
   "name": "@alex.garcia/oak-stdlib",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Standard Library for Oak projects.",
   "main": "./built/index.js",
   "files": [
