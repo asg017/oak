@@ -1,0 +1,67 @@
+{
+  "name": "@alex.garcia/oak-core",
+  "version": "0.0.1",
+  "description": "Core operations for Oak projects.",
+  "main": "./built/index.js",
+  "files": [
+    "built/**/*"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/asg017/oak.git",
+    "directory": "oak-core"
+  },
+  "keywords": [
+    "etl",
+    "pipeline",
+    "workflow",
+    "cli",
+    "dag",
+    "task",
+    "oak"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "rm -rf built && npm run build",
+    "preversion": "npm test",
+    "version": "rm -rf built && npm run build",
+    "format": "prettier --write src/**/*.ts",
+    "format-test": "prettier --check src/**/*.ts",
+    "test": "npm run format-test && ts-node ./node_modules/tape/bin/tape tests/**/*.ts",
+    "t": "ts-node ./node_modules/tape/bin/tape"
+  },
+  "dependencies": {
+    "@observablehq/parser": "^4.0.1",
+    "@observablehq/runtime": "4.4.4",
+    "@observablehq/stdlib": "^3.0.2",
+    "@rushstack/ts-command-line": "^4.3.13",
+    "chalk": "^2.4.2",
+    "d3-array": "^2.2.0",
+    "fs-extra": "^8.1.0",
+    "hasha": "^5.1.0",
+    "immutable": "^4.0.0-rc.12",
+    "pino": "^5.17.0",
+    "pino-pretty": "^3.6.1",
+    "read-package-json": "^2.1.0",
+    "sql-template-strings": "^2.2.2",
+    "sqlite": "^3.0.3",
+    "untildify": "^4.0.0",
+    "yn": "^3.1.1"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^8.1.0",
+    "@types/node": "^13.9.5",
+    "@types/pino": "^5.17.0",
+    "@types/tape": "^4.2.34",
+    "prettier": "^1.19.1",
+    "surge": "^0.21.3",
+    "tape": "^4.11.0",
+    "ts-node": "^8.3.0",
+    "tslib": "^1.10.0",
+    "typescript": "^3.5.3"
+  }
+}
