@@ -1,0 +1,2 @@
+wrap = s => `A ${s}`;
+x = task({ target: "x", run: x => shell`echo -n ${wrap("x")} > ${x}` });

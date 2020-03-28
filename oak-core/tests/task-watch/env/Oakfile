@@ -1,0 +1,9 @@
+a = task({ target: "a", run: a => command("echo", ["-n", "a"], a) });
+
+b = task({ target: "b", run: b => command("echo", ["-n", "b"], b) });
+
+c = task({
+  target: "c",
+  run: c => command("node", ["build_c.js", a, b], c),
+  watch: ["build_c.js"]
+});

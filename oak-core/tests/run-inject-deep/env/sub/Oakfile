@@ -1,0 +1,11 @@
+wrap = s => {
+        console.log('Wow wrap b called');
+return `B ${s}`;
+}
+
+import {x} with {wrap} from "./subsub/Oakfile";
+
+y = task({
+    target: "y", 
+    run: y => shell`cat ${x} > ${y}`
+})
