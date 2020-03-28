@@ -20,6 +20,7 @@ async function runTask(
   await oakDB.addLog(
     oakfileHash,
     runHash,
+    cellName,
     ancestorHash,
     logFile,
     new Date().getTime()

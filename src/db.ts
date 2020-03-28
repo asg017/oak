@@ -50,17 +50,17 @@ export class OakDB {
     await db.close();
   }
 
-  /*async getLog(oakfil) {
+  async getLog(cellName: string) {
     const db = await this.getDb();
-    const directMatch = await db.get(SQL`SELECT *
+    const result = await db.get(SQL`SELECT *
     FROM Logs
-    WHERE Cells.ancestorHash = ${ancestorHash}
-    ORDER BY Oakfiles.mtime ASC
+    WHERE Logs.cellName = ${cellName}
+    ORDER BY Logs.time DESC
     LIMIT 1`);
     await db.close();
-    console.log(result);
     return result;
-  }*/
+  }
+
   async findMostRecentCellHash(
     ancestorHash: string
   ): Promise<{ mtime: number }> {
@@ -74,19 +74,29 @@ export class OakDB {
     await db.close();
     return result;
   }
+
   async addLog(
     oakfileHash: string,
     runHash: string,
+    cellName: string,
     ancestorHash: string,
     logPath: string,
     time: number
   ) {
     const db = await this.getDb();
     await db.run(
-      SQL`INSERT INTO Logs VALUES (${oakfileHash}, ${runHash}, ${ancestorHash}, ${logPath}, ${time})`
+      SQL`INSERT INTO Logs VALUES (
+        ${oakfileHash}, 
+        ${runHash}, 
+        ${cellName}, 
+        ${ancestorHash}, 
+        ${logPath}, 
+        ${time}
+      )`
     );
     await db.close();
   }
+
   async registerOakfile(
     oakfileHash: string,
     mtime: number,
@@ -100,6 +110,7 @@ export class OakDB {
       await this.addCells(oakfileHash, cellHashMap);
     }
   }
+
   async getOakfile(oakfileHash: string): Promise<DBOakfile> {
     const db = await this.getDb();
     const row = await db.get(
@@ -108,11 +119,13 @@ export class OakDB {
     await db.close();
     return row;
   }
+
   async addOakfile(oakfileHash: string, mtime: number) {
     const db = await this.getDb();
     await db.run(SQL`INSERT INTO Oakfiles VALUES (${oakfileHash}, ${mtime})`);
     await db.close();
   }
+
   async addRun(
     oakfileHash: string,
     runHash: string,
@@ -125,6 +138,7 @@ export class OakDB {
     );
     await db.close();
   }
+
   async addCells(oakfileHash: string, cellHashMap: Map<string, CellSignature>) {
     const db = await this.getDb();
     Promise.all(
@@ -142,6 +156,7 @@ export class OakDB {
     db.close();
   }
 }
+
 async function initDb(db: Database) {
   await db.run(
     `CREATE TABLE Oakfiles(
@@ -158,7 +173,8 @@ async function initDb(db: Database) {
             ancestorHash TEXT,
             name TEXT,
             refs TEXT,
-            FOREIGN KEY (oakfile) REFERENCES Oakfiles(hash)
+            FOREIGN KEY (oakfile) REFERENCES Oakfiles(hash),
+            UNIQUE (oakfile, ancestorHash)
         ); `
     ),
     db.run(
@@ -176,6 +192,7 @@ async function initDb(db: Database) {
       `CREATE TABLE Logs(
             oakfile TEXT,
             run TEXT,
+            cellName TEXT,
             cellAncestorHash TEXT,
             path TEXT,
             time INTEGER,
