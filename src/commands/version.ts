@@ -1,7 +1,7 @@
 import readPackageJson from "read-package-json";
 import { join } from "path";
 
-const pkgPath = join(__dirname, "..", "package.json");
+const pkgPath = join(__dirname, "..", "..", "package.json");
 
 export default (): void => {
   readPackageJson(pkgPath, (err: any, data: any) => {
