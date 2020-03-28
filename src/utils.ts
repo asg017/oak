@@ -19,34 +19,117 @@ export type CellSignature = {
   cellRefs: string[];
   ancestorHash: string;
 };
+
+type Node = {
+  type: "normal" | "import";
+  otherOakfile?: string;
+  cellName: string;
+  cellRefs: string[];
+  cellContents: string;
+};
+
+function topoSort(parseResults: ParseOakfileResults): Node[] {
+  const seen = new Set();
+  const tmp = new Set();
+  const nodes: Map<string, Node> = new Map();
+
+  const sortedList: Node[] = [];
+
+  function visit(node: Node) {
+    if (seen.has(node.cellName)) return;
+    if (tmp.has(node.cellName))
+      throw Error(
+        `There is a cycle in the Oakfile defintion. Found with ${node.cellName}, ${node.cellContents}`
+      );
+    tmp.add(node.cellName);
+    for (let refNodeName of node.cellRefs) {
+      if (!nodes.has(refNodeName))
+        throw Error(`${refNodeName} not defined yet for ${node.cellName}`);
+      visit(nodes.get(refNodeName));
+    }
+    tmp.delete(node.cellName);
+    seen.add(node.cellName);
+    sortedList.push(node);
+  }
+
+  for (let cell of parseResults.module.cells) {
+    if (!cell?.id?.name && !cell.body.specifiers?.length) continue;
+    if (cell.body.type === "ImportDeclaration") {
+      // oh boy
+      const injections = (cell.body?.injections || []).map(
+        n => n.imported.name
+      );
+      const otherOakfile = cell.body.source.value;
+      const cellContents = cell.input.substring(cell.start, cell.end);
+      for (let specifier of cell.body.specifiers) {
+        const cellName = specifier.local.name;
+        nodes.set(cellName, {
+          type: "import",
+          cellName,
+          cellRefs: injections,
+          cellContents,
+          otherOakfile,
+        });
+      }
+    } else {
+      const cellName = cell.id.name;
+      const cellRefs = cell.references
+        .map(ref => ref.name)
+        .filter(ref => !LibraryKeys.has(ref));
+      const cellContents = cell.input.substring(cell.start, cell.end);
+      nodes.set(cellName, { type: "normal", cellName, cellRefs, cellContents });
+    }
+  }
+
+  for (let [cellName, node] of nodes) {
+    visit(node);
+  }
+  return sortedList;
+}
+
 export function parsedCellHashMap(
+  oakfilePath: string,
   parseResults: ParseOakfileResults
 ): Map<string, CellSignature> {
   const initMap: Map<
     string,
     { cellHash: string; cellRefs: string[] }
   > = new Map();
+
   const map: Map<string, CellSignature> = new Map();
-  const cellsWithNames = parseResults.module.cells.filter(
-    cell => cell?.id?.name
-  );
-  for (let cell of cellsWithNames) {
-    const cellName = cell.id.name;
-    const cellRefs = cell.references
-      .map(ref => ref.name)
-      .filter(ref => !LibraryKeys.has(ref));
-    const cellContents = cell.input.substring(cell.start, cell.end);
-    const hashContents = `${cellContents}`;
-    const cellHash = hashString(hashContents);
-    initMap.set(cellName, { cellHash, cellRefs });
-  }
-  for (let [cellName, { cellHash, cellRefs }] of initMap) {
-    const refHashes = cellRefs
-      .map(ref => initMap.get(ref))
-      .filter(ref => ref)
-      .map(ref => ref.cellHash);
-    const ancestorHash = hashString(`${cellHash}${refHashes.join("")}`);
-    map.set(cellName, { cellHash, cellRefs, ancestorHash });
+  const topoCellNames: Node[] = topoSort(parseResults);
+  for (let {
+    cellName,
+    cellRefs,
+    cellContents,
+    type,
+    otherOakfile,
+  } of topoCellNames) {
+    if (type === "normal") {
+      const cellHash = hashString(cellContents);
+      const ancestorHash = hashString(
+        `${cellHash}${cellRefs.map(ref => {
+          if (!map.has(ref))
+            throw Error(`Some problem with topo sort, pls add more `);
+          return map.get(ref).ancestorHash;
+        })}`
+      );
+      map.set(cellName, { cellHash, cellRefs, ancestorHash });
+    }
+    if (type === "import") {
+      const cellHash = hashString(cellContents);
+      const otherOakfileHash = hashFile(
+        join(dirname(oakfilePath), otherOakfile)
+      );
+      const ancestorHash = hashString(
+        `${cellHash}${cellRefs.map(ref => {
+          if (!map.has(ref))
+            throw Error(`Some problem with topo sort, pls add more `);
+          return map.get(ref).ancestorHash;
+        })}${otherOakfileHash}`
+      );
+      map.set(cellName, { cellHash, cellRefs, ancestorHash });
+    }
   }
   return map;
 }
@@ -135,7 +218,46 @@ export type OakCell = {
     type: string;
     start: number;
     end: number;
-    specifiers?: any[]; // import only
+    // import only
+    specifiers?: {
+      type: string;
+      start: number;
+      end: number;
+      view: boolean;
+      mutable: boolean;
+      imported: {
+        type: string;
+        start: number;
+        end: number;
+        name: string;
+      };
+      local: {
+        type: string;
+        start: number;
+        end: number;
+        name: string;
+      };
+    }[];
+    // import only
+    injections?: {
+      type: string;
+      start: number;
+      end: number;
+      view: boolean;
+      mutable: boolean;
+      imported: {
+        type: string;
+        start: number;
+        end: number;
+        name: string;
+      };
+      local: {
+        type: string;
+        start: number;
+        end: number;
+        name: string;
+      };
+    }[];
     source?: {
       // import only
       type: string;

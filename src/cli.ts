@@ -7,6 +7,7 @@ import { oak_init } from "./commands/init";
 import oak_dash from "./commands/dash";
 import oak_version from "./commands/version";
 import oak_clean from "./commands/clean";
+import { oak_logs } from "./commands/logs";
 
 import {
   CommandLineChoiceParameter,
@@ -140,6 +141,42 @@ class PrintAction extends CommandLineAction {
   }
 }
 
+class LogsAction extends CommandLineAction {
+  private _filename: CommandLineStringParameter;
+  private _targets: CommandLineStringListParameter;
+  public constructor() {
+    super({
+      actionName: "logs",
+      summary: "Show the logs from a previous oak run.",
+      documentation: "TODO",
+    });
+  }
+  protected async onExecute(): Promise<void> {
+    await oak_logs({
+      filename: this._filename.value,
+      targets: this._targets.values,
+    });
+    return;
+  }
+
+  protected onDefineParameters(): void {
+    this._filename = this.defineStringParameter({
+      argumentName: "FILENAME",
+      parameterLongName: "--file",
+      parameterShortName: "-f",
+      description: "Path to Oakfile.",
+      defaultValue: "./Oakfile",
+    });
+    this._targets = this.defineStringListParameter({
+      argumentName: "TARGET",
+      parameterLongName: "--target",
+      parameterShortName: "-t",
+      description: "Task name associated with the log.",
+      required: true,
+    });
+  }
+}
+
 class PulseAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
 
@@ -226,6 +263,7 @@ class OakCommandLine extends CommandLineParser {
     this.addAction(new CleanAction());
     this.addAction(new DashAction());
     this.addAction(new PrintAction());
+    this.addAction(new LogsAction());
     this.addAction(new PulseAction());
     this.addAction(new RunAction());
     this.addAction(new InitAction());

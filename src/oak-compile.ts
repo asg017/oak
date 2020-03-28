@@ -192,7 +192,7 @@ export class OakCompiler {
       throw Error(`Error parsing Oakfile at ${path} ${err}`);
     });
 
-    const cellHashMap = parsedCellHashMap(parseResults);
+    const cellHashMap = parsedCellHashMap(path, parseResults);
 
     const define = await createOakDefinition(
       path,
