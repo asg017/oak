@@ -1,4 +1,0 @@
-import { a } from "./subsub/Oakfile";
-
-b = task({ target: "b", run: b => shell`echo -n "b" > ${b}` });
-c = task({ target: "c", run: c => shell`cat ${a} ${b} > ${c}` });
