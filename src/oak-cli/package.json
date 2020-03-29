@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@alex.garcia/oak-core": "^0.0.2",
+    "@alex.garcia/oak-studio": "^0.0.5",
     "@rushstack/ts-command-line": "^4.3.13"
   },
   "devDependencies": {
@@ -50,9 +51,5 @@
     "ts-node": "^8.3.0",
     "tslib": "^1.10.0",
     "typescript": "^3.5.3"
-  },
-  "peerDependencies": {},
-  "optionalDependencies": {
-    "@alex.garcia/oak-studio": "^0.0.5"
   }
 }

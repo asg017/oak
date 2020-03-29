@@ -5,6 +5,7 @@ dependencies:
   '@observablehq/parser': 4.0.1
   '@observablehq/runtime': 4.4.4
   '@observablehq/stdlib': 3.3.1
+  '@rush-temp/oak-cli': 'file:projects/oak-cli.tgz'
   '@rush-temp/oak-core': 'file:projects/oak-core.tgz'
   '@rush-temp/oak-stdlib': 'file:projects/oak-stdlib.tgz'
   '@rush-temp/oak-studio': 'file:projects/oak-studio.tgz'
@@ -66,10 +67,32 @@ packages:
     dev: false
     resolution:
       integrity: sha512-LY3UNSAkxgRbJVyb+JD3zYWpYtcUdZjhSwbpaxSDdm9OigyK5oiRwMPeKIqeviOcPATFjtutnacSo+kACGJalA==
+  /@alex.garcia/oak-studio/0.0.5:
+    dependencies:
+      '@alex.garcia/oak-utils': 0.0.2
+      '@types/express': 4.17.3
+      chokidar: 3.3.1
+      cors: 2.8.5
+      express: 4.17.1
+      pino: 6.0.0
+      socket.io: 2.3.0
+    dev: false
+    optional: true
+    optionalDependencies:
+      '@alex.garcia/oak-core': 0.0.2
+    resolution:
+      integrity: sha512-9b2wdDTKSB5dXYHlS1m2aQxsz/s8k68jqK6e/dBj4wDoAK35Q+fuTBPRgQdsEV8koba/ht4M2elYOUAwA84LvQ==
   /@alex.garcia/oak-utils/0.0.1:
     dev: false
     resolution:
       integrity: sha512-t7BZo+bt5GFaent3PsI0BDUs1hXwfO41HEWeGTqd+FrwAH2T3pYdFYozwM1WDgWSH0ahoTekakD0TLU1BVjb2Q==
+  /@alex.garcia/oak-utils/0.0.2:
+    dependencies:
+      untildify: 4.0.0
+    dev: false
+    optional: true
+    resolution:
+      integrity: sha512-45D/F7OR6rus/y9X4aKQq4cq8eme0x8aXpvjDgqzMyUqFrWuDbWbxpAfQ1N7W8ObA/sHuEnGIfklduCnVm69gw==
   /@hapi/bourne/1.3.2:
     dev: false
     resolution:
@@ -2720,6 +2743,26 @@ packages:
       node: '>=6'
     resolution:
       integrity: sha512-Ux4ygGWsu2c7isFWe8Yu1YluJmqVhxqK2cLXNQA5AcC3QfbGNpM7fu0Y8b/z16pXLnFxZYvWhd3fhBY9DLmC6Q==
+  'file:projects/oak-cli.tgz':
+    dependencies:
+      '@alex.garcia/oak-core': 0.0.2
+      '@rushstack/ts-command-line': 4.3.13
+      '@types/node': 13.9.5
+      '@types/tape': 4.2.34
+      fs-extra: 9.0.0
+      prettier: 1.19.1
+      tape: 4.13.2
+      ts-node: 8.8.1_typescript@3.8.3
+      tslib: 1.11.1
+      typescript: 3.8.3
+    dev: false
+    name: '@rush-temp/oak-cli'
+    optionalDependencies:
+      '@alex.garcia/oak-studio': 0.0.5
+    resolution:
+      integrity: sha512-Ey5GRV2YrLmhKIok6dPU/9V0D5pVSTKEcKG/WoDquHNwEWU82phselV5AAeSpPJzQUDS4UGGUJifdMJDD7V6rw==
+      tarball: 'file:projects/oak-cli.tgz'
+    version: 0.0.0
   'file:projects/oak-core.tgz':
     dependencies:
       '@alex.garcia/oak-stdlib': 0.0.3
@@ -2795,7 +2838,7 @@ packages:
     optionalDependencies:
       '@alex.garcia/oak-core': 0.0.2
     resolution:
-      integrity: sha512-VAQPRs6n+16LuZ2NxDdCQajx0YK57NsMGgEmjGS9xdWcSeY+JojO+b90nbk0J8j6T0L/EaP/TcJ+SPVvLTvj/w==
+      integrity: sha512-UQv6GZUZ/aGJsVF2E0eBq5w7bPRb76gkaHyxxbmGj8sXHlRiscv+M5WQQiGSwBBG/F8kxoGCb4e67oPsNvPTYQ==
       tarball: 'file:projects/oak-studio.tgz'
     version: 0.0.0
   'file:projects/oak-utils.tgz':
@@ -2823,6 +2866,7 @@ specifiers:
   '@observablehq/parser': ^4.0.1
   '@observablehq/runtime': 4.4.4
   '@observablehq/stdlib': ^3.0.2
+  '@rush-temp/oak-cli': 'file:./projects/oak-cli.tgz'
   '@rush-temp/oak-core': 'file:./projects/oak-core.tgz'
   '@rush-temp/oak-stdlib': 'file:./projects/oak-stdlib.tgz'
   '@rush-temp/oak-studio': 'file:./projects/oak-studio.tgz'

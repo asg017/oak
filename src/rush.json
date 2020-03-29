@@ -31,6 +31,10 @@
     {
       "packageName": "@alex.garcia/oak-studio",
       "projectFolder": "oak-studio"
+    },
+    {
+      "packageName": "@alex.garcia/oak-cli",
+      "projectFolder": "oak-cli"
     }
   ]
 }
