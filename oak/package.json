@@ -1,14 +1,7 @@
 {
   "name": "@alex.garcia/oak",
-  "version": "0.0.17-beta",
+  "version": "0.0.16-beta.2",
   "description": "Easy, simple, data workflows",
-  "main": "./built/cli.js",
-  "bin": {
-    "oak": "./built/cli.js"
-  },
-  "files": [
-    "built/**/*"
-  ],
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -28,7 +21,7 @@
   ],
   "scripts": {},
   "dependencies": {
-    "@alex.garcia/oak-cli": "^0.0.2",
+    "@alex.garcia/oak-cli": "0.0.3",
     "@alex.garcia/oak-core": "^0.0.3",
     "@alex.garcia/oak-studio": "^0.0.5"
   }
