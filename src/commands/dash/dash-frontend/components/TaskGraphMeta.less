@@ -1,8 +1,11 @@
 @import "../defintions.less";
 
+@taskgraphmeta-name-width: 100px;
+@taskgraphmeta-value-width: 500px;
+
 .taskgraphmeta {
     width: @taskgraphmeta-width;
-    margin: auto;
+    margin: 0 auto;
     &-name {
         font-size: 1.5rem;
         font-weight: 650;
@@ -11,6 +14,15 @@
         font-size: 1.1rem;
         width: @taskgraphmeta-width;
         margin: 0 auto;
+    }
+    &-row {
+        display: grid;
+        grid-template-columns: @taskgraphmeta-name-width @taskgraphmeta-value-width;
+    }
+    &-path {
+        font-family: "Roboto Mono";
+        white-space: nowrap;
+        overflow: auto;
     }
     &-code {
         width: @taskgraphmeta-width;

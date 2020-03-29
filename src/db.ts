@@ -61,6 +61,51 @@ export class OakDB {
     return result;
   }
 
+  async getLogById(rowid: number) {
+    const db = await this.getDb();
+    const result = await db.get(SQL`SELECT 
+      path
+    FROM Logs
+    WHERE Logs.rowid = ${rowid}`);
+    await db.close();
+    return result;
+  }
+
+  async getLogs() {
+    const db = await this.getDb();
+    const result = await db.all(SQL`SELECT 
+      rowid,
+      oakfile,
+      run,
+      cellName,
+      cellAncestorHash,
+      path,
+      time
+    FROM Logs
+    ORDER BY Logs.time DESC`);
+    await db.close();
+    return result;
+  }
+
+  async getRuns() {
+    const db = await this.getDb();
+    const result = await db.all(SQL`SELECT
+    Runs.hash,
+    Runs.oakfile,
+    Runs.time,
+    Runs.arguments,
+    COUNT(*) as logCount
+  FROM
+    Runs
+    INNER JOIN Logs ON Runs.hash = Logs.run
+  GROUP BY
+    Logs.run
+  ORDER BY
+    Runs.time DESC`);
+    await db.close();
+    return result;
+  }
+
   async findMostRecentCellHash(
     ancestorHash: string
   ): Promise<{ mtime: number }> {

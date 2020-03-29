@@ -931,24 +931,59 @@ module.hot.accept(reloadCSS);
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = _default;
+exports.default = NavBar;
 
 var _preact = require("preact");
 
 require("./NavBar.less");
 
-function _default(props) {
+function NavBarItem(props) {
+  var label = props.label,
+      _props$selected = props.selected,
+      selected = _props$selected === void 0 ? false : _props$selected,
+      _props$disabled = props.disabled,
+      disabled = _props$disabled === void 0 ? false : _props$disabled,
+      onSelect = props.onSelect;
+  return (0, _preact.h)("div", {
+    className: "navbar-item ".concat(disabled ? "navbar-item--disabled" : "", " ").concat(selected ? "navbar-item--selected" : ""),
+    onClick: function onClick() {
+      return !disabled && onSelect();
+    }
+  }, label);
+}
+
+function NavBar(props) {
+  var _onSelect = props.onSelect,
+      section = props.section;
   return (0, _preact.h)("div", {
     className: "navbar"
-  }, (0, _preact.h)("div", {
-    className: "navbar-item"
-  }, "Task Graph"), (0, _preact.h)("div", {
-    className: "navbar-item navbar-item--disabled"
-  }, "Code"), (0, _preact.h)("div", {
-    className: "navbar-item navbar-item--disabled"
-  }, "Runs"), (0, _preact.h)("div", {
-    className: "navbar-item navbar-item--disabled"
-  }, "Logs"));
+  }, (0, _preact.h)(NavBarItem, {
+    label: "Task Graph",
+    selected: section === "taskgraph",
+    onSelect: function onSelect() {
+      return _onSelect("taskgraph");
+    }
+  }), (0, _preact.h)(NavBarItem, {
+    label: "Code",
+    selected: section === "code",
+    onSelect: function onSelect() {
+      return _onSelect("code");
+    },
+    disabled: true
+  }), (0, _preact.h)(NavBarItem, {
+    label: "Runs",
+    selected: section === "runs",
+    onSelect: function onSelect() {
+      return _onSelect("runs");
+    },
+    disabled: true
+  }), (0, _preact.h)(NavBarItem, {
+    label: "Logs",
+    selected: section === "logs",
+    onSelect: function onSelect() {
+      return _onSelect("logs");
+    }
+  }));
 }
 },{"preact":"node_modules/preact/dist/preact.mjs","./NavBar.less":"components/NavBar.less"}],"utils/format.js":[function(require,module,exports) {
 "use strict";
@@ -1000,7 +1035,10 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.getMeta = getMeta;
 exports.getPulse = getPulse;
-var BASE = "http://abc.alxg.xyz:3000";
+exports.getLogs = getLogs;
+exports.getRuns = getRuns;
+exports.getLog = getLog;
+var BASE = "";
 
 function getMeta() {
   return fetch("".concat(BASE, "/api/meta")).then(function (r) {
@@ -1011,6 +1049,24 @@ function getMeta() {
 function getPulse() {
   return fetch("".concat(BASE, "/api/pulse")).then(function (r) {
     return r.json();
+  });
+}
+
+function getLogs() {
+  return fetch("".concat(BASE, "/api/logs")).then(function (r) {
+    return r.json();
+  });
+}
+
+function getRuns() {
+  return fetch("".concat(BASE, "/api/runs")).then(function (r) {
+    return r.json();
+  });
+}
+
+function getLog(rowid) {
+  return fetch("".concat(BASE, "/api/log?rowid=").concat(rowid)).then(function (r) {
+    return r.text();
   });
 }
 },{}],"components/Header.less":[function(require,module,exports) {
@@ -1095,6 +1151,9 @@ var Header = /*#__PURE__*/function (_Component) {
   }, {
     key: "render",
     value: function render() {
+      var _this$props = this.props,
+          onSelectionSection = _this$props.onSelectionSection,
+          section = _this$props.section;
       var meta = this.state.meta;
       if (!meta) return (0, _preact.h)("div", {
         className: "header"
@@ -1107,7 +1166,12 @@ var Header = /*#__PURE__*/function (_Component) {
         className: "header-path"
       }, (0, _preact.h)("div", {
         className: "header-path-container"
-      }, (0, _preact.h)("span", null, meta.oakfilePath)))), (0, _preact.h)(_NavBar.default, null));
+      }, (0, _preact.h)("span", null, meta.oakfilePath)))), (0, _preact.h)(_NavBar.default, {
+        section: section,
+        onSelect: function onSelect(section) {
+          return onSelectionSection(section);
+        }
+      }));
     }
   }]);
 
@@ -41219,6 +41283,14 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
+function Row(props) {
+  var name = props.name,
+      value = props.value;
+  return (0, _preact.h)("div", {
+    className: "taskgraphmeta-row"
+  }, (0, _preact.h)("div", null, name), (0, _preact.h)("div", null, value));
+}
+
 var TaskGraphMeta = /*#__PURE__*/function (_Component) {
   _inherits(TaskGraphMeta, _Component);
 
@@ -41288,18 +41360,28 @@ var TaskGraphMeta = /*#__PURE__*/function (_Component) {
         className: "taskgraphmeta"
       }, (0, _preact.h)("div", null, "none selected"));
       var task = dag.node(selectedTask);
-      console.log(task);
       return (0, _preact.h)("div", {
         className: "taskgraphmeta"
       }, (0, _preact.h)("div", {
         className: "taskgraphmeta-name"
-      }, task.label), (0, _preact.h)("table", {
+      }, task.label), (0, _preact.h)("div", {
         className: "taskgraphmeta-table"
-      }, (0, _preact.h)("tr", null, (0, _preact.h)("td", null, "Path"), (0, _preact.h)("td", {
-        style: {
-          overflow: "ellipses"
-        }
-      }, task.target)), (0, _preact.h)("tr", null, (0, _preact.h)("td", null, "Size"), (0, _preact.h)("td", null, (0, _format.bytesToSize)(task.bytes))), (0, _preact.h)("tr", null, (0, _preact.h)("td", null, "Last Modified"), (0, _preact.h)("td", null, task.mtime ? (0, _format.duration)(new Date(task.mtime)) : "-"))), (0, _preact.h)("div", {
+      }, (0, _preact.h)(Row, {
+        name: "Path",
+        value: (0, _preact.h)("div", {
+          className: "taskgraphmeta-path"
+        }, (0, _preact.h)("code", null, task.target))
+      }), (0, _preact.h)(Row, {
+        name: "Size",
+        value: (0, _preact.h)("div", {
+          className: "taskgraphmeta-size"
+        }, (0, _format.bytesToSize)(task.bytes))
+      }), (0, _preact.h)(Row, {
+        name: "Last Modified",
+        value: (0, _preact.h)("div", {
+          className: "taskgraphmeta-mtime"
+        }, task.mtime ? (0, _format.duration)(new Date(task.mtime)) : "-")
+      })), (0, _preact.h)("div", {
         className: "taskgraphmeta-code-header"
       }, "Task Code"), (0, _preact.h)("div", {
         className: "taskgraphmeta-code",
@@ -62113,7 +62195,264 @@ var TaskGraphSection = /*#__PURE__*/function (_Component) {
 }(_preact.Component);
 
 exports.default = TaskGraphSection;
-},{"preact":"node_modules/preact/dist/preact.mjs","./TaskGraph":"components/TaskGraph.js","./TaskGraphMeta":"components/TaskGraphMeta.js","./TaskGraphControls":"components/TaskGraphControls.js","graphlib":"node_modules/graphlib/index.js","dagre":"node_modules/dagre/index.js","../utils/api":"utils/api.js","./TaskGraphSection.less":"components/TaskGraphSection.less","socket.io-client":"node_modules/socket.io-client/lib/index.js"}],"components/AppSection.less":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.mjs","./TaskGraph":"components/TaskGraph.js","./TaskGraphMeta":"components/TaskGraphMeta.js","./TaskGraphControls":"components/TaskGraphControls.js","graphlib":"node_modules/graphlib/index.js","dagre":"node_modules/dagre/index.js","../utils/api":"utils/api.js","./TaskGraphSection.less":"components/TaskGraphSection.less","socket.io-client":"node_modules/socket.io-client/lib/index.js"}],"components/LogsSection.less":[function(require,module,exports) {
+var reloadCSS = require('_css_loader');
+
+module.hot.dispose(reloadCSS);
+module.hot.accept(reloadCSS);
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"components/LogsSection.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _preact = require("preact");
+
+require("./LogsSection.less");
+
+var _api = require("../utils/api");
+
+var _format = require("../utils/format");
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+var LogsSectionLogSelector = /*#__PURE__*/function (_Component) {
+  _inherits(LogsSectionLogSelector, _Component);
+
+  function LogsSectionLogSelector() {
+    _classCallCheck(this, LogsSectionLogSelector);
+
+    return _possibleConstructorReturn(this, _getPrototypeOf(LogsSectionLogSelector).apply(this, arguments));
+  }
+
+  _createClass(LogsSectionLogSelector, [{
+    key: "render",
+    value: function render() {
+      var _this$props = this.props,
+          logs = _this$props.logs,
+          _onSelect = _this$props.onSelect,
+          selectedLogId = _this$props.selectedLogId;
+      return (0, _preact.h)("div", {
+        className: "logssection-logselector"
+      }, logs.map(function (log, i) {
+        return (0, _preact.h)(LogsSectionLogSelectorItem, {
+          key: log.rowid,
+          log: log,
+          selected: selectedLogId === log.rowid,
+          onSelect: function onSelect() {
+            return _onSelect(log.rowid);
+          }
+        });
+      }));
+    }
+  }]);
+
+  return LogsSectionLogSelector;
+}(_preact.Component);
+
+function LogsSectionLogSelectorItem(props) {
+  var log = props.log,
+      selected = props.selected,
+      onSelect = props.onSelect;
+  var rowid = log.rowid,
+      oakfile = log.oakfile,
+      run = log.run,
+      cellName = log.cellName,
+      cellAncestorHash = log.cellAncestorHash,
+      path = log.path,
+      time = log.time;
+  return (0, _preact.h)("div", {
+    className: "logssection-logselectoritem ".concat(selected ? "logssection-logselectoritem--selected" : ""),
+    onClick: function onClick() {
+      return onSelect();
+    }
+  }, (0, _preact.h)("div", {
+    className: "logssection-logselectoritem-title"
+  }, cellName), (0, _preact.h)("div", {
+    className: "logssection-logselectoritem-rowid"
+  }, "#", rowid), (0, _preact.h)("div", {
+    className: "logssection-logselectoritem-time"
+  }, (0, _format.duration)(new Date(time))));
+}
+
+var LogsSectionLogViewer = /*#__PURE__*/function (_Component2) {
+  _inherits(LogsSectionLogViewer, _Component2);
+
+  function LogsSectionLogViewer() {
+    var _getPrototypeOf2;
+
+    var _this;
+
+    _classCallCheck(this, LogsSectionLogViewer);
+
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    _this = _possibleConstructorReturn(this, (_getPrototypeOf2 = _getPrototypeOf(LogsSectionLogViewer)).call.apply(_getPrototypeOf2, [this].concat(args)));
+
+    _defineProperty(_assertThisInitialized(_this), "state", {
+      error: false,
+      loading: false,
+      data: null
+    });
+
+    return _this;
+  }
+
+  _createClass(LogsSectionLogViewer, [{
+    key: "componentDidUpdate",
+    value: function componentDidUpdate(prevProp) {
+      var _this2 = this;
+
+      if (prevProp.selectedLogId !== this.props.selectedLogId) {
+        (0, _api.getLog)(this.props.selectedLogId).then(function (data) {
+          return _this2.setState({
+            error: false,
+            loading: false,
+            data: data
+          });
+        }).catch(function (err) {
+          return _this2.setState({
+            error: true,
+            loading: false,
+            data: err
+          });
+        });
+      }
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      var selectedLogId = this.props.selectedLogId;
+      var _this$state = this.state,
+          loading = _this$state.loading,
+          error = _this$state.error,
+          data = _this$state.data;
+      if (loading) return (0, _preact.h)("div", {
+        className: "logssection-logviewer"
+      }, "Loading...");
+      if (error) return (0, _preact.h)("div", {
+        className: "logssection-logviewer"
+      }, "There was a problem loading this page :/", " ");
+      if (selectedLogId === null) return (0, _preact.h)("div", {
+        className: "logssection-logviewer"
+      }, "Select a log to view.");
+      console.log(data);
+      return (0, _preact.h)("div", {
+        className: "logssection-logviewer"
+      }, (0, _preact.h)("code", null, (0, _preact.h)("pre", null, data)));
+    }
+  }]);
+
+  return LogsSectionLogViewer;
+}(_preact.Component);
+
+var LogsSection = /*#__PURE__*/function (_Component3) {
+  _inherits(LogsSection, _Component3);
+
+  function LogsSection() {
+    var _getPrototypeOf3;
+
+    var _this3;
+
+    _classCallCheck(this, LogsSection);
+
+    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      args[_key2] = arguments[_key2];
+    }
+
+    _this3 = _possibleConstructorReturn(this, (_getPrototypeOf3 = _getPrototypeOf(LogsSection)).call.apply(_getPrototypeOf3, [this].concat(args)));
+
+    _defineProperty(_assertThisInitialized(_this3), "state", {
+      error: false,
+      loading: true,
+      data: null,
+      selectedLogId: null
+    });
+
+    return _this3;
+  }
+
+  _createClass(LogsSection, [{
+    key: "componentDidMount",
+    value: function componentDidMount() {
+      var _this4 = this;
+
+      this.setState({
+        loading: true
+      });
+      (0, _api.getLogs)().then(function (data) {
+        return _this4.setState({
+          error: false,
+          loading: false,
+          data: data
+        });
+      }).catch(function (err) {
+        return _this4.setState({
+          error: true,
+          loading: false,
+          data: err
+        });
+      });
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      var _this5 = this;
+
+      var _this$state2 = this.state,
+          loading = _this$state2.loading,
+          error = _this$state2.error,
+          data = _this$state2.data,
+          selectedLogId = _this$state2.selectedLogId;
+      if (loading) return (0, _preact.h)("div", {
+        className: "logssection"
+      }, "Loading...");
+      if (error) return (0, _preact.h)("div", {
+        className: "logssection"
+      }, "There was a problem loading this page :/", " ");
+      return (0, _preact.h)("div", {
+        className: "logssection"
+      }, (0, _preact.h)(LogsSectionLogSelector, {
+        logs: data.logs,
+        selectedLogId: selectedLogId,
+        onSelect: function onSelect(selectedLogId) {
+          return _this5.setState({
+            selectedLogId: selectedLogId
+          });
+        }
+      }), (0, _preact.h)(LogsSectionLogViewer, {
+        selectedLogId: selectedLogId
+      }));
+    }
+  }]);
+
+  return LogsSection;
+}(_preact.Component);
+
+exports.default = LogsSection;
+},{"preact":"node_modules/preact/dist/preact.mjs","./LogsSection.less":"components/LogsSection.less","../utils/api":"utils/api.js","../utils/format":"utils/format.js"}],"components/AppSection.less":[function(require,module,exports) {
 var reloadCSS = require('_css_loader');
 
 module.hot.dispose(reloadCSS);
@@ -62130,24 +62469,31 @@ var _preact = require("preact");
 
 var _TaskGraphSection = _interopRequireDefault(require("./TaskGraphSection"));
 
+var _LogsSection = _interopRequireDefault(require("./LogsSection"));
+
 require("./AppSection.less");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function AppSection(props) {
-  var section = "task-graph";
+  var section = props.section;
 
   switch (section) {
-    case "task-graph":
+    case "taskgraph":
       return (0, _preact.h)("div", {
         class: "app-section"
       }, (0, _preact.h)(_TaskGraphSection.default, null));
+
+    case "logs":
+      return (0, _preact.h)("div", {
+        class: "app-section"
+      }, (0, _preact.h)(_LogsSection.default, null));
 
     default:
       throw Error("".concat(section, " not defined in AppSection."));
   }
 }
-},{"preact":"node_modules/preact/dist/preact.mjs","./TaskGraphSection":"components/TaskGraphSection.js","./AppSection.less":"components/AppSection.less"}],"components/App.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.mjs","./TaskGraphSection":"components/TaskGraphSection.js","./LogsSection":"components/LogsSection.js","./AppSection.less":"components/AppSection.less"}],"components/App.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -62184,10 +62530,16 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
 var App = /*#__PURE__*/function (_Component) {
   _inherits(App, _Component);
 
-  function App() {
+  function App(props) {
+    var _this;
+
     _classCallCheck(this, App);
 
-    return _possibleConstructorReturn(this, _getPrototypeOf(App).apply(this, arguments));
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(App).call(this, props));
+    _this.state = {
+      section: "logs"
+    };
+    return _this;
   }
 
   _createClass(App, [{
@@ -62196,7 +62548,19 @@ var App = /*#__PURE__*/function (_Component) {
   }, {
     key: "render",
     value: function render() {
-      return (0, _preact.h)("div", null, (0, _preact.h)(_Header.default, null), (0, _preact.h)(_AppSection.default, null));
+      var _this2 = this;
+
+      var section = this.state.section;
+      return (0, _preact.h)("div", null, (0, _preact.h)(_Header.default, {
+        section: section,
+        onSelectionSection: function onSelectionSection(section) {
+          return _this2.setState({
+            section: section
+          });
+        }
+      }), (0, _preact.h)(_AppSection.default, {
+        section: section
+      }));
     }
   }]);
 
@@ -62242,7 +62606,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "8888" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "3000" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

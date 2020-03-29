@@ -5,13 +5,16 @@
 .navbar-item {
   height: 40px;
   line-height: 40px;
+  cursor: pointer;
   text-align: center;
   font-size: 24px;
-  display: flex;
-  align-items: flex-end;
 }
 .navbar-item--disabled {
   color: gray;
+  cursor: not-allowed;
+}
+.navbar-item--selected {
+  border-bottom: 3px solid #31666b;
 }
 
 .header {
@@ -99,7 +102,7 @@
 
 .taskgraphmeta {
   width: 600px;
-  margin: auto;
+  margin: 0 auto;
 }
 .taskgraphmeta-name {
   font-size: 1.5rem;
@@ -109,6 +112,15 @@
   font-size: 1.1rem;
   width: 600px;
   margin: 0 auto;
+}
+.taskgraphmeta-row {
+  display: grid;
+  grid-template-columns: 100px 500px;
+}
+.taskgraphmeta-path {
+  font-family: "Roboto Mono";
+  white-space: nowrap;
+  overflow: auto;
 }
 .taskgraphmeta-code {
   width: 600px;
@@ -204,6 +216,45 @@
     display: grid;
     grid-template-columns: auto 600px;
   }
+}
+
+.logssection {
+  display: grid;
+  grid-template-columns: 200px auto;
+  height: 95vh;
+}
+.logssection-logviewer {
+  overflow: scroll;
+  background-color: #c4c4c4;
+  padding: 1rem 0.5rem;
+}
+.logssection-logselectoritem {
+  height: 60px;
+  border-bottom: 1px solid #c4c4c4;
+  position: relative;
+}
+.logssection-logselectoritem:first-child {
+  border-top: 1px solid #c4c4c4;
+}
+.logssection-logselectoritem--selected {
+  background-color: #d9d9d9;
+}
+.logssection-logselectoritem-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+.logssection-logselectoritem-rowid {
+  font-size: 0.9rem;
+  position: absolute;
+  left: 0.2rem;
+  bottom: 0.2rem;
+}
+.logssection-logselectoritem-time {
+  font-size: 0.9rem;
+  position: absolute;
+  right: 0.2rem;
+  bottom: 0.2rem;
+  font-style: italic;
 }
 
 .app-section {

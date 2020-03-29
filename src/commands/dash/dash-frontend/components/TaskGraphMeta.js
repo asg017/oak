@@ -1,10 +1,20 @@
-import { h, createRef, Component } from "preact";
+import { Fragment, h, createRef, Component } from "preact";
 import { duration, bytesToSize } from "../utils/format";
 import "./TaskGraphMeta.less";
 import CodeMirror from "codemirror";
 import jsMode from "codemirror/mode/javascript/javascript";
 import scrollbar from "codemirror/addon/scroll/simplescrollbars";
 import scrollbarCSS from "codemirror/addon/scroll/simplescrollbars.css";
+
+function Row(props) {
+  const { name, value } = props;
+  return (
+    <div className="taskgraphmeta-row">
+      <div>{name}</div>
+      <div>{value}</div>
+    </div>
+  );
+}
 
 export default class TaskGraphMeta extends Component {
   codemirrorRef = createRef();
@@ -42,24 +52,35 @@ export default class TaskGraphMeta extends Component {
         </div>
       );
     const task = dag.node(selectedTask);
-    console.log(task);
     return (
       <div className="taskgraphmeta">
         <div className="taskgraphmeta-name">{task.label}</div>
-        <table className="taskgraphmeta-table">
-          <tr>
-            <td>Path</td>
-            <td style={{ overflow: "ellipses" }}>{task.target}</td>
-          </tr>
-          <tr>
-            <td>Size</td>
-            <td>{bytesToSize(task.bytes)}</td>
-          </tr>
-          <tr>
-            <td>Last Modified</td>
-            <td>{task.mtime ? duration(new Date(task.mtime)) : "-"}</td>
-          </tr>
-        </table>
+        <div className="taskgraphmeta-table">
+          <Row
+            name="Path"
+            value={
+              <div className="taskgraphmeta-path">
+                <code>{task.target}</code>
+              </div>
+            }
+          />
+          <Row
+            name="Size"
+            value={
+              <div className="taskgraphmeta-size">
+                {bytesToSize(task.bytes)}
+              </div>
+            }
+          />
+          <Row
+            name="Last Modified"
+            value={
+              <div className="taskgraphmeta-mtime">
+                {task.mtime ? duration(new Date(task.mtime)) : "-"}
+              </div>
+            }
+          />
+        </div>
         <div className="taskgraphmeta-code-header">Task Code</div>
         <div className="taskgraphmeta-code" ref={this.codemirrorRef}></div>
       </div>
