@@ -23,6 +23,10 @@
     {
       "packageName": "@alex.garcia/oak-core",
       "projectFolder": "oak-core"
+    },
+    {
+      "packageName": "@alex.garcia/oak-utils",
+      "projectFolder": "oak-utils"
     }
   ]
 }
