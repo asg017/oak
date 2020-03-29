@@ -1,0 +1,52 @@
+{
+  "name": "@alex.garcia/oak-cli",
+  "version": "0.0.1",
+  "description": "Command Line Interface for Oak.",
+  "main": "./built/index.js",
+  "files": [
+    "built/**/*"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/asg017/oak.git",
+    "directory": "oak-cli"
+  },
+  "keywords": [
+    "etl",
+    "pipeline",
+    "workflow",
+    "cli",
+    "dag",
+    "task",
+    "oak"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "rm -rf built && npm run build",
+    "preversion": "npm test",
+    "version": "rm -rf built && npm run build",
+    "format": "prettier --write src/**/*.ts",
+    "format-test": "prettier --check src/**/*.ts",
+    "test": "npm run format-test && ts-node ./node_modules/tape/bin/tape tests/**/*.ts",
+    "t": "ts-node ./node_modules/tape/bin/tape"
+  },
+  "dependencies": {
+    "@alex.garcia/oak-core": "^0.0.2",
+    "@rushstack/ts-command-line": "^4.3.13"
+  },
+  "devDependencies": {
+    "@types/node": "^13.9.5",
+    "@types/tape": "^4.2.34",
+    "fs-extra": "^9.0.0",
+    "prettier": "^1.19.1",
+    "tape": "^4.11.0",
+    "ts-node": "^8.3.0",
+    "tslib": "^1.10.0",
+    "typescript": "^3.5.3"
+  },
+  "peerDependencies": {}
+}
