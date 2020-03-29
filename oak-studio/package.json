@@ -1,0 +1,60 @@
+{
+  "name": "@alex.garcia/oak-studio",
+  "version": "0.0.5",
+  "description": "Interactive Studio for working on Oak projects.",
+  "main": "./built/index.js",
+  "files": [
+    "built/**/*"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/asg017/oak.git",
+    "directory": "oak-studio"
+  },
+  "keywords": [
+    "etl",
+    "pipeline",
+    "workflow",
+    "cli",
+    "dag",
+    "task",
+    "oak"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "rm -rf built && npm run build",
+    "preversion": "npm test",
+    "version": "rm -rf built && npm run build",
+    "format": "prettier --write src/**/*.ts",
+    "format-test": "prettier --check src/**/*.ts",
+    "test": "npm run format-test && ts-node ./node_modules/tape/bin/tape tests/**/*.ts",
+    "t": "ts-node ./node_modules/tape/bin/tape"
+  },
+  "dependencies": {
+    "@alex.garcia/oak-utils": "0.0.2",
+    "@types/express": "^4.17.3",
+    "chokidar": "^3.3.1",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "pino": "^6.0.0",
+    "socket.io": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^13.9.5",
+    "@types/tape": "^4.2.34",
+    "fs-extra": "^9.0.0",
+    "prettier": "^1.19.1",
+    "tape": "^4.11.0",
+    "ts-node": "^8.3.0",
+    "tslib": "^1.10.0",
+    "typescript": "^3.5.3"
+  },
+  "peerDependencies": {},
+  "optionalDependencies": {
+    "@alex.garcia/oak-core": "^0.0.2"
+  }
+}

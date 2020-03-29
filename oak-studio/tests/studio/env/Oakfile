@@ -1,0 +1,4 @@
+a = task({
+  target: "a",
+  run: a => shell`echo -n "a" > ${a}`
+});

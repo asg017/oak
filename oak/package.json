@@ -1,0 +1,40 @@
+{
+  "name": "@alex.garcia/oak",
+  "version": "0.0.17-beta.3",
+  "description": "Easy, simple, data workflows",
+  "main": "./built/cli.js",
+  "bin": {
+    "oak": "./built/cli.js"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/asg017/oak.git"
+  },
+  "keywords": [
+    "etl",
+    "pipeline",
+    "workflow",
+    "cli",
+    "dag",
+    "task",
+    "oak"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "rm -rf built && npm run build"
+  },
+  "dependencies": {
+    "@alex.garcia/oak-cli": "0.0.3",
+    "@alex.garcia/oak-core": "^0.0.3",
+    "@alex.garcia/oak-studio": "^0.0.5"
+  },
+  "devDependencies": {
+    "ts-node": "^8.3.0",
+    "tslib": "^1.10.0",
+    "typescript": "^3.5.3"
+  }
+}
