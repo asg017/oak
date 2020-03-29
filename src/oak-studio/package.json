@@ -41,7 +41,8 @@
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "pino": "^6.0.0",
-    "socket.io": "^2.3.0"
+    "socket.io": "^2.3.0",
+    "@alex.garcia/oak-core": "^0.0.3"
   },
   "devDependencies": {
     "@types/node": "^13.9.5",
@@ -52,9 +53,5 @@
     "ts-node": "^8.3.0",
     "tslib": "^1.10.0",
     "typescript": "^3.5.3"
-  },
-  "peerDependencies": {},
-  "optionalDependencies": {
-    "@alex.garcia/oak-core": "^0.0.2"
   }
 }

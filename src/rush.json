@@ -27,6 +27,10 @@
     {
       "packageName": "@alex.garcia/oak-utils",
       "projectFolder": "oak-utils"
+    },
+    {
+      "packageName": "@alex.garcia/oak-studio",
+      "projectFolder": "oak-studio"
     }
   ]
 }
