@@ -1,5 +1,11 @@
 import { readdirSync, stat, Stats } from "fs";
-import { join } from "path";
+import { isAbsolute, join } from "path";
+import untildify from "untildify";
+
+export function fileArgument(inputPath: string): string {
+  const expand = untildify(inputPath);
+  return isAbsolute(expand) ? expand : join(process.cwd(), expand);
+}
 
 export async function getDirectoryStat(
   directoryPath: string,
