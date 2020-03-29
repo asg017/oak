@@ -1,6 +1,6 @@
 {
   "name": "@alex.garcia/oak-utils",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Shared utilities for the Oak ecosystem.",
   "main": "./built/index.js",
   "files": [
@@ -34,7 +34,9 @@
     "test": "npm run format-test && ts-node ./node_modules/tape/bin/tape tests/**/*.ts",
     "t": "ts-node ./node_modules/tape/bin/tape"
   },
-  "dependencies": {},
+  "dependencies": {
+    "untildify": "^4.0.0"
+  },
   "devDependencies": {
     "@types/node": "^13.9.5",
     "@types/tape": "^4.2.34",
