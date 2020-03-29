@@ -1,6 +1,6 @@
 {
   "name": "@alex.garcia/oak-stdlib",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Standard Library for Oak projects.",
   "main": "./built/index.js",
   "files": [
@@ -46,5 +46,8 @@
     "ts-node": "^8.3.0",
     "tslib": "^1.10.0",
     "typescript": "^3.5.3"
+  },
+  "peerDependencies": {
+    "@alex.garcia/oak-utils": "^0.0.1"
   }
 }
