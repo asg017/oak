@@ -19,6 +19,10 @@
     {
       "packageName": "@alex.garcia/oak-stdlib",
       "projectFolder": "oak-stdlib"
+    },
+    {
+      "packageName": "@alex.garcia/oak-core",
+      "projectFolder": "oak-core"
     }
   ]
 }
