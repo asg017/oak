@@ -1,6 +1,6 @@
 {
   "name": "@alex.garcia/oak-cli",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Command Line Interface for Oak.",
   "main": "./built/index.js",
   "files": [
@@ -48,5 +48,8 @@
     "tslib": "^1.10.0",
     "typescript": "^3.5.3"
   },
-  "peerDependencies": {}
+  "peerDependencies": {},
+  "optionalDependencies": {
+    "@alex.garcia/oak-studio": "^0.0.5"
+  }
 }
