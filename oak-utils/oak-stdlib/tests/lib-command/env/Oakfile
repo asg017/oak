@@ -1,0 +1,17 @@
+echo = (path, content) => command("echo", ["-n", content], path);
+
+cat = (path, files) => command("cat", files, path);
+
+a = task({
+  target: "a",
+  run: a => echo(a, "a")
+});
+
+b = task({
+  target: "b",
+  run: a => echo(a, "b")
+});
+c = task({
+  target: "c",
+  run: c => cat(c, [a, b])
+});
