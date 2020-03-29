@@ -9,6 +9,8 @@ import {
   oak_logs
 } from "@alex.garcia/oak-core";
 
+import { oak_studio } from "@alex.garcia/oak-studio";
+
 import {
   CommandLineStringParameter,
   CommandLineStringListParameter,
@@ -58,19 +60,18 @@ class CleanAction extends CommandLineAction {
   }
 }
 
-/*
-class DashAction extends CommandLineAction {
+class StudioAction extends CommandLineAction {
   private _port: CommandLineStringParameter;
   private _filename: CommandLineStringParameter;
   public constructor() {
     super({
-      actionName: "dash",
-      summary: "Start a dashboard server to interact with an Oakfile.",
+      actionName: "studio",
+      summary: "Start a Studio server to interact with an Oakfile.",
       documentation: "TODO"
     });
   }
   protected onExecute(): Promise<void> {
-    oak_dash({ filename: this._filename.value, port: this._port.value });
+    oak_studio({ filename: this._filename.value, port: this._port.value });
     return Promise.resolve();
   }
 
@@ -90,7 +91,7 @@ class DashAction extends CommandLineAction {
       defaultValue: "8888"
     });
   }
-}*/
+}
 
 class InitAction extends CommandLineAction {
   public constructor() {
@@ -226,7 +227,7 @@ class OakCommandLine extends CommandLineParser {
     });
 
     this.addAction(new CleanAction());
-    // this.addAction(new DashAction());
+    this.addAction(new StudioAction());
     this.addAction(new LogsAction());
     this.addAction(new PulseAction());
     this.addAction(new RunAction());
