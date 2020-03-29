@@ -1,6 +1,6 @@
 {
   "name": "@alex.garcia/oak-core",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Core operations for Oak projects.",
   "main": "./built/index.js",
   "files": [
@@ -35,6 +35,8 @@
     "t": "ts-node ./node_modules/tape/bin/tape"
   },
   "dependencies": {
+    "@alex.garcia/oak-stdlib": "0.0.3",
+    "@alex.garcia/oak-utils": "^0.0.1",
     "@observablehq/parser": "^4.0.1",
     "@observablehq/runtime": "4.4.4",
     "@observablehq/stdlib": "^3.0.2",
