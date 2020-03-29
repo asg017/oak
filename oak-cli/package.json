@@ -1,8 +1,11 @@
 {
   "name": "@alex.garcia/oak-cli",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Command Line Interface for Oak.",
   "main": "./built/index.js",
+  "bin": {
+    "oak": "./built/index.js"
+  },
   "files": [
     "built/**/*"
   ],
