@@ -1,6 +1,5 @@
 import { execFile } from "child_process";
-import Task from "../Task";
-import { Execution } from "../Execution";
+import { Task, Execution } from "@alex.garcia/oak-utils";
 import { createWriteStream } from "fs";
 import pino from "pino";
 

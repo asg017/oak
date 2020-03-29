@@ -1,5 +1,4 @@
-import { getStat } from "../utils";
-import Task from "../Task";
+import { getStat, Task } from "@alex.garcia/oak-utils";
 
 type WatchArg = string | string[];
 

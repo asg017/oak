@@ -1,4 +1,4 @@
-import { default as Library } from "../../src";
+import { Library } from "../../src";
 import test from "tape";
 import { envFile } from "../utils";
 import task from "../../src/Library/task";
@@ -7,7 +7,9 @@ import shell from "../../src/Library/shell";
 const env = envFile(__dirname);
 
 test("Library.ts", async t => {
-  t.test("cell", async st => {
+  const l = new Library();
+  t.true(l.shell);
+  t.test("task", async st => {
     const c1 = await task({
       target: env("test.txt"),
       run: c => 4
@@ -16,8 +18,18 @@ test("Library.ts", async t => {
     st.end();
   });
   t.test("shell", async st => {
-    const b1 = await shell`echo "hello dog"`;
-    st.skip(); //typeof b1, "excution");
+    const s = shell`echo -n "hello dog"`;
+    let res = "";
+
+    s.process.stdout.on("data", d => (res += d.toString()));
+
+    await new Promise((resolve, reject) => {
+      s.process.on("exit", (code, signal) => {
+        if (code === 0) return resolve();
+        reject(code);
+      });
+    }).catch(e => st.fail(e));
+    st.equals(res, "hello dog");
     st.end();
   });
   t.end();

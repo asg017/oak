@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@alex.garcia/oak-utils@^0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@alex.garcia/oak-utils/-/oak-utils-0.0.1.tgz#1692af95bdca10e89ede669430fbb89afe62332d"
+  integrity sha512-t7BZo+bt5GFaent3PsI0BDUs1hXwfO41HEWeGTqd+FrwAH2T3pYdFYozwM1WDgWSH0ahoTekakD0TLU1BVjb2Q==
+
 "@types/node@*", "@types/node@^13.9.5":
   version "13.9.5"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-13.9.5.tgz#59738bf30b31aea1faa2df7f4a5f55613750cf00"
