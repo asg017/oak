@@ -1,0 +1,19 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/rush.schema.json",
+  "rushVersion": "5.22.0",
+  "yarnVersion": "1.9.4",
+  "nodeSupportedVersionRange": ">=10.13.0 <11.0.0",
+  "gitPolicy": {},
+  "repository": {
+    "url": "https://github.com/asg017/oak"
+  },
+  "eventHooks": {
+    "preRushInstall": [],
+    "postRushInstall": [],
+    "preRushBuild": [],
+    "postRushBuild": []
+  },
+  "variants": [],
+  "telemetryEnabled": false,
+  "projects": []
+}
