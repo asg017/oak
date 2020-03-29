@@ -11,7 +11,7 @@ function cleanUp() {
 }
 
 test.onFinish(() => {
-  cleanUp();
+  //cleanUp();
 });
 
 cleanUp();

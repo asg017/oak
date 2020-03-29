@@ -1,5 +1,5 @@
 import { Runtime } from "@observablehq/runtime";
-import { Library } from "../Library";
+import { Library } from "@alex.garcia/oak-stdlib";
 import { OakCompiler } from "../oak-compile";
 import { dirname, join } from "path";
 import { EventEmitter } from "events";

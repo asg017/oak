@@ -1,6 +1,6 @@
 import { Runtime } from "@observablehq/runtime";
 import { OakCompiler } from "../oak-compile";
-import { Library } from "../Library";
+import { Library } from "@alex.garcia/oak-stdlib";
 import pino from "pino";
 import { fileArgument } from "../utils";
 import {
@@ -10,7 +10,7 @@ import {
   getStat,
   CellSignature,
 } from "../utils";
-import Task from "../Task";
+import { Task } from "@alex.garcia/oak-utils";
 
 const logger = pino();
 
@@ -29,6 +29,15 @@ type PulseResults = {
   tasks: PulseTaskResult[];
 };
 
+function cellIsTask(cell: any): boolean {
+  return (
+    cell &&
+    typeof cell.target === "string" &&
+    cell.stat !== undefined &&
+    typeof cell.run === "function"
+  );
+}
+
 function pulseCellDecorator(
   cellFunction: (...args: any) => any,
   cellName: string,
@@ -45,7 +54,7 @@ function pulseCellDecorator(
     });
     let currCell = await cellFunction(...dependencies);
 
-    if (currCell instanceof Task) {
+    if (cellIsTask(currCell)) {
       await currCell.updateBasePath(baseModuleDir);
 
       const watchFiles = currCell.watch;

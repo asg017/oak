@@ -4,7 +4,7 @@ import chalk from "chalk";
 import { dirname, isAbsolute, join } from "path";
 import { merge } from "d3-array";
 import hasha from "hasha";
-import { LibraryKeys } from "./Library";
+import { LibraryKeys } from "@alex.garcia/oak-stdlib";
 import untildify from "untildify";
 
 export const formatPath = (s: string) => chalk.black.bgWhiteBright.bold(s);

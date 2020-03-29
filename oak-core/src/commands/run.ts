@@ -1,5 +1,5 @@
 import { Runtime } from "@observablehq/runtime";
-import { Library } from "../Library";
+import { Library } from "@alex.garcia/oak-stdlib";
 import { OakCompiler } from "../oak-compile";
 import {
   formatCellName,
@@ -13,9 +13,9 @@ import { dirname, join } from "path";
 import { EventEmitter } from "events";
 import pino from "pino";
 import { fileArgument } from "../utils";
-import { mkdirsSync } from "fs-extra";
+import { mkdirsSync, Stats } from "fs-extra";
 import { OakDB } from "../db";
-import Task from "../Task";
+import { Task } from "@alex.garcia/oak-utils";
 import { createWriteStream, createFileSync, readFileSync } from "fs-extra";
 
 async function runTask(
@@ -79,6 +79,15 @@ async function runTask(
   });
 }
 
+function cellIsTask(cell: any): boolean {
+  return (
+    cell &&
+    typeof cell.target === "string" &&
+    cell.stat !== undefined &&
+    typeof cell.run === "function"
+  );
+}
+
 function runCellDecorator(
   oakfileHash: string,
   runHash: string,
@@ -97,17 +106,16 @@ function runCellDecorator(
       // dont try and get Task for cell depends like `cell` or `shell`
       let cellDependents = [];
       dependencies.map(dependency => {
-        if (dependency instanceof Task) {
+        if (cellIsTask(dependency)) {
           cellDependents.push(dependency);
         }
       });
       let currCell = await cellFunction(...dependencies);
-
-      if (currCell instanceof Task) {
+      if (cellIsTask(currCell)) {
         await currCell.updateBasePath(baseModuleDir);
 
         const watchFiles = currCell.watch;
-        const watchStats = await Promise.all(
+        const watchStats: { path: string; stat: Stats }[] = await Promise.all(
           watchFiles.map(async watchFile => {
             const stat = await getStat(watchFile);
             return { path: watchFile, stat };
@@ -226,8 +234,9 @@ export async function oak_run(args: {
   const oakDB = new OakDB(oakfilePath);
 
   const startTime = new Date();
+  const l = new Library();
 
-  const runtime = new Runtime(new Library());
+  const runtime = new Runtime(l, { console: console });
   const compiler = new OakCompiler();
   const oakfileHash = hashFile(oakfilePath);
   const runHash = hashString(`${startTime.getTime()}`);
@@ -279,15 +288,15 @@ export async function oak_run(args: {
   const ee = new EventEmitter();
 
   ee.on("pending", name => {
-    logger.debug("pending", name);
+    logger.info("pending", name);
     events.push({ type: "pending", name, time: new Date().getTime() });
   });
-  ee.on("fulfilled", name => {
-    logger.debug("fulfilled", name);
+  ee.on("fulfilled", (name, value) => {
+    logger.info("fulfilled", name, value);
     events.push({ type: "fulfilled", name, time: new Date().getTime() });
   });
   ee.on("rejected", (name, error) => {
-    logger.error("rejected", name);
+    logger.error("rejected", name, error);
     events.push({
       type: "rejected",
       name,

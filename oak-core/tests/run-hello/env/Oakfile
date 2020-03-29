@@ -1,6 +1,8 @@
 a = task({
   target: "a",
-  run: a => shell`echo -n "a" > ${a}`
+  run: a => {
+    return shell`echo -n "a" > ${a}`;
+  }
 });
 b = task({
   target: "b",
