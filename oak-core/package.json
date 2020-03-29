@@ -1,6 +1,6 @@
 {
   "name": "@alex.garcia/oak-core",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Core operations for Oak projects.",
   "main": "./built/index.js",
   "files": [
