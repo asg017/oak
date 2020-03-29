@@ -1,6 +1,6 @@
 {
   "name": "@alex.garcia/oak",
-  "version": "0.0.16-beta.2",
+  "version": "0.0.17-beta.2",
   "description": "Easy, simple, data workflows",
   "license": "MIT",
   "publishConfig": {
