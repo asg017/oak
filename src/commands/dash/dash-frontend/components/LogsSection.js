@@ -1,19 +1,20 @@
 import { h, Component } from "preact";
 import "./LogsSection.less";
+import { route } from "preact-router";
 import { getLog, getLogs } from "../utils/api";
 import { duration } from "../utils/format";
 
 class LogsSectionLogSelector extends Component {
   render() {
-    const { logs, onSelect, selectedLogId } = this.props;
+    const { logs, onSelect, selectedLog } = this.props;
     return (
       <div className="logssection-logselector">
         {logs.map((log, i) => (
           <LogsSectionLogSelectorItem
             key={log.rowid}
             log={log}
-            selected={selectedLogId === log.rowid}
-            onSelect={() => onSelect(log.rowid)}
+            selected={selectedLog && selectedLog.rowid === log.rowid}
+            onSelect={() => onSelect(log)}
           />
         ))}
       </div>
@@ -28,7 +29,10 @@ function LogsSectionLogSelectorItem(props) {
       className={`logssection-logselectoritem ${
         selected ? "logssection-logselectoritem--selected" : ""
       }`}
-      onClick={() => onSelect()}
+      onClick={() => {
+        route(`/logs?logid=${rowid}`);
+        onSelect();
+      }}
     >
       <div className="logssection-logselectoritem-title">{cellName}</div>
       <div className="logssection-logselectoritem-rowid">#{rowid}</div>
@@ -42,8 +46,11 @@ function LogsSectionLogSelectorItem(props) {
 class LogsSectionLogViewer extends Component {
   state = { error: false, loading: false, data: null };
   componentDidUpdate(prevProp) {
-    if (prevProp.selectedLogId !== this.props.selectedLogId) {
-      getLog(this.props.selectedLogId)
+    if (
+      Boolean(this.props.selectedLog) ^ Boolean(prevProp.selectedLog) ||
+      prevProp.selectedLog.rowid !== this.props.selectedLog.rowid
+    ) {
+      getLog(this.props.selectedLog.rowid)
         .then(data => this.setState({ error: false, loading: false, data }))
         .catch(err =>
           this.setState({ error: true, loading: false, data: err })
@@ -51,7 +58,7 @@ class LogsSectionLogViewer extends Component {
     }
   }
   render() {
-    const { selectedLogId } = this.props;
+    const { selectedLog } = this.props;
     const { loading, error, data } = this.state;
     if (loading) return <div className="logssection-logviewer">Loading...</div>;
     if (error)
@@ -60,11 +67,16 @@ class LogsSectionLogViewer extends Component {
           There was a problem loading this page :/{" "}
         </div>
       );
-    if (selectedLogId === null)
+    if (selectedLog === null)
       return <div className="logssection-logviewer">Select a log to view.</div>;
-    console.log(data);
     return (
       <div className="logssection-logviewer">
+        <div>{selectedLog.cellName}</div>
+        <div>{selectedLog.rowid}</div>
+        <div>{duration(new Date(selectedLog.time))}</div>
+        <div>
+          <code>{selectedLog.path}</code>
+        </div>
         <code>
           <pre>{data}</pre>
         </code>
@@ -74,7 +86,7 @@ class LogsSectionLogViewer extends Component {
 }
 
 export default class LogsSection extends Component {
-  state = { error: false, loading: true, data: null, selectedLogId: null };
+  state = { error: false, loading: true, data: null, selectedLog: null };
   componentDidMount() {
     this.setState({ loading: true });
     getLogs()
@@ -82,7 +94,9 @@ export default class LogsSection extends Component {
       .catch(err => this.setState({ error: true, loading: false, data: err }));
   }
   render() {
-    const { loading, error, data, selectedLogId } = this.state;
+    const { logid } = this.props;
+    const { loading, error, data, selectedLog } = this.state;
+
     if (loading) return <div className="logssection">Loading...</div>;
     if (error)
       return (
@@ -94,10 +108,10 @@ export default class LogsSection extends Component {
       <div className="logssection">
         <LogsSectionLogSelector
           logs={data.logs}
-          selectedLogId={selectedLogId}
-          onSelect={selectedLogId => this.setState({ selectedLogId })}
+          selectedLog={selectedLog}
+          onSelect={selectedLog => this.setState({ selectedLog })}
         />
-        <LogsSectionLogViewer selectedLogId={selectedLogId} />
+        <LogsSectionLogViewer selectedLog={selectedLog} />
       </div>
     );
   }

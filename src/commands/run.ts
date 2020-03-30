@@ -258,6 +258,7 @@ export async function oak_run(args: {
   );
 
   const events: {
+    ancestorHash: string;
     type: string;
     name: string;
     time: number;
@@ -280,16 +281,27 @@ export async function oak_run(args: {
 
   ee.on("pending", name => {
     logger.debug("pending", name);
-    events.push({ type: "pending", name, time: new Date().getTime() });
+    events.push({
+      type: "pending",
+      ancestorHash: cellHashMap.get(name).ancestorHash,
+      name,
+      time: new Date().getTime(),
+    });
   });
   ee.on("fulfilled", name => {
     logger.debug("fulfilled", name);
-    events.push({ type: "fulfilled", name, time: new Date().getTime() });
+    events.push({
+      type: "fulfilled",
+      ancestorHash: cellHashMap.get(name).ancestorHash,
+      name,
+      time: new Date().getTime(),
+    });
   });
   ee.on("rejected", (name, error) => {
     logger.error("rejected", name);
     events.push({
       type: "rejected",
+      ancestorHash: cellHashMap.get(name).ancestorHash,
       name,
       time: new Date().getTime(),
       meta: error,

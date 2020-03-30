@@ -117,77 +117,387 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"node_modules/preact/dist/preact.mjs":[function(require,module,exports) {
+})({"node_modules/preact/dist/preact.module.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.createElement = exports.h = h;
-exports.cloneElement = cloneElement;
-exports.createRef = createRef;
-exports.Component = Component;
-exports.render = render;
-exports.rerender = rerender;
-exports.options = exports.default = void 0;
+exports.render = H;
+exports.hydrate = I;
+exports.h = exports.createElement = h;
+exports.Fragment = d;
+exports.createRef = y;
+exports.Component = m;
+exports.cloneElement = L;
+exports.createContext = M;
+exports.toChildArray = x;
+exports._unmount = D;
+exports.options = exports.isValidElement = void 0;
+var n,
+    l,
+    u,
+    i,
+    t,
+    o,
+    r,
+    f,
+    e = {},
+    c = [],
+    s = /acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|zoo|^ord/i;
+exports.isValidElement = l;
+exports.options = n;
 
-var VNode = function VNode() {};
+function a(n, l) {
+  for (var u in l) n[u] = l[u];
 
-var options = {};
-exports.options = options;
-var stack = [];
-var EMPTY_CHILDREN = [];
-
-function h(nodeName, attributes) {
-  var children = EMPTY_CHILDREN,
-      lastSimple,
-      child,
-      simple,
-      i;
-
-  for (i = arguments.length; i-- > 2;) {
-    stack.push(arguments[i]);
-  }
-
-  if (attributes && attributes.children != null) {
-    if (!stack.length) stack.push(attributes.children);
-    delete attributes.children;
-  }
-
-  while (stack.length) {
-    if ((child = stack.pop()) && child.pop !== undefined) {
-      for (i = child.length; i--;) {
-        stack.push(child[i]);
-      }
-    } else {
-      if (typeof child === 'boolean') child = null;
-
-      if (simple = typeof nodeName !== 'function') {
-        if (child == null) child = '';else if (typeof child === 'number') child = String(child);else if (typeof child !== 'string') simple = false;
-      }
-
-      if (simple && lastSimple) {
-        children[children.length - 1] += child;
-      } else if (children === EMPTY_CHILDREN) {
-        children = [child];
-      } else {
-        children.push(child);
-      }
-
-      lastSimple = simple;
-    }
-  }
-
-  var p = new VNode();
-  p.nodeName = nodeName;
-  p.children = children;
-  p.attributes = attributes == null ? undefined : attributes;
-  p.key = attributes == null ? undefined : attributes.key;
-  if (options.vnode !== undefined) options.vnode(p);
-  return p;
+  return n;
 }
 
-function extend(obj, props) {
+function v(n) {
+  var l = n.parentNode;
+  l && l.removeChild(n);
+}
+
+function h(n, l, u) {
+  var i,
+      t = arguments,
+      o = {};
+
+  for (i in l) "key" !== i && "ref" !== i && (o[i] = l[i]);
+
+  if (arguments.length > 3) for (u = [u], i = 3; i < arguments.length; i++) u.push(t[i]);
+  if (null != u && (o.children = u), "function" == typeof n && null != n.defaultProps) for (i in n.defaultProps) void 0 === o[i] && (o[i] = n.defaultProps[i]);
+  return p(n, o, l && l.key, l && l.ref);
+}
+
+function p(l, u, i, t) {
+  var o = {
+    type: l,
+    props: u,
+    key: i,
+    ref: t,
+    __k: null,
+    __: null,
+    __b: 0,
+    __e: null,
+    __d: void 0,
+    __c: null,
+    constructor: void 0
+  };
+  return n.vnode && n.vnode(o), o;
+}
+
+function y() {
+  return {};
+}
+
+function d(n) {
+  return n.children;
+}
+
+function m(n, l) {
+  this.props = n, this.context = l;
+}
+
+function w(n, l) {
+  if (null == l) return n.__ ? w(n.__, n.__.__k.indexOf(n) + 1) : null;
+
+  for (var u; l < n.__k.length; l++) if (null != (u = n.__k[l]) && null != u.__e) return u.__e;
+
+  return "function" == typeof n.type ? w(n) : null;
+}
+
+function g(n) {
+  var l, u;
+
+  if (null != (n = n.__) && null != n.__c) {
+    for (n.__e = n.__c.base = null, l = 0; l < n.__k.length; l++) if (null != (u = n.__k[l]) && null != u.__e) {
+      n.__e = n.__c.base = u.__e;
+      break;
+    }
+
+    return g(n);
+  }
+}
+
+function k(l) {
+  (!l.__d && (l.__d = !0) && u.push(l) && !i++ || o !== n.debounceRendering) && ((o = n.debounceRendering) || t)(_);
+}
+
+function _() {
+  for (var n; i = u.length;) n = u.sort(function (n, l) {
+    return n.__v.__b - l.__v.__b;
+  }), u = [], n.some(function (n) {
+    var l, u, i, t, o, r;
+    n.__d && (o = (t = (l = n).__v).__e, (r = l.__P) && (u = [], i = A(r, t, a({}, t), l.__n, void 0 !== r.ownerSVGElement, null, u, null == o ? w(t) : o), T(u, t), i != o && g(t)));
+  });
+}
+
+function b(n, l, u, i, t, o, r, f, s) {
+  var a,
+      h,
+      p,
+      y,
+      d,
+      m,
+      g,
+      k = u && u.__k || c,
+      _ = k.length;
+  if (f == e && (f = null != o ? o[0] : _ ? w(u, 0) : null), a = 0, l.__k = x(l.__k, function (u) {
+    if (null != u) {
+      if (u.__ = l, u.__b = l.__b + 1, null === (p = k[a]) || p && u.key == p.key && u.type === p.type) k[a] = void 0;else for (h = 0; h < _; h++) {
+        if ((p = k[h]) && u.key == p.key && u.type === p.type) {
+          k[h] = void 0;
+          break;
+        }
+
+        p = null;
+      }
+
+      if (y = A(n, u, p = p || e, i, t, o, r, f, s), (h = u.ref) && p.ref != h && (g || (g = []), p.ref && g.push(p.ref, null, u), g.push(h, u.__c || y, u)), null != y) {
+        var c;
+        if (null == m && (m = y), void 0 !== u.__d) c = u.__d, u.__d = void 0;else if (o == p || y != f || null == y.parentNode) {
+          n: if (null == f || f.parentNode !== n) n.appendChild(y), c = null;else {
+            for (d = f, h = 0; (d = d.nextSibling) && h < _; h += 2) if (d == y) break n;
+
+            n.insertBefore(y, f), c = f;
+          }
+
+          "option" == l.type && (n.value = "");
+        }
+        f = void 0 !== c ? c : y.nextSibling, "function" == typeof l.type && (l.__d = f);
+      } else f && p.__e == f && f.parentNode != n && (f = w(p));
+    }
+
+    return a++, u;
+  }), l.__e = m, null != o && "function" != typeof l.type) for (a = o.length; a--;) null != o[a] && v(o[a]);
+
+  for (a = _; a--;) null != k[a] && D(k[a], k[a]);
+
+  if (g) for (a = 0; a < g.length; a++) j(g[a], g[++a], g[++a]);
+}
+
+function x(n, l, u) {
+  if (null == u && (u = []), null == n || "boolean" == typeof n) l && u.push(l(null));else if (Array.isArray(n)) for (var i = 0; i < n.length; i++) x(n[i], l, u);else u.push(l ? l("string" == typeof n || "number" == typeof n ? p(null, n, null, null) : null != n.__e || null != n.__c ? p(n.type, n.props, n.key, null) : n) : n);
+  return u;
+}
+
+function P(n, l, u, i, t) {
+  var o;
+
+  for (o in u) o in l || N(n, o, null, u[o], i);
+
+  for (o in l) t && "function" != typeof l[o] || "value" === o || "checked" === o || u[o] === l[o] || N(n, o, l[o], u[o], i);
+}
+
+function C(n, l, u) {
+  "-" === l[0] ? n.setProperty(l, u) : n[l] = "number" == typeof u && !1 === s.test(l) ? u + "px" : null == u ? "" : u;
+}
+
+function N(n, l, u, i, t) {
+  var o, r, f, e, c;
+  if (t ? "className" === l && (l = "class") : "class" === l && (l = "className"), "key" === l || "children" === l) ;else if ("style" === l) {
+    if (o = n.style, "string" == typeof u) o.cssText = u;else {
+      if ("string" == typeof i && (o.cssText = "", i = null), i) for (r in i) u && r in u || C(o, r, "");
+      if (u) for (f in u) i && u[f] === i[f] || C(o, f, u[f]);
+    }
+  } else "o" === l[0] && "n" === l[1] ? (e = l !== (l = l.replace(/Capture$/, "")), c = l.toLowerCase(), l = (c in n ? c : l).slice(2), u ? (i || n.addEventListener(l, z, e), (n.l || (n.l = {}))[l] = u) : n.removeEventListener(l, z, e)) : "list" !== l && "tagName" !== l && "form" !== l && "type" !== l && "size" !== l && !t && l in n ? n[l] = null == u ? "" : u : "function" != typeof u && "dangerouslySetInnerHTML" !== l && (l !== (l = l.replace(/^xlink:?/, "")) ? null == u || !1 === u ? n.removeAttributeNS("http://www.w3.org/1999/xlink", l.toLowerCase()) : n.setAttributeNS("http://www.w3.org/1999/xlink", l.toLowerCase(), u) : null == u || !1 === u && !/^ar/.test(l) ? n.removeAttribute(l) : n.setAttribute(l, u));
+}
+
+function z(l) {
+  this.l[l.type](n.event ? n.event(l) : l);
+}
+
+function A(l, u, i, t, o, r, f, e, c) {
+  var s,
+      v,
+      h,
+      p,
+      y,
+      w,
+      g,
+      k,
+      _,
+      x,
+      P = u.type;
+
+  if (void 0 !== u.constructor) return null;
+  (s = n.__b) && s(u);
+
+  try {
+    n: if ("function" == typeof P) {
+      if (k = u.props, _ = (s = P.contextType) && t[s.__c], x = s ? _ ? _.props.value : s.__ : t, i.__c ? g = (v = u.__c = i.__c).__ = v.__E : ("prototype" in P && P.prototype.render ? u.__c = v = new P(k, x) : (u.__c = v = new m(k, x), v.constructor = P, v.render = E), _ && _.sub(v), v.props = k, v.state || (v.state = {}), v.context = x, v.__n = t, h = v.__d = !0, v.__h = []), null == v.__s && (v.__s = v.state), null != P.getDerivedStateFromProps && (v.__s == v.state && (v.__s = a({}, v.__s)), a(v.__s, P.getDerivedStateFromProps(k, v.__s))), p = v.props, y = v.state, h) null == P.getDerivedStateFromProps && null != v.componentWillMount && v.componentWillMount(), null != v.componentDidMount && v.__h.push(v.componentDidMount);else {
+        if (null == P.getDerivedStateFromProps && k !== p && null != v.componentWillReceiveProps && v.componentWillReceiveProps(k, x), !v.__e && null != v.shouldComponentUpdate && !1 === v.shouldComponentUpdate(k, v.__s, x)) {
+          for (v.props = k, v.state = v.__s, v.__d = !1, v.__v = u, u.__e = i.__e, u.__k = i.__k, v.__h.length && f.push(v), s = 0; s < u.__k.length; s++) u.__k[s] && (u.__k[s].__ = u);
+
+          break n;
+        }
+
+        null != v.componentWillUpdate && v.componentWillUpdate(k, v.__s, x), null != v.componentDidUpdate && v.__h.push(function () {
+          v.componentDidUpdate(p, y, w);
+        });
+      }
+      v.context = x, v.props = k, v.state = v.__s, (s = n.__r) && s(u), v.__d = !1, v.__v = u, v.__P = l, s = v.render(v.props, v.state, v.context), u.__k = null != s && s.type == d && null == s.key ? s.props.children : Array.isArray(s) ? s : [s], null != v.getChildContext && (t = a(a({}, t), v.getChildContext())), h || null == v.getSnapshotBeforeUpdate || (w = v.getSnapshotBeforeUpdate(p, y)), b(l, u, i, t, o, r, f, e, c), v.base = u.__e, v.__h.length && f.push(v), g && (v.__E = v.__ = null), v.__e = !1;
+    } else u.__e = $(i.__e, u, i, t, o, r, f, c);
+
+    (s = n.diffed) && s(u);
+  } catch (l) {
+    n.__e(l, u, i);
+  }
+
+  return u.__e;
+}
+
+function T(l, u) {
+  n.__c && n.__c(u, l), l.some(function (u) {
+    try {
+      l = u.__h, u.__h = [], l.some(function (n) {
+        n.call(u);
+      });
+    } catch (l) {
+      n.__e(l, u.__v);
+    }
+  });
+}
+
+function $(n, l, u, i, t, o, r, f) {
+  var s,
+      a,
+      v,
+      h,
+      p,
+      y = u.props,
+      d = l.props;
+  if (t = "svg" === l.type || t, null != o) for (s = 0; s < o.length; s++) if (null != (a = o[s]) && ((null === l.type ? 3 === a.nodeType : a.localName === l.type) || n == a)) {
+    n = a, o[s] = null;
+    break;
+  }
+
+  if (null == n) {
+    if (null === l.type) return document.createTextNode(d);
+    n = t ? document.createElementNS("http://www.w3.org/2000/svg", l.type) : document.createElement(l.type, d.is && {
+      is: d.is
+    }), o = null;
+  }
+
+  if (null === l.type) y !== d && n.data != d && (n.data = d);else if (l !== u) {
+    if (null != o && (o = c.slice.call(n.childNodes)), v = (y = u.props || e).dangerouslySetInnerHTML, h = d.dangerouslySetInnerHTML, !f) {
+      if (y === e) for (y = {}, p = 0; p < n.attributes.length; p++) y[n.attributes[p].name] = n.attributes[p].value;
+      (h || v) && (h && v && h.__html == v.__html || (n.innerHTML = h && h.__html || ""));
+    }
+
+    P(n, d, y, t, f), l.__k = l.props.children, h || b(n, l, u, i, "foreignObject" !== l.type && t, o, r, e, f), f || ("value" in d && void 0 !== d.value && d.value !== n.value && (n.value = null == d.value ? "" : d.value), "checked" in d && void 0 !== d.checked && d.checked !== n.checked && (n.checked = d.checked));
+  }
+  return n;
+}
+
+function j(l, u, i) {
+  try {
+    "function" == typeof l ? l(u) : l.current = u;
+  } catch (l) {
+    n.__e(l, i);
+  }
+}
+
+function D(l, u, i) {
+  var t, o, r;
+
+  if (n.unmount && n.unmount(l), (t = l.ref) && (t.current && t.current !== l.__e || j(t, null, u)), i || "function" == typeof l.type || (i = null != (o = l.__e)), l.__e = l.__d = void 0, null != (t = l.__c)) {
+    if (t.componentWillUnmount) try {
+      t.componentWillUnmount();
+    } catch (l) {
+      n.__e(l, u);
+    }
+    t.base = t.__P = null;
+  }
+
+  if (t = l.__k) for (r = 0; r < t.length; r++) t[r] && D(t[r], u, i);
+  null != o && v(o);
+}
+
+function E(n, l, u) {
+  return this.constructor(n, u);
+}
+
+function H(l, u, i) {
+  var t, o, f;
+  n.__ && n.__(l, u), o = (t = i === r) ? null : i && i.__k || u.__k, l = h(d, null, [l]), f = [], A(u, (t ? u : i || u).__k = l, o || e, e, void 0 !== u.ownerSVGElement, i && !t ? [i] : o ? null : c.slice.call(u.childNodes), f, i || e, t), T(f, l);
+}
+
+function I(n, l) {
+  H(n, l, r);
+}
+
+function L(n, l) {
+  return l = a(a({}, n.props), l), arguments.length > 2 && (l.children = c.slice.call(arguments, 2)), p(n.type, l, l.key || n.key, l.ref || n.ref);
+}
+
+function M(n) {
+  var l = {},
+      u = {
+    __c: "__cC" + f++,
+    __: n,
+    Consumer: function (n, l) {
+      return n.children(l);
+    },
+    Provider: function (n) {
+      var i,
+          t = this;
+      return this.getChildContext || (i = [], this.getChildContext = function () {
+        return l[u.__c] = t, l;
+      }, this.shouldComponentUpdate = function (l) {
+        n.value !== l.value && i.some(function (n) {
+          n.context = l.value, k(n);
+        });
+      }, this.sub = function (n) {
+        i.push(n);
+        var l = n.componentWillUnmount;
+
+        n.componentWillUnmount = function () {
+          i.splice(i.indexOf(n), 1), l && l.call(n);
+        };
+      }), n.children;
+    }
+  };
+  return u.Consumer.contextType = u, u;
+}
+
+exports.options = n = {
+  __e: function (n, l) {
+    for (var u, i; l = l.__;) if ((u = l.__c) && !u.__) try {
+      if (u.constructor && null != u.constructor.getDerivedStateFromError && (i = !0, u.setState(u.constructor.getDerivedStateFromError(n))), null != u.componentDidCatch && (i = !0, u.componentDidCatch(n)), i) return k(u.__E = u);
+    } catch (l) {
+      n = l;
+    }
+
+    throw n;
+  }
+}, exports.isValidElement = l = function (n) {
+  return null != n && void 0 === n.constructor;
+}, m.prototype.setState = function (n, l) {
+  var u;
+  u = this.__s !== this.state ? this.__s : this.__s = a({}, this.state), "function" == typeof n && (n = n(u, this.props)), n && a(u, n), null != n && this.__v && (l && this.__h.push(l), k(this));
+}, m.prototype.forceUpdate = function (n) {
+  this.__v && (this.__e = !0, n && this.__h.push(n), k(this));
+}, m.prototype.render = d, u = [], i = 0, t = "function" == typeof Promise ? Promise.prototype.then.bind(Promise.resolve()) : setTimeout, r = e, f = 0;
+},{}],"node_modules/preact-router/dist/preact-router.es.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getCurrentUrl = getCurrentUrl;
+exports.route = route;
+exports.exec = exec;
+exports.default = exports.Link = exports.Route = exports.Router = exports.subscribers = void 0;
+
+var _preact = require("preact");
+
+var EMPTY$1 = {};
+
+function assign(obj, props) {
+  // eslint-disable-next-line guard-for-in
   for (var i in props) {
     obj[i] = props[i];
   }
@@ -195,665 +505,481 @@ function extend(obj, props) {
   return obj;
 }
 
-function applyRef(ref, value) {
-  if (ref) {
-    if (typeof ref == 'function') ref(value);else ref.current = value;
-  }
-}
+function exec(url, route, opts) {
+  var reg = /(?:\?([^#]*))?(#.*)?$/,
+      c = url.match(reg),
+      matches = {},
+      ret;
 
-var defer = typeof Promise == 'function' ? Promise.resolve().then.bind(Promise.resolve()) : setTimeout;
+  if (c && c[1]) {
+    var p = c[1].split('&');
 
-function cloneElement(vnode, props) {
-  return h(vnode.nodeName, extend(extend({}, vnode.attributes), props), arguments.length > 2 ? [].slice.call(arguments, 2) : vnode.children);
-}
-
-var IS_NON_DIMENSIONAL = /acit|ex(?:s|g|n|p|$)|rph|ows|mnc|ntw|ine[ch]|zoo|^ord/i;
-var items = [];
-
-function enqueueRender(component) {
-  if (!component._dirty && (component._dirty = true) && items.push(component) == 1) {
-    (options.debounceRendering || defer)(rerender);
-  }
-}
-
-function rerender() {
-  var p;
-
-  while (p = items.pop()) {
-    if (p._dirty) renderComponent(p);
-  }
-}
-
-function isSameNodeType(node, vnode, hydrating) {
-  if (typeof vnode === 'string' || typeof vnode === 'number') {
-    return node.splitText !== undefined;
-  }
-
-  if (typeof vnode.nodeName === 'string') {
-    return !node._componentConstructor && isNamedNode(node, vnode.nodeName);
-  }
-
-  return hydrating || node._componentConstructor === vnode.nodeName;
-}
-
-function isNamedNode(node, nodeName) {
-  return node.normalizedNodeName === nodeName || node.nodeName.toLowerCase() === nodeName.toLowerCase();
-}
-
-function getNodeProps(vnode) {
-  var props = extend({}, vnode.attributes);
-  props.children = vnode.children;
-  var defaultProps = vnode.nodeName.defaultProps;
-
-  if (defaultProps !== undefined) {
-    for (var i in defaultProps) {
-      if (props[i] === undefined) {
-        props[i] = defaultProps[i];
-      }
+    for (var i = 0; i < p.length; i++) {
+      var r = p[i].split('=');
+      matches[decodeURIComponent(r[0])] = decodeURIComponent(r.slice(1).join('='));
     }
   }
 
-  return props;
-}
+  url = segmentize(url.replace(reg, ''));
+  route = segmentize(route || '');
+  var max = Math.max(url.length, route.length);
 
-function createNode(nodeName, isSvg) {
-  var node = isSvg ? document.createElementNS('http://www.w3.org/2000/svg', nodeName) : document.createElement(nodeName);
-  node.normalizedNodeName = nodeName;
-  return node;
-}
+  for (var i$1 = 0; i$1 < max; i$1++) {
+    if (route[i$1] && route[i$1].charAt(0) === ':') {
+      var param = route[i$1].replace(/(^:|[+*?]+$)/g, ''),
+          flags = (route[i$1].match(/[+*?]+$/) || EMPTY$1)[0] || '',
+          plus = ~flags.indexOf('+'),
+          star = ~flags.indexOf('*'),
+          val = url[i$1] || '';
 
-function removeNode(node) {
-  var parentNode = node.parentNode;
-  if (parentNode) parentNode.removeChild(node);
-}
-
-function setAccessor(node, name, old, value, isSvg) {
-  if (name === 'className') name = 'class';
-
-  if (name === 'key') {} else if (name === 'ref') {
-    applyRef(old, null);
-    applyRef(value, node);
-  } else if (name === 'class' && !isSvg) {
-    node.className = value || '';
-  } else if (name === 'style') {
-    if (!value || typeof value === 'string' || typeof old === 'string') {
-      node.style.cssText = value || '';
-    }
-
-    if (value && typeof value === 'object') {
-      if (typeof old !== 'string') {
-        for (var i in old) {
-          if (!(i in value)) node.style[i] = '';
-        }
+      if (!val && !star && (flags.indexOf('?') < 0 || plus)) {
+        ret = false;
+        break;
       }
 
-      for (var i in value) {
-        node.style[i] = typeof value[i] === 'number' && IS_NON_DIMENSIONAL.test(i) === false ? value[i] + 'px' : value[i];
+      matches[param] = decodeURIComponent(val);
+
+      if (plus || star) {
+        matches[param] = url.slice(i$1).map(decodeURIComponent).join('/');
+        break;
       }
+    } else if (route[i$1] !== url[i$1]) {
+      ret = false;
+      break;
     }
-  } else if (name === 'dangerouslySetInnerHTML') {
-    if (value) node.innerHTML = value.__html || '';
-  } else if (name[0] == 'o' && name[1] == 'n') {
-    var useCapture = name !== (name = name.replace(/Capture$/, ''));
-    name = name.toLowerCase().substring(2);
+  }
 
-    if (value) {
-      if (!old) node.addEventListener(name, eventProxy, useCapture);
-    } else {
-      node.removeEventListener(name, eventProxy, useCapture);
-    }
+  if (opts.default !== true && ret === false) {
+    return false;
+  }
 
-    (node._listeners || (node._listeners = {}))[name] = value;
-  } else if (name !== 'list' && name !== 'type' && !isSvg && name in node) {
-    try {
-      node[name] = value == null ? '' : value;
-    } catch (e) {}
+  return matches;
+}
 
-    if ((value == null || value === false) && name != 'spellcheck') node.removeAttribute(name);
+function pathRankSort(a, b) {
+  return a.rank < b.rank ? 1 : a.rank > b.rank ? -1 : a.index - b.index;
+} // filter out VNodes without attributes (which are unrankeable), and add `index`/`rank` properties to be used in sorting.
+
+
+function prepareVNodeForRanking(vnode, index) {
+  vnode.index = index;
+  vnode.rank = rankChild(vnode);
+  return vnode.props;
+}
+
+function segmentize(url) {
+  return url.replace(/(^\/+|\/+$)/g, '').split('/');
+}
+
+function rankSegment(segment) {
+  return segment.charAt(0) == ':' ? 1 + '*+?'.indexOf(segment.charAt(segment.length - 1)) || 4 : 5;
+}
+
+function rank(path) {
+  return segmentize(path).map(rankSegment).join('');
+}
+
+function rankChild(vnode) {
+  return vnode.props.default ? 0 : rank(vnode.props.path);
+}
+
+var customHistory = null;
+var ROUTERS = [];
+var subscribers = [];
+exports.subscribers = subscribers;
+var EMPTY = {};
+
+function setUrl(url, type) {
+  if (type === void 0) type = 'push';
+
+  if (customHistory && customHistory[type]) {
+    customHistory[type](url);
+  } else if (typeof history !== 'undefined' && history[type + 'State']) {
+    history[type + 'State'](null, null, url);
+  }
+}
+
+function getCurrentUrl() {
+  var url;
+
+  if (customHistory && customHistory.location) {
+    url = customHistory.location;
+  } else if (customHistory && customHistory.getCurrentLocation) {
+    url = customHistory.getCurrentLocation();
   } else {
-    var ns = isSvg && name !== (name = name.replace(/^xlink:?/, ''));
-
-    if (value == null || value === false) {
-      if (ns) node.removeAttributeNS('http://www.w3.org/1999/xlink', name.toLowerCase());else node.removeAttribute(name);
-    } else if (typeof value !== 'function') {
-      if (ns) node.setAttributeNS('http://www.w3.org/1999/xlink', name.toLowerCase(), value);else node.setAttribute(name, value);
-    }
+    url = typeof location !== 'undefined' ? location : EMPTY;
   }
+
+  return "" + (url.pathname || '') + (url.search || '');
 }
 
-function eventProxy(e) {
-  return this._listeners[e.type](options.event && options.event(e) || e);
+function route(url, replace) {
+  if (replace === void 0) replace = false;
+
+  if (typeof url !== 'string' && url.url) {
+    replace = url.replace;
+    url = url.url;
+  } // only push URL into history if we can handle it
+
+
+  if (canRoute(url)) {
+    setUrl(url, replace ? 'replace' : 'push');
+  }
+
+  return routeTo(url);
 }
+/** Check if the given URL can be handled by any router instances. */
 
-var mounts = [];
-var diffLevel = 0;
-var isSvgMode = false;
-var hydrating = false;
 
-function flushMounts() {
-  var c;
-
-  while (c = mounts.shift()) {
-    if (options.afterMount) options.afterMount(c);
-    if (c.componentDidMount) c.componentDidMount();
-  }
-}
-
-function diff(dom, vnode, context, mountAll, parent, componentRoot) {
-  if (!diffLevel++) {
-    isSvgMode = parent != null && parent.ownerSVGElement !== undefined;
-    hydrating = dom != null && !('__preactattr_' in dom);
-  }
-
-  var ret = idiff(dom, vnode, context, mountAll, componentRoot);
-  if (parent && ret.parentNode !== parent) parent.appendChild(ret);
-
-  if (! --diffLevel) {
-    hydrating = false;
-    if (!componentRoot) flushMounts();
-  }
-
-  return ret;
-}
-
-function idiff(dom, vnode, context, mountAll, componentRoot) {
-  var out = dom,
-      prevSvgMode = isSvgMode;
-  if (vnode == null || typeof vnode === 'boolean') vnode = '';
-
-  if (typeof vnode === 'string' || typeof vnode === 'number') {
-    if (dom && dom.splitText !== undefined && dom.parentNode && (!dom._component || componentRoot)) {
-      if (dom.nodeValue != vnode) {
-        dom.nodeValue = vnode;
-      }
-    } else {
-      out = document.createTextNode(vnode);
-
-      if (dom) {
-        if (dom.parentNode) dom.parentNode.replaceChild(out, dom);
-        recollectNodeTree(dom, true);
-      }
-    }
-
-    out['__preactattr_'] = true;
-    return out;
-  }
-
-  var vnodeName = vnode.nodeName;
-
-  if (typeof vnodeName === 'function') {
-    return buildComponentFromVNode(dom, vnode, context, mountAll);
-  }
-
-  isSvgMode = vnodeName === 'svg' ? true : vnodeName === 'foreignObject' ? false : isSvgMode;
-  vnodeName = String(vnodeName);
-
-  if (!dom || !isNamedNode(dom, vnodeName)) {
-    out = createNode(vnodeName, isSvgMode);
-
-    if (dom) {
-      while (dom.firstChild) {
-        out.appendChild(dom.firstChild);
-      }
-
-      if (dom.parentNode) dom.parentNode.replaceChild(out, dom);
-      recollectNodeTree(dom, true);
+function canRoute(url) {
+  for (var i = ROUTERS.length; i--;) {
+    if (ROUTERS[i].canRoute(url)) {
+      return true;
     }
   }
 
-  var fc = out.firstChild,
-      props = out['__preactattr_'],
-      vchildren = vnode.children;
+  return false;
+}
+/** Tell all router instances to handle the given URL.  */
 
-  if (props == null) {
-    props = out['__preactattr_'] = {};
 
-    for (var a = out.attributes, i = a.length; i--;) {
-      props[a[i].name] = a[i].value;
+function routeTo(url) {
+  var didRoute = false;
+
+  for (var i = 0; i < ROUTERS.length; i++) {
+    if (ROUTERS[i].routeTo(url) === true) {
+      didRoute = true;
     }
   }
 
-  if (!hydrating && vchildren && vchildren.length === 1 && typeof vchildren[0] === 'string' && fc != null && fc.splitText !== undefined && fc.nextSibling == null) {
-    if (fc.nodeValue != vchildren[0]) {
-      fc.nodeValue = vchildren[0];
-    }
-  } else if (vchildren && vchildren.length || fc != null) {
-    innerDiffNode(out, vchildren, context, mountAll, hydrating || props.dangerouslySetInnerHTML != null);
+  for (var i$1 = subscribers.length; i$1--;) {
+    subscribers[i$1](url);
   }
 
-  diffAttributes(out, vnode.attributes, props);
-  isSvgMode = prevSvgMode;
-  return out;
+  return didRoute;
 }
 
-function innerDiffNode(dom, vchildren, context, mountAll, isHydrating) {
-  var originalChildren = dom.childNodes,
-      children = [],
-      keyed = {},
-      keyedLen = 0,
-      min = 0,
-      len = originalChildren.length,
-      childrenLen = 0,
-      vlen = vchildren ? vchildren.length : 0,
-      j,
-      c,
-      f,
-      vchild,
-      child;
+function routeFromLink(node) {
+  // only valid elements
+  if (!node || !node.getAttribute) {
+    return;
+  }
 
-  if (len !== 0) {
-    for (var i = 0; i < len; i++) {
-      var _child = originalChildren[i],
-          props = _child['__preactattr_'],
-          key = vlen && props ? _child._component ? _child._component.__key : props.key : null;
+  var href = node.getAttribute('href'),
+      target = node.getAttribute('target'); // ignore links with targets and non-path URLs
 
-      if (key != null) {
-        keyedLen++;
-        keyed[key] = _child;
-      } else if (props || (_child.splitText !== undefined ? isHydrating ? _child.nodeValue.trim() : true : isHydrating)) {
-        children[childrenLen++] = _child;
+  if (!href || !href.match(/^\//g) || target && !target.match(/^_?self$/i)) {
+    return;
+  } // attempt to route, if no match simply cede control to browser
+
+
+  return route(href);
+}
+
+function handleLinkClick(e) {
+  if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || e.button !== 0) {
+    return;
+  }
+
+  routeFromLink(e.currentTarget || e.target || this);
+  return prevent(e);
+}
+
+function prevent(e) {
+  if (e) {
+    if (e.stopImmediatePropagation) {
+      e.stopImmediatePropagation();
+    }
+
+    if (e.stopPropagation) {
+      e.stopPropagation();
+    }
+
+    e.preventDefault();
+  }
+
+  return false;
+}
+
+function delegateLinkHandler(e) {
+  // ignore events the browser takes care of already:
+  if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || e.button !== 0) {
+    return;
+  }
+
+  var t = e.target;
+
+  do {
+    if (String(t.nodeName).toUpperCase() === 'A' && t.getAttribute('href')) {
+      if (t.hasAttribute('native')) {
+        return;
+      } // if link is handled by the router, prevent browser defaults
+
+
+      if (routeFromLink(t)) {
+        return prevent(e);
       }
     }
+  } while (t = t.parentNode);
+}
+
+var eventListenersInitialized = false;
+
+function initEventListeners() {
+  if (eventListenersInitialized) {
+    return;
   }
 
-  if (vlen !== 0) {
-    for (var i = 0; i < vlen; i++) {
-      vchild = vchildren[i];
-      child = null;
-      var key = vchild.key;
+  if (typeof addEventListener === 'function') {
+    if (!customHistory) {
+      addEventListener('popstate', function () {
+        routeTo(getCurrentUrl());
+      });
+    }
 
-      if (key != null) {
-        if (keyedLen && keyed[key] !== undefined) {
-          child = keyed[key];
-          keyed[key] = undefined;
-          keyedLen--;
+    addEventListener('click', delegateLinkHandler);
+  }
+
+  eventListenersInitialized = true;
+}
+
+var Router = function (Component$$1) {
+  function Router(props) {
+    Component$$1.call(this, props);
+
+    if (props.history) {
+      customHistory = props.history;
+    }
+
+    this.state = {
+      url: props.url || getCurrentUrl()
+    };
+    initEventListeners();
+  }
+
+  if (Component$$1) Router.__proto__ = Component$$1;
+  Router.prototype = Object.create(Component$$1 && Component$$1.prototype);
+  Router.prototype.constructor = Router;
+
+  Router.prototype.shouldComponentUpdate = function shouldComponentUpdate(props) {
+    if (props.static !== true) {
+      return true;
+    }
+
+    return props.url !== this.props.url || props.onChange !== this.props.onChange;
+  };
+  /** Check if the given URL can be matched against any children */
+
+
+  Router.prototype.canRoute = function canRoute(url) {
+    var children = (0, _preact.toChildArray)(this.props.children);
+    return this.getMatchingChildren(children, url, false).length > 0;
+  };
+  /** Re-render children with a new URL to match against. */
+
+
+  Router.prototype.routeTo = function routeTo(url) {
+    this.setState({
+      url: url
+    });
+    var didRoute = this.canRoute(url); // trigger a manual re-route if we're not in the middle of an update:
+
+    if (!this.updating) {
+      this.forceUpdate();
+    }
+
+    return didRoute;
+  };
+
+  Router.prototype.componentWillMount = function componentWillMount() {
+    ROUTERS.push(this);
+    this.updating = true;
+  };
+
+  Router.prototype.componentDidMount = function componentDidMount() {
+    var this$1 = this;
+
+    if (customHistory) {
+      this.unlisten = customHistory.listen(function (location) {
+        this$1.routeTo("" + (location.pathname || '') + (location.search || ''));
+      });
+    }
+
+    this.updating = false;
+  };
+
+  Router.prototype.componentWillUnmount = function componentWillUnmount() {
+    if (typeof this.unlisten === 'function') {
+      this.unlisten();
+    }
+
+    ROUTERS.splice(ROUTERS.indexOf(this), 1);
+  };
+
+  Router.prototype.componentWillUpdate = function componentWillUpdate() {
+    this.updating = true;
+  };
+
+  Router.prototype.componentDidUpdate = function componentDidUpdate() {
+    this.updating = false;
+  };
+
+  Router.prototype.getMatchingChildren = function getMatchingChildren(children, url, invoke) {
+    return children.filter(prepareVNodeForRanking).sort(pathRankSort).map(function (vnode) {
+      var matches = exec(url, vnode.props.path, vnode.props);
+
+      if (matches) {
+        if (invoke !== false) {
+          var newProps = {
+            url: url,
+            matches: matches
+          };
+          assign(newProps, matches);
+          delete newProps.ref;
+          delete newProps.key;
+          return (0, _preact.cloneElement)(vnode, newProps);
         }
-      } else if (min < childrenLen) {
-        for (j = min; j < childrenLen; j++) {
-          if (children[j] !== undefined && isSameNodeType(c = children[j], vchild, isHydrating)) {
-            child = c;
-            children[j] = undefined;
-            if (j === childrenLen - 1) childrenLen--;
-            if (j === min) min++;
-            break;
-          }
-        }
+
+        return vnode;
       }
+    }).filter(Boolean);
+  };
 
-      child = idiff(child, vchild, context, mountAll);
-      f = originalChildren[i];
+  Router.prototype.render = function render(ref, ref$1) {
+    var children = ref.children;
+    var onChange = ref.onChange;
+    var url = ref$1.url;
+    var active = this.getMatchingChildren((0, _preact.toChildArray)(children), url, true);
+    var current = active[0] || null;
+    var previous = this.previousUrl;
 
-      if (child && child !== dom && child !== f) {
-        if (f == null) {
-          dom.appendChild(child);
-        } else if (child === f.nextSibling) {
-          removeNode(f);
-        } else {
-          dom.insertBefore(child, f);
-        }
-      }
-    }
-  }
+    if (url !== previous) {
+      this.previousUrl = url;
 
-  if (keyedLen) {
-    for (var i in keyed) {
-      if (keyed[i] !== undefined) recollectNodeTree(keyed[i], false);
-    }
-  }
-
-  while (min <= childrenLen) {
-    if ((child = children[childrenLen--]) !== undefined) recollectNodeTree(child, false);
-  }
-}
-
-function recollectNodeTree(node, unmountOnly) {
-  var component = node._component;
-
-  if (component) {
-    unmountComponent(component);
-  } else {
-    if (node['__preactattr_'] != null) applyRef(node['__preactattr_'].ref, null);
-
-    if (unmountOnly === false || node['__preactattr_'] == null) {
-      removeNode(node);
-    }
-
-    removeChildren(node);
-  }
-}
-
-function removeChildren(node) {
-  node = node.lastChild;
-
-  while (node) {
-    var next = node.previousSibling;
-    recollectNodeTree(node, true);
-    node = next;
-  }
-}
-
-function diffAttributes(dom, attrs, old) {
-  var name;
-
-  for (name in old) {
-    if (!(attrs && attrs[name] != null) && old[name] != null) {
-      setAccessor(dom, name, old[name], old[name] = undefined, isSvgMode);
-    }
-  }
-
-  for (name in attrs) {
-    if (name !== 'children' && name !== 'innerHTML' && (!(name in old) || attrs[name] !== (name === 'value' || name === 'checked' ? dom[name] : old[name]))) {
-      setAccessor(dom, name, old[name], old[name] = attrs[name], isSvgMode);
-    }
-  }
-}
-
-var recyclerComponents = [];
-
-function createComponent(Ctor, props, context) {
-  var inst,
-      i = recyclerComponents.length;
-
-  if (Ctor.prototype && Ctor.prototype.render) {
-    inst = new Ctor(props, context);
-    Component.call(inst, props, context);
-  } else {
-    inst = new Component(props, context);
-    inst.constructor = Ctor;
-    inst.render = doRender;
-  }
-
-  while (i--) {
-    if (recyclerComponents[i].constructor === Ctor) {
-      inst.nextBase = recyclerComponents[i].nextBase;
-      recyclerComponents.splice(i, 1);
-      return inst;
-    }
-  }
-
-  return inst;
-}
-
-function doRender(props, state, context) {
-  return this.constructor(props, context);
-}
-
-function setComponentProps(component, props, renderMode, context, mountAll) {
-  if (component._disable) return;
-  component._disable = true;
-  component.__ref = props.ref;
-  component.__key = props.key;
-  delete props.ref;
-  delete props.key;
-
-  if (typeof component.constructor.getDerivedStateFromProps === 'undefined') {
-    if (!component.base || mountAll) {
-      if (component.componentWillMount) component.componentWillMount();
-    } else if (component.componentWillReceiveProps) {
-      component.componentWillReceiveProps(props, context);
-    }
-  }
-
-  if (context && context !== component.context) {
-    if (!component.prevContext) component.prevContext = component.context;
-    component.context = context;
-  }
-
-  if (!component.prevProps) component.prevProps = component.props;
-  component.props = props;
-  component._disable = false;
-
-  if (renderMode !== 0) {
-    if (renderMode === 1 || options.syncComponentUpdates !== false || !component.base) {
-      renderComponent(component, 1, mountAll);
-    } else {
-      enqueueRender(component);
-    }
-  }
-
-  applyRef(component.__ref, component);
-}
-
-function renderComponent(component, renderMode, mountAll, isChild) {
-  if (component._disable) return;
-  var props = component.props,
-      state = component.state,
-      context = component.context,
-      previousProps = component.prevProps || props,
-      previousState = component.prevState || state,
-      previousContext = component.prevContext || context,
-      isUpdate = component.base,
-      nextBase = component.nextBase,
-      initialBase = isUpdate || nextBase,
-      initialChildComponent = component._component,
-      skip = false,
-      snapshot = previousContext,
-      rendered,
-      inst,
-      cbase;
-
-  if (component.constructor.getDerivedStateFromProps) {
-    state = extend(extend({}, state), component.constructor.getDerivedStateFromProps(props, state));
-    component.state = state;
-  }
-
-  if (isUpdate) {
-    component.props = previousProps;
-    component.state = previousState;
-    component.context = previousContext;
-
-    if (renderMode !== 2 && component.shouldComponentUpdate && component.shouldComponentUpdate(props, state, context) === false) {
-      skip = true;
-    } else if (component.componentWillUpdate) {
-      component.componentWillUpdate(props, state, context);
-    }
-
-    component.props = props;
-    component.state = state;
-    component.context = context;
-  }
-
-  component.prevProps = component.prevState = component.prevContext = component.nextBase = null;
-  component._dirty = false;
-
-  if (!skip) {
-    rendered = component.render(props, state, context);
-
-    if (component.getChildContext) {
-      context = extend(extend({}, context), component.getChildContext());
-    }
-
-    if (isUpdate && component.getSnapshotBeforeUpdate) {
-      snapshot = component.getSnapshotBeforeUpdate(previousProps, previousState);
-    }
-
-    var childComponent = rendered && rendered.nodeName,
-        toUnmount,
-        base;
-
-    if (typeof childComponent === 'function') {
-      var childProps = getNodeProps(rendered);
-      inst = initialChildComponent;
-
-      if (inst && inst.constructor === childComponent && childProps.key == inst.__key) {
-        setComponentProps(inst, childProps, 1, context, false);
-      } else {
-        toUnmount = inst;
-        component._component = inst = createComponent(childComponent, childProps, context);
-        inst.nextBase = inst.nextBase || nextBase;
-        inst._parentComponent = component;
-        setComponentProps(inst, childProps, 0, context, false);
-        renderComponent(inst, 1, mountAll, true);
-      }
-
-      base = inst.base;
-    } else {
-      cbase = initialBase;
-      toUnmount = initialChildComponent;
-
-      if (toUnmount) {
-        cbase = component._component = null;
-      }
-
-      if (initialBase || renderMode === 1) {
-        if (cbase) cbase._component = null;
-        base = diff(cbase, rendered, context, mountAll || !isUpdate, initialBase && initialBase.parentNode, true);
+      if (typeof onChange === 'function') {
+        onChange({
+          router: this,
+          url: url,
+          previous: previous,
+          active: active,
+          current: current
+        });
       }
     }
 
-    if (initialBase && base !== initialBase && inst !== initialChildComponent) {
-      var baseParent = initialBase.parentNode;
+    return current;
+  };
 
-      if (baseParent && base !== baseParent) {
-        baseParent.replaceChild(base, initialBase);
+  return Router;
+}(_preact.Component);
 
-        if (!toUnmount) {
-          initialBase._component = null;
-          recollectNodeTree(initialBase, false);
-        }
-      }
-    }
+exports.Router = Router;
 
-    if (toUnmount) {
-      unmountComponent(toUnmount);
-    }
-
-    component.base = base;
-
-    if (base && !isChild) {
-      var componentRef = component,
-          t = component;
-
-      while (t = t._parentComponent) {
-        (componentRef = t).base = base;
-      }
-
-      base._component = componentRef;
-      base._componentConstructor = componentRef.constructor;
-    }
-  }
-
-  if (!isUpdate || mountAll) {
-    mounts.push(component);
-  } else if (!skip) {
-    if (component.componentDidUpdate) {
-      component.componentDidUpdate(previousProps, previousState, snapshot);
-    }
-
-    if (options.afterUpdate) options.afterUpdate(component);
-  }
-
-  while (component._renderCallbacks.length) {
-    component._renderCallbacks.pop().call(component);
-  }
-
-  if (!diffLevel && !isChild) flushMounts();
-}
-
-function buildComponentFromVNode(dom, vnode, context, mountAll) {
-  var c = dom && dom._component,
-      originalComponent = c,
-      oldDom = dom,
-      isDirectOwner = c && dom._componentConstructor === vnode.nodeName,
-      isOwner = isDirectOwner,
-      props = getNodeProps(vnode);
-
-  while (c && !isOwner && (c = c._parentComponent)) {
-    isOwner = c.constructor === vnode.nodeName;
-  }
-
-  if (c && isOwner && (!mountAll || c._component)) {
-    setComponentProps(c, props, 3, context, mountAll);
-    dom = c.base;
-  } else {
-    if (originalComponent && !isDirectOwner) {
-      unmountComponent(originalComponent);
-      dom = oldDom = null;
-    }
-
-    c = createComponent(vnode.nodeName, props, context);
-
-    if (dom && !c.nextBase) {
-      c.nextBase = dom;
-      oldDom = null;
-    }
-
-    setComponentProps(c, props, 1, context, mountAll);
-    dom = c.base;
-
-    if (oldDom && dom !== oldDom) {
-      oldDom._component = null;
-      recollectNodeTree(oldDom, false);
-    }
-  }
-
-  return dom;
-}
-
-function unmountComponent(component) {
-  if (options.beforeUnmount) options.beforeUnmount(component);
-  var base = component.base;
-  component._disable = true;
-  if (component.componentWillUnmount) component.componentWillUnmount();
-  component.base = null;
-  var inner = component._component;
-
-  if (inner) {
-    unmountComponent(inner);
-  } else if (base) {
-    if (base['__preactattr_'] != null) applyRef(base['__preactattr_'].ref, null);
-    component.nextBase = base;
-    removeNode(base);
-    recyclerComponents.push(component);
-    removeChildren(base);
-  }
-
-  applyRef(component.__ref, null);
-}
-
-function Component(props, context) {
-  this._dirty = true;
-  this.context = context;
-  this.props = props;
-  this.state = this.state || {};
-  this._renderCallbacks = [];
-}
-
-extend(Component.prototype, {
-  setState: function setState(state, callback) {
-    if (!this.prevState) this.prevState = this.state;
-    this.state = extend(extend({}, this.state), typeof state === 'function' ? state(this.state, this.props) : state);
-    if (callback) this._renderCallbacks.push(callback);
-    enqueueRender(this);
-  },
-  forceUpdate: function forceUpdate(callback) {
-    if (callback) this._renderCallbacks.push(callback);
-    renderComponent(this, 2);
-  },
-  render: function render() {}
-});
-
-function render(vnode, parent, merge) {
-  return diff(merge, vnode, {}, false, parent, false);
-}
-
-function createRef() {
-  return {};
-}
-
-var preact = {
-  h: h,
-  createElement: h,
-  cloneElement: cloneElement,
-  createRef: createRef,
-  Component: Component,
-  render: render,
-  rerender: rerender,
-  options: options
+var Link = function (props) {
+  return (0, _preact.createElement)('a', assign({
+    onClick: handleLinkClick
+  }, props));
 };
-var _default = preact;
+
+exports.Link = Link;
+
+var Route = function (props) {
+  return (0, _preact.createElement)(props.component, props);
+};
+
+exports.Route = Route;
+Router.subscribers = subscribers;
+Router.getCurrentUrl = getCurrentUrl;
+Router.route = route;
+Router.Router = Router;
+Router.Route = Route;
+Router.Link = Link;
+Router.exec = exec;
+var _default = Router;
 exports.default = _default;
-},{}],"node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.module.js"}],"node_modules/preact-router/match.js":[function(require,module,exports) {
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+exports.Link = exports.Match = undefined;
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _preact = require('preact');
+
+var _preactRouter = require('preact-router');
+
+function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Match = exports.Match = function (_Component) {
+	_inherits(Match, _Component);
+
+	function Match() {
+		var _temp, _this, _ret;
+
+		_classCallCheck(this, Match);
+
+		for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+			args[_key] = arguments[_key];
+		}
+
+		return _ret = (_temp = (_this = _possibleConstructorReturn(this, _Component.call.apply(_Component, [this].concat(args))), _this), _this.update = function (url) {
+			_this.nextUrl = url;
+			_this.setState({});
+		}, _temp), _possibleConstructorReturn(_this, _ret);
+	}
+
+	Match.prototype.componentDidMount = function componentDidMount() {
+		_preactRouter.subscribers.push(this.update);
+	};
+
+	Match.prototype.componentWillUnmount = function componentWillUnmount() {
+		_preactRouter.subscribers.splice(_preactRouter.subscribers.indexOf(this.update) >>> 0, 1);
+	};
+
+	Match.prototype.render = function render(props) {
+		var url = this.nextUrl || (0, _preactRouter.getCurrentUrl)(),
+		    path = url.replace(/\?.+$/, '');
+		this.nextUrl = null;
+		return props.children({
+			url: url,
+			path: path,
+			matches: (0, _preactRouter.exec)(path, props.path, {}) !== false
+		});
+	};
+
+	return Match;
+}(_preact.Component);
+
+var Link = function Link(_ref) {
+	var activeClassName = _ref.activeClassName,
+	    path = _ref.path,
+	    props = _objectWithoutProperties(_ref, ['activeClassName', 'path']);
+
+	return (0, _preact.h)(
+		Match,
+		{ path: path || props.href },
+		function (_ref2) {
+			var matches = _ref2.matches;
+			return (0, _preact.h)(_preactRouter.Link, _extends({}, props, { 'class': [props.class || props.className, matches && activeClassName].filter(Boolean).join(' ') }));
+		}
+	);
+};
+
+exports.Link = Link;
+exports.default = Match;
+
+Match.Link = Link;
+
+},{"preact":"node_modules/preact/dist/preact.module.js","preact-router":"node_modules/preact-router/dist/preact-router.es.js"}],"node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
 var bundleURL = null;
 
 function getBundleURLCached() {
@@ -935,57 +1061,40 @@ exports.default = NavBar;
 
 var _preact = require("preact");
 
+var _match = require("preact-router/match");
+
 require("./NavBar.less");
 
 function NavBarItem(props) {
   var label = props.label,
-      _props$selected = props.selected,
-      selected = _props$selected === void 0 ? false : _props$selected,
+      href = props.href,
       _props$disabled = props.disabled,
-      disabled = _props$disabled === void 0 ? false : _props$disabled,
-      onSelect = props.onSelect;
-  return (0, _preact.h)("div", {
-    className: "navbar-item ".concat(disabled ? "navbar-item--disabled" : "", " ").concat(selected ? "navbar-item--selected" : ""),
-    onClick: function onClick() {
-      return !disabled && onSelect();
-    }
+      disabled = _props$disabled === void 0 ? false : _props$disabled;
+  return (0, _preact.h)(_match.Link, {
+    activeClassName: "navbar-item--selected",
+    className: "navbar-item ".concat(disabled ? "navbar-item--disabled" : ""),
+    href: href
   }, label);
 }
 
-function NavBar(props) {
-  var _onSelect = props.onSelect,
-      section = props.section;
+function NavBar() {
   return (0, _preact.h)("div", {
     className: "navbar"
   }, (0, _preact.h)(NavBarItem, {
     label: "Task Graph",
-    selected: section === "taskgraph",
-    onSelect: function onSelect() {
-      return _onSelect("taskgraph");
-    }
+    href: "/task-graph"
   }), (0, _preact.h)(NavBarItem, {
     label: "Code",
-    selected: section === "code",
-    onSelect: function onSelect() {
-      return _onSelect("code");
-    },
     disabled: true
   }), (0, _preact.h)(NavBarItem, {
     label: "Runs",
-    selected: section === "runs",
-    onSelect: function onSelect() {
-      return _onSelect("runs");
-    },
-    disabled: true
+    href: "/runs"
   }), (0, _preact.h)(NavBarItem, {
     label: "Logs",
-    selected: section === "logs",
-    onSelect: function onSelect() {
-      return _onSelect("logs");
-    }
+    href: "/logs"
   }));
 }
-},{"preact":"node_modules/preact/dist/preact.mjs","./NavBar.less":"components/NavBar.less"}],"utils/format.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.module.js","preact-router/match":"node_modules/preact-router/match.js","./NavBar.less":"components/NavBar.less"}],"utils/format.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1179,7 +1288,7 @@ var Header = /*#__PURE__*/function (_Component) {
 }(_preact.Component);
 
 exports.default = Header;
-},{"preact":"node_modules/preact/dist/preact.mjs","./NavBar":"components/NavBar.js","../utils/format":"utils/format.js","../utils/api":"utils/api.js","./Header.less":"components/Header.less"}],"node_modules/d3/dist/package.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.module.js","./NavBar":"components/NavBar.js","../utils/format":"utils/format.js","../utils/api":"utils/api.js","./Header.less":"components/Header.less"}],"node_modules/d3/dist/package.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -30198,7 +30307,7 @@ var TaskGraphNode = /*#__PURE__*/function (_Component2) {
 }(_preact.Component);
 
 exports.default = TaskGraphNode;
-},{"preact":"node_modules/preact/dist/preact.mjs","d3":"node_modules/d3/index.js","./TaskGraphNode.less":"components/TaskGraphNode.less","../utils/format":"utils/format.js","../utils/colors":"utils/colors.js"}],"components/TaskGraphEdge.less":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.module.js","d3":"node_modules/d3/index.js","./TaskGraphNode.less":"components/TaskGraphNode.less","../utils/format":"utils/format.js","../utils/colors":"utils/colors.js"}],"components/TaskGraphEdge.less":[function(require,module,exports) {
 var reloadCSS = require('_css_loader');
 
 module.hot.dispose(reloadCSS);
@@ -30273,7 +30382,7 @@ function TaskGraphEdge(props) {
     edge: edge
   }));
 }
-},{"preact":"node_modules/preact/dist/preact.mjs","d3":"node_modules/d3/index.js","../utils/colors":"utils/colors.js","./TaskGraphEdge.less":"components/TaskGraphEdge.less"}],"components/TaskGraph.less":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.module.js","d3":"node_modules/d3/index.js","../utils/colors":"utils/colors.js","./TaskGraphEdge.less":"components/TaskGraphEdge.less"}],"components/TaskGraph.less":[function(require,module,exports) {
 var reloadCSS = require('_css_loader');
 
 module.hot.dispose(reloadCSS);
@@ -30395,7 +30504,7 @@ var TaskGraph = /*#__PURE__*/function (_Component) {
 }(_preact.Component);
 
 exports.default = TaskGraph;
-},{"preact":"node_modules/preact/dist/preact.mjs","./TaskGraphNode":"components/TaskGraphNode.js","./TaskGraphEdge":"components/TaskGraphEdge.js","d3":"node_modules/d3/index.js","./TaskGraph.less":"components/TaskGraph.less"}],"components/TaskGraphMeta.less":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.module.js","./TaskGraphNode":"components/TaskGraphNode.js","./TaskGraphEdge":"components/TaskGraphEdge.js","d3":"node_modules/d3/index.js","./TaskGraph.less":"components/TaskGraph.less"}],"components/TaskGraphMeta.less":[function(require,module,exports) {
 var reloadCSS = require('_css_loader');
 
 module.hot.dispose(reloadCSS);
@@ -41394,7 +41503,7 @@ var TaskGraphMeta = /*#__PURE__*/function (_Component) {
 }(_preact.Component);
 
 exports.default = TaskGraphMeta;
-},{"preact":"node_modules/preact/dist/preact.mjs","../utils/format":"utils/format.js","./TaskGraphMeta.less":"components/TaskGraphMeta.less","codemirror":"node_modules/codemirror/lib/codemirror.js","codemirror/mode/javascript/javascript":"node_modules/codemirror/mode/javascript/javascript.js","codemirror/addon/scroll/simplescrollbars":"node_modules/codemirror/addon/scroll/simplescrollbars.js","codemirror/addon/scroll/simplescrollbars.css":"node_modules/codemirror/addon/scroll/simplescrollbars.css"}],"components/TaskGraphControls.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.module.js","../utils/format":"utils/format.js","./TaskGraphMeta.less":"components/TaskGraphMeta.less","codemirror":"node_modules/codemirror/lib/codemirror.js","codemirror/mode/javascript/javascript":"node_modules/codemirror/mode/javascript/javascript.js","codemirror/addon/scroll/simplescrollbars":"node_modules/codemirror/addon/scroll/simplescrollbars.js","codemirror/addon/scroll/simplescrollbars.css":"node_modules/codemirror/addon/scroll/simplescrollbars.css"}],"components/TaskGraphControls.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -41457,7 +41566,7 @@ var TaskGraphControls = /*#__PURE__*/function (_Component) {
 }(_preact.Component);
 
 exports.default = TaskGraphControls;
-},{"preact":"node_modules/preact/dist/preact.mjs"}],"node_modules/lodash/_listCacheClear.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.module.js"}],"node_modules/lodash/_listCacheClear.js":[function(require,module,exports) {
 /**
  * Removes all key-value entries from the list cache.
  *
@@ -62195,7 +62304,7 @@ var TaskGraphSection = /*#__PURE__*/function (_Component) {
 }(_preact.Component);
 
 exports.default = TaskGraphSection;
-},{"preact":"node_modules/preact/dist/preact.mjs","./TaskGraph":"components/TaskGraph.js","./TaskGraphMeta":"components/TaskGraphMeta.js","./TaskGraphControls":"components/TaskGraphControls.js","graphlib":"node_modules/graphlib/index.js","dagre":"node_modules/dagre/index.js","../utils/api":"utils/api.js","./TaskGraphSection.less":"components/TaskGraphSection.less","socket.io-client":"node_modules/socket.io-client/lib/index.js"}],"components/LogsSection.less":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.module.js","./TaskGraph":"components/TaskGraph.js","./TaskGraphMeta":"components/TaskGraphMeta.js","./TaskGraphControls":"components/TaskGraphControls.js","graphlib":"node_modules/graphlib/index.js","dagre":"node_modules/dagre/index.js","../utils/api":"utils/api.js","./TaskGraphSection.less":"components/TaskGraphSection.less","socket.io-client":"node_modules/socket.io-client/lib/index.js"}],"components/LogsSection.less":[function(require,module,exports) {
 var reloadCSS = require('_css_loader');
 
 module.hot.dispose(reloadCSS);
@@ -62211,6 +62320,8 @@ exports.default = void 0;
 var _preact = require("preact");
 
 require("./LogsSection.less");
+
+var _preactRouter = require("preact-router");
 
 var _api = require("../utils/api");
 
@@ -62251,16 +62362,16 @@ var LogsSectionLogSelector = /*#__PURE__*/function (_Component) {
       var _this$props = this.props,
           logs = _this$props.logs,
           _onSelect = _this$props.onSelect,
-          selectedLogId = _this$props.selectedLogId;
+          selectedLog = _this$props.selectedLog;
       return (0, _preact.h)("div", {
         className: "logssection-logselector"
       }, logs.map(function (log, i) {
         return (0, _preact.h)(LogsSectionLogSelectorItem, {
           key: log.rowid,
           log: log,
-          selected: selectedLogId === log.rowid,
+          selected: selectedLog && selectedLog.rowid === log.rowid,
           onSelect: function onSelect() {
-            return _onSelect(log.rowid);
+            return _onSelect(log);
           }
         });
       }));
@@ -62284,7 +62395,8 @@ function LogsSectionLogSelectorItem(props) {
   return (0, _preact.h)("div", {
     className: "logssection-logselectoritem ".concat(selected ? "logssection-logselectoritem--selected" : ""),
     onClick: function onClick() {
-      return onSelect();
+      (0, _preactRouter.route)("/logs?logid=".concat(rowid));
+      onSelect();
     }
   }, (0, _preact.h)("div", {
     className: "logssection-logselectoritem-title"
@@ -62325,8 +62437,8 @@ var LogsSectionLogViewer = /*#__PURE__*/function (_Component2) {
     value: function componentDidUpdate(prevProp) {
       var _this2 = this;
 
-      if (prevProp.selectedLogId !== this.props.selectedLogId) {
-        (0, _api.getLog)(this.props.selectedLogId).then(function (data) {
+      if (Boolean(this.props.selectedLog) ^ Boolean(prevProp.selectedLog) || prevProp.selectedLog.rowid !== this.props.selectedLog.rowid) {
+        (0, _api.getLog)(this.props.selectedLog.rowid).then(function (data) {
           return _this2.setState({
             error: false,
             loading: false,
@@ -62344,7 +62456,7 @@ var LogsSectionLogViewer = /*#__PURE__*/function (_Component2) {
   }, {
     key: "render",
     value: function render() {
-      var selectedLogId = this.props.selectedLogId;
+      var selectedLog = this.props.selectedLog;
       var _this$state = this.state,
           loading = _this$state.loading,
           error = _this$state.error,
@@ -62355,13 +62467,12 @@ var LogsSectionLogViewer = /*#__PURE__*/function (_Component2) {
       if (error) return (0, _preact.h)("div", {
         className: "logssection-logviewer"
       }, "There was a problem loading this page :/", " ");
-      if (selectedLogId === null) return (0, _preact.h)("div", {
+      if (selectedLog === null) return (0, _preact.h)("div", {
         className: "logssection-logviewer"
       }, "Select a log to view.");
-      console.log(data);
       return (0, _preact.h)("div", {
         className: "logssection-logviewer"
-      }, (0, _preact.h)("code", null, (0, _preact.h)("pre", null, data)));
+      }, (0, _preact.h)("div", null, selectedLog.cellName), (0, _preact.h)("div", null, selectedLog.rowid), (0, _preact.h)("div", null, (0, _format.duration)(new Date(selectedLog.time))), (0, _preact.h)("div", null, (0, _preact.h)("code", null, selectedLog.path)), (0, _preact.h)("code", null, (0, _preact.h)("pre", null, data)));
     }
   }]);
 
@@ -62388,7 +62499,7 @@ var LogsSection = /*#__PURE__*/function (_Component3) {
       error: false,
       loading: true,
       data: null,
-      selectedLogId: null
+      selectedLog: null
     });
 
     return _this3;
@@ -62421,11 +62532,12 @@ var LogsSection = /*#__PURE__*/function (_Component3) {
     value: function render() {
       var _this5 = this;
 
+      var logid = this.props.logid;
       var _this$state2 = this.state,
           loading = _this$state2.loading,
           error = _this$state2.error,
           data = _this$state2.data,
-          selectedLogId = _this$state2.selectedLogId;
+          selectedLog = _this$state2.selectedLog;
       if (loading) return (0, _preact.h)("div", {
         className: "logssection"
       }, "Loading...");
@@ -62436,14 +62548,14 @@ var LogsSection = /*#__PURE__*/function (_Component3) {
         className: "logssection"
       }, (0, _preact.h)(LogsSectionLogSelector, {
         logs: data.logs,
-        selectedLogId: selectedLogId,
-        onSelect: function onSelect(selectedLogId) {
+        selectedLog: selectedLog,
+        onSelect: function onSelect(selectedLog) {
           return _this5.setState({
-            selectedLogId: selectedLogId
+            selectedLog: selectedLog
           });
         }
       }), (0, _preact.h)(LogsSectionLogViewer, {
-        selectedLogId: selectedLogId
+        selectedLog: selectedLog
       }));
     }
   }]);
@@ -62452,7 +62564,262 @@ var LogsSection = /*#__PURE__*/function (_Component3) {
 }(_preact.Component);
 
 exports.default = LogsSection;
-},{"preact":"node_modules/preact/dist/preact.mjs","./LogsSection.less":"components/LogsSection.less","../utils/api":"utils/api.js","../utils/format":"utils/format.js"}],"components/AppSection.less":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.module.js","./LogsSection.less":"components/LogsSection.less","preact-router":"node_modules/preact-router/dist/preact-router.es.js","../utils/api":"utils/api.js","../utils/format":"utils/format.js"}],"components/RunsSection.less":[function(require,module,exports) {
+var reloadCSS = require('_css_loader');
+
+module.hot.dispose(reloadCSS);
+module.hot.accept(reloadCSS);
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"components/RunsSection.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _preact = require("preact");
+
+require("./RunsSection.less");
+
+var _api = require("../utils/api");
+
+var _format = require("../utils/format");
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+var RunsSectionRunSelector = /*#__PURE__*/function (_Component) {
+  _inherits(RunsSectionRunSelector, _Component);
+
+  function RunsSectionRunSelector() {
+    _classCallCheck(this, RunsSectionRunSelector);
+
+    return _possibleConstructorReturn(this, _getPrototypeOf(RunsSectionRunSelector).apply(this, arguments));
+  }
+
+  _createClass(RunsSectionRunSelector, [{
+    key: "render",
+    value: function render() {
+      var _this$props = this.props,
+          runs = _this$props.runs,
+          _onSelect = _this$props.onSelect,
+          selectedRunId = _this$props.selectedRunId;
+      return (0, _preact.h)("div", {
+        className: "runssection-runselector"
+      }, runs.map(function (run, i) {
+        return (0, _preact.h)(RunsSectionRunSelectorItem, {
+          key: run.rowid,
+          run: run,
+          selected: selectedRunId === run.rowid,
+          onSelect: function onSelect() {
+            return _onSelect(run.rowid);
+          }
+        });
+      }));
+    }
+  }]);
+
+  return RunsSectionRunSelector;
+}(_preact.Component);
+
+function RunsSectionRunSelectorItem(props) {
+  var run = props.run,
+      selected = props.selected,
+      onSelect = props.onSelect;
+  var rowid = run.rowid,
+      oakfile = run.oakfile,
+      cellName = run.cellName,
+      cellAncestorHash = run.cellAncestorHash,
+      path = run.path,
+      time = run.time;
+  return (0, _preact.h)("div", {
+    className: "runssection-runselectoritem ".concat(selected ? "runssection-runselectoritem--selected" : ""),
+    onClick: function onClick() {
+      return onSelect();
+    }
+  }, (0, _preact.h)("div", {
+    className: "runssection-runselectoritem-title"
+  }, cellName), (0, _preact.h)("div", {
+    className: "runssection-runselectoritem-rowid"
+  }, "#", rowid), (0, _preact.h)("div", {
+    className: "runssection-runselectoritem-time"
+  }, (0, _format.duration)(new Date(time))));
+}
+
+var RunsSectionRunViewer = /*#__PURE__*/function (_Component2) {
+  _inherits(RunsSectionRunViewer, _Component2);
+
+  function RunsSectionRunViewer() {
+    var _getPrototypeOf2;
+
+    var _this;
+
+    _classCallCheck(this, RunsSectionRunViewer);
+
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    _this = _possibleConstructorReturn(this, (_getPrototypeOf2 = _getPrototypeOf(RunsSectionRunViewer)).call.apply(_getPrototypeOf2, [this].concat(args)));
+
+    _defineProperty(_assertThisInitialized(_this), "state", {
+      error: false,
+      loading: false,
+      data: null
+    });
+
+    return _this;
+  }
+
+  _createClass(RunsSectionRunViewer, [{
+    key: "componentDidUpdate",
+    value: function componentDidUpdate(prevProp) {
+      var _this2 = this;
+
+      if (prevProp.selectedRunId !== this.props.selectedRunId) {
+        (0, _api.getRun)(this.props.selectedRunId).then(function (data) {
+          return _this2.setState({
+            error: false,
+            loading: false,
+            data: data
+          });
+        }).catch(function (err) {
+          return _this2.setState({
+            error: true,
+            loading: false,
+            data: err
+          });
+        });
+      }
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      var selectedRunId = this.props.selectedRunId;
+      var _this$state = this.state,
+          loading = _this$state.loading,
+          error = _this$state.error,
+          data = _this$state.data;
+      if (loading) return (0, _preact.h)("div", {
+        className: "runssection-runviewer"
+      }, "Loading...");
+      if (error) return (0, _preact.h)("div", {
+        className: "runssection-runviewer"
+      }, "There was a problem loading this page :/", " ");
+      if (selectedRunId === null) return (0, _preact.h)("div", {
+        className: "runssection-runviewer"
+      }, "Select a run to view.");
+      return (0, _preact.h)("div", {
+        className: "runssection-runviewer"
+      }, (0, _preact.h)("code", null, (0, _preact.h)("pre", null, data)));
+    }
+  }]);
+
+  return RunsSectionRunViewer;
+}(_preact.Component);
+
+var RunsSection = /*#__PURE__*/function (_Component3) {
+  _inherits(RunsSection, _Component3);
+
+  function RunsSection() {
+    var _getPrototypeOf3;
+
+    var _this3;
+
+    _classCallCheck(this, RunsSection);
+
+    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      args[_key2] = arguments[_key2];
+    }
+
+    _this3 = _possibleConstructorReturn(this, (_getPrototypeOf3 = _getPrototypeOf(RunsSection)).call.apply(_getPrototypeOf3, [this].concat(args)));
+
+    _defineProperty(_assertThisInitialized(_this3), "state", {
+      error: false,
+      loading: true,
+      data: null,
+      selectedRunId: null
+    });
+
+    return _this3;
+  }
+
+  _createClass(RunsSection, [{
+    key: "componentDidMount",
+    value: function componentDidMount() {
+      var _this4 = this;
+
+      this.setState({
+        loading: true
+      });
+      (0, _api.getRuns)().then(function (data) {
+        return _this4.setState({
+          error: false,
+          loading: false,
+          data: data
+        });
+      }).catch(function (err) {
+        return _this4.setState({
+          error: true,
+          loading: false,
+          data: err
+        });
+      });
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      var _this5 = this;
+
+      var _this$state2 = this.state,
+          loading = _this$state2.loading,
+          error = _this$state2.error,
+          data = _this$state2.data,
+          selectedRunId = _this$state2.selectedRunId;
+      if (loading) return (0, _preact.h)("div", {
+        className: "runssection"
+      }, "Loading...");
+      if (error) return (0, _preact.h)("div", {
+        className: "runssection"
+      }, "There was a problem loading this page :/", " ");
+      return (0, _preact.h)("div", {
+        className: "runssection"
+      }, (0, _preact.h)(RunsSectionRunSelector, {
+        runs: data.runs,
+        selectedRunId: selectedRunId,
+        onSelect: function onSelect(selectedRunId) {
+          return _this5.setState({
+            selectedRunId: selectedRunId
+          });
+        }
+      }), (0, _preact.h)(RunsSectionRunViewer, {
+        selectedRunId: selectedRunId
+      }));
+    }
+  }]);
+
+  return RunsSection;
+}(_preact.Component);
+
+exports.default = RunsSection;
+},{"preact":"node_modules/preact/dist/preact.module.js","./RunsSection.less":"components/RunsSection.less","../utils/api":"utils/api.js","../utils/format":"utils/format.js"}],"components/AppSection.less":[function(require,module,exports) {
 var reloadCSS = require('_css_loader');
 
 module.hot.dispose(reloadCSS);
@@ -62467,33 +62834,69 @@ exports.default = AppSection;
 
 var _preact = require("preact");
 
+var _preactRouter = require("preact-router");
+
 var _TaskGraphSection = _interopRequireDefault(require("./TaskGraphSection"));
 
 var _LogsSection = _interopRequireDefault(require("./LogsSection"));
+
+var _RunsSection = _interopRequireDefault(require("./RunsSection"));
 
 require("./AppSection.less");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+var A = /*#__PURE__*/function (_Component) {
+  _inherits(A, _Component);
+
+  function A() {
+    _classCallCheck(this, A);
+
+    return _possibleConstructorReturn(this, _getPrototypeOf(A).apply(this, arguments));
+  }
+
+  _createClass(A, [{
+    key: "render",
+    value: function render() {
+      return (0, _preact.h)("div", null, "hi a");
+    }
+  }]);
+
+  return A;
+}(_preact.Component);
+
 function AppSection(props) {
   var section = props.section;
-
-  switch (section) {
-    case "taskgraph":
-      return (0, _preact.h)("div", {
-        class: "app-section"
-      }, (0, _preact.h)(_TaskGraphSection.default, null));
-
-    case "logs":
-      return (0, _preact.h)("div", {
-        class: "app-section"
-      }, (0, _preact.h)(_LogsSection.default, null));
-
-    default:
-      throw Error("".concat(section, " not defined in AppSection."));
-  }
+  return (0, _preact.h)("div", {
+    class: "app-section"
+  }, (0, _preact.h)(_preactRouter.Router, null, (0, _preact.h)(_TaskGraphSection.default, {
+    path: "task-graph",
+    default: true
+  }), (0, _preact.h)(_LogsSection.default, {
+    path: "logs/:logid?"
+  }), (0, _preact.h)(_RunsSection.default, {
+    path: "runs"
+  })));
 }
-},{"preact":"node_modules/preact/dist/preact.mjs","./TaskGraphSection":"components/TaskGraphSection.js","./LogsSection":"components/LogsSection.js","./AppSection.less":"components/AppSection.less"}],"components/App.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.module.js","preact-router":"node_modules/preact-router/dist/preact-router.es.js","./TaskGraphSection":"components/TaskGraphSection.js","./LogsSection":"components/LogsSection.js","./RunsSection":"components/RunsSection.js","./AppSection.less":"components/AppSection.less"}],"components/App.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -62530,37 +62933,16 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
 var App = /*#__PURE__*/function (_Component) {
   _inherits(App, _Component);
 
-  function App(props) {
-    var _this;
-
+  function App() {
     _classCallCheck(this, App);
 
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(App).call(this, props));
-    _this.state = {
-      section: "logs"
-    };
-    return _this;
+    return _possibleConstructorReturn(this, _getPrototypeOf(App).apply(this, arguments));
   }
 
   _createClass(App, [{
-    key: "componentDidMount",
-    value: function componentDidMount() {}
-  }, {
     key: "render",
     value: function render() {
-      var _this2 = this;
-
-      var section = this.state.section;
-      return (0, _preact.h)("div", null, (0, _preact.h)(_Header.default, {
-        section: section,
-        onSelectionSection: function onSelectionSection(section) {
-          return _this2.setState({
-            section: section
-          });
-        }
-      }), (0, _preact.h)(_AppSection.default, {
-        section: section
-      }));
+      return (0, _preact.h)("div", null, (0, _preact.h)(_Header.default, null), (0, _preact.h)(_AppSection.default, null));
     }
   }]);
 
@@ -62568,7 +62950,7 @@ var App = /*#__PURE__*/function (_Component) {
 }(_preact.Component);
 
 exports.default = App;
-},{"preact":"node_modules/preact/dist/preact.mjs","./Header":"components/Header.js","./AppSection":"components/AppSection.js"}],"main.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.module.js","./Header":"components/Header.js","./AppSection":"components/AppSection.js"}],"main.js":[function(require,module,exports) {
 "use strict";
 
 var _App = _interopRequireDefault(require("./components/App"));
@@ -62578,7 +62960,7 @@ var _preact = require("preact");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 (0, _preact.render)((0, _preact.h)(_App.default, null), document.querySelector("#main"));
-},{"./components/App":"components/App.js","preact":"node_modules/preact/dist/preact.mjs"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./components/App":"components/App.js","preact":"node_modules/preact/dist/preact.module.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;

@@ -77,7 +77,11 @@ export default function oak_dash(args: { filename: string; port: string }) {
   });
 
   app.use(express.static(join(__dirname, "dash-frontend", "dist")));
-
+  app.use("/", (req, res) => {
+    res
+      .status(200)
+      .sendFile(join(__dirname, "dash-frontend", "dist", "index.html"));
+  });
   io.on("connection", async socket => {
     const cleanUpWatcher = await watchOakfileEvents(
       oakfilePath,

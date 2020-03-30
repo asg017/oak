@@ -1,48 +1,26 @@
 import { h } from "preact";
+import { Link } from "preact-router/match";
 import "./NavBar.less";
 
 function NavBarItem(props) {
-  const { label, selected = false, disabled = false, onSelect } = props;
+  const { label, href, disabled = false } = props;
   return (
-    <div
-      className={`navbar-item ${disabled ? "navbar-item--disabled" : ""} ${
-        selected ? "navbar-item--selected" : ""
-      }`}
-      onClick={() => !disabled && onSelect()}
+    <Link
+      activeClassName="navbar-item--selected"
+      className={`navbar-item ${disabled ? "navbar-item--disabled" : ""}`}
+      href={href}
     >
       {label}
-    </div>
+    </Link>
   );
 }
-export default function NavBar(props) {
-  const { onSelect, section } = props;
+export default function NavBar() {
   return (
     <div className="navbar">
-      <NavBarItem
-        label="Task Graph"
-        selected={section === "taskgraph"}
-        onSelect={() => onSelect("taskgraph")}
-      />
-
-      <NavBarItem
-        label="Code"
-        selected={section === "code"}
-        onSelect={() => onSelect("code")}
-        disabled
-      />
-
-      <NavBarItem
-        label="Runs"
-        selected={section === "runs"}
-        onSelect={() => onSelect("runs")}
-        disabled
-      />
-
-      <NavBarItem
-        label="Logs"
-        selected={section === "logs"}
-        onSelect={() => onSelect("logs")}
-      />
+      <NavBarItem label="Task Graph" href="/task-graph" />
+      <NavBarItem label="Code" disabled />
+      <NavBarItem label="Runs" href="/runs" />
+      <NavBarItem label="Logs" href="/logs" />
     </div>
   );
 }

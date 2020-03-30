@@ -34,15 +34,28 @@ export class OakDB {
   }
   async addEvents(
     runHash: string,
-    events: { type: string; name: string; time: number; meta?: string }[]
+    events: {
+      type: string;
+      ancestorHash: string;
+      name: string;
+      time: number;
+      meta?: string;
+    }[]
   ) {
     const db = await this.getDb();
 
     await Promise.all(
       events.map(event => {
-        const { type, name, time, meta } = event;
+        const { type, ancestorHash, name, time, meta } = event;
         db.run(
-          SQL`INSERT INTO Events VALUES (${runHash}, ${type}, ${name}, ${time}, ${meta})`
+          SQL`INSERT INTO Events VALUES (
+            ${runHash}, 
+            ${ancestorHash}, 
+            ${type}, 
+            ${name}, 
+            ${time}, 
+            ${meta}
+          )`
         );
       })
     );
@@ -67,6 +80,16 @@ export class OakDB {
       path
     FROM Logs
     WHERE Logs.rowid = ${rowid}`);
+    await db.close();
+    return result;
+  }
+
+  async getRunById(hash: string) {
+    const db = await this.getDb();
+    const result = await db.get(SQL`SELECT 
+      hash
+    FROM Runs
+    WHERE Runs.hash = ${hash}`);
     await db.close();
     return result;
   }
@@ -190,9 +213,13 @@ export class OakDB {
       Array.from(cellHashMap).map(
         ([cellName, { cellHash, ancestorHash, cellRefs }]) => {
           return db.run(
-            SQL`INSERT INTO Cells VALUES (${oakfileHash}, ${cellHash}, ${ancestorHash}, ${cellName}, ${JSON.stringify(
-              cellRefs
-            )})`
+            SQL`INSERT INTO Cells VALUES (
+              ${oakfileHash}, 
+              ${cellHash}, 
+              ${ancestorHash}, 
+              ${cellName}, 
+              ${JSON.stringify(cellRefs)}
+            )`
           );
         }
       )
@@ -248,6 +275,7 @@ async function initDb(db: Database) {
     db.run(
       `CREATE TABLE Events(
             run TEXT,
+            ancestorHash TEXT,
             type TEXT,
             name TEXT,
             time INTEGER,
