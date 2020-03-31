@@ -1,5 +1,5 @@
 import { c } from "./sub/Oakfile";
 
-d = task({ target: "d", run: d => shell`cat ${c} > ${d}` });
+d = new Task({ target: "d", run: d => shell`cat ${c} > ${d}` });
 
-f = task({ target: "f", run: f => shell`echo -n "fff" > ${f}` });
+f = new Task({ target: "f", run: f => shell`echo -n "fff" > ${f}` });

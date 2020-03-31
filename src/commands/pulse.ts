@@ -66,7 +66,7 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
       command: () => (script, args, out) => script,
       /*task: ()=>(args:{run, watch, target, })=>{
         const stat = getStat()
-        const t = new Task(...args);
+        const t = new Task({...args);
         return new PulseTask()
       }*/
     })

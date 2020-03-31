@@ -1,2 +1,2 @@
 export { default as Library } from "./library";
-export const LibraryKeys = new Set(["task", "shell", "command"]);
+export const LibraryKeys = new Set(["Task", "shell", "command"]);

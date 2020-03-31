@@ -8,62 +8,62 @@ f  g
 h
 */
 
-a = task({
-    target: 'a',
-    run: a => shell`echo -n "a" > ${a}`
-})
+a = new Task({
+  target: "a",
+  run: a => shell`echo -n "a" > ${a}`
+});
 
-b = task({
-    target: 'b',
-    run: b => shell`echo -n "b" > ${b}`
-})
+b = new Task({
+  target: "b",
+  run: b => shell`echo -n "b" > ${b}`
+});
 
-c = task({
-    target: 'c',
-    run: c => shell`echo -n "c" > ${c}`
-})
+c = new Task({
+  target: "c",
+  run: c => shell`echo -n "c" > ${c}`
+});
 
-x = task({
-    target: 'x',
-    run: x => shell`echo -n "x" > ${x}`
-})
+x = new Task({
+  target: "x",
+  run: x => shell`echo -n "x" > ${x}`
+});
 
-y = task({
-    target: 'y',
-    run: y => shell`echo -n "y" > ${y}`
-})
+y = new Task({
+  target: "y",
+  run: y => shell`echo -n "y" > ${y}`
+});
 
-m = task({
-    target: 'm',
-    run: m => shell`echo -n "m" > ${m}`
-})
+m = new Task({
+  target: "m",
+  run: m => shell`echo -n "m" > ${m}`
+});
 
-d = task({
-    target: 'd',
-    run: d => shell`cat ${a} > ${d}`
-})
+d = new Task({
+  target: "d",
+  run: d => shell`cat ${a} > ${d}`
+});
 
-e = task({
-    target: 'e',
-    run: e => shell`cat ${b} ${c} > ${e}`
-})
+e = new Task({
+  target: "e",
+  run: e => shell`cat ${b} ${c} > ${e}`
+});
 
-z = task({
-    target: 'z',
-    run: z => shell`cat ${x} ${y} > ${z}`
-})
+z = new Task({
+  target: "z",
+  run: z => shell`cat ${x} ${y} > ${z}`
+});
 
-f = task({
-    target: 'f',
-    run: f => shell`cat ${d} > ${f}`
-})
+f = new Task({
+  target: "f",
+  run: f => shell`cat ${d} > ${f}`
+});
 
-g = task({
-    target: 'g',
-    run: g => shell`cat ${e} > ${g}`
-})
+g = new Task({
+  target: "g",
+  run: g => shell`cat ${e} > ${g}`
+});
 
-h = task({
-    target: 'h',
-    run: h => shell`cat ${f} ${g} > ${h}`
-})
+h = new Task({
+  target: "h",
+  run: h => shell`cat ${f} ${g} > ${h}`
+});

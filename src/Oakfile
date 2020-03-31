@@ -1,35 +1,34 @@
-a = task({
-    target: 'temp/a.txt',
-    run: a => shell`sleep 1 && echo "hello its a! " > ${a}`
-})
+a = new Task({
+  target: "temp/a.txt",
+  run: a => shell`sleep 1 && echo "hello its a! " > ${a}`,
+});
 
+b = new Task({
+  target: "temp/b.txt",
+  run: b => shell`sleep 1.5 && echo "hello now its b! " > ${b}`,
+});
 
-b = task({
-    target: 'temp/b.txt',
-    run: b => shell`sleep 1.5 && echo "hello now its b! " > ${b}`
-})
+c = new Task({
+  target: "temp/c.txt",
+  run: c => shell`sleep 1 && cat ${a} ${b} > ${c}`,
+});
 
-c = task({
-    target: 'temp/c.txt',
-    run: c => shell`sleep 1 && cat ${a} ${b} > ${c}`
-})
+d = new Task({
+  target: "temp/d.txt",
+  run: d => shell`sleep 1 && cat ${c} > ${d}`,
+});
 
-d = task({
-    target: 'temp/d.txt',
-    run: d=> shell`sleep 1 && cat ${c} > ${d}`
-})
+e = new Task({
+  target: "temp/e.txt",
+  run: e => shell`sleep 1 && cat ${d} > ${e}`,
+});
 
-e = task({
-    target: 'temp/e.txt',
-    run: e=> shell`sleep 1 && cat ${d} > ${e}`
-})
+f = new Task({
+  target: "temp/f.txt",
+  run: f => shell`sleep 1 && cat ${e} > ${f}`,
+});
 
-f = task({
-    target: 'temp/f.txt',
-    run: f=> shell`sleep 1 && cat ${e} > ${f}`
-})
-
-g = task({
-    target: 'temp/g.txt',
-    run: g=> shell`sleep 1 && cat ${e} ${f} > ${g}`
-})
+g = new Task({
+  target: "temp/g.txt",
+  run: g => shell`sleep 1 && cat ${e} ${f} > ${g}`,
+});

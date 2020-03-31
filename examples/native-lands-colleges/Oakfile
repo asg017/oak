@@ -1,24 +1,24 @@
 cscFile = "CollegeScorecard_Raw_Data/MERGED2015_16_PP.csv";
 
-nativelands = task({
+nativelands = new Task({
   target: "indigenousTerritories.geojson",
   run: nativelands =>
     shell`wget -O ${nativelands} https://native-land.ca/coordinates/indigenousTerritories.json`
 });
 
-zipped_csc = task({
+zipped_csc = new Task({
   target: "CollegeScorecard_Raw_Data.zip",
   run: zipped_csc =>
     shell`wget -O ${zipped_csc} https://ed-public-download.app.cloud.gov/downloads/CollegeScorecard_Raw_Data.zip`
 });
 
-csc15 = task({
+csc15 = new Task({
   target: "csc15.csv",
   run: csc15 => shell`unzip -j ${zipped_csc} ${cscFile} -d .
 mv ${cscFile} ${csc15}`
 });
 
-known_colleges = task({
+known_colleges = new Task({
   target: "colleges.csv",
   run: known_colleges =>
     shell`pipenv run python filter_colleges.py --input=${csc15} --output=${known_colleges}`

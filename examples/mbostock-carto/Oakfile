@@ -1,19 +1,19 @@
 fips = "48";
 year = "2014";
 
-raw_state_zip = task({
+raw_state_zip = new Task({
   target: "raw_state.zip",
   run: raw_state_zip =>
     shell`wget -O ${raw_state_zip} 'http://www2.census.gov/geo/tiger/GENZ2014/shp/cb_${year}_${fips}_tract_500k.zip'`
 });
 
-raw_state_dir = task({
+raw_state_dir = new Task({
   target: "raw_state",
   run: raw_state_dir =>
     shell`mkdir -p ${raw_state_dir} && unzip -d ${raw_state_dir} ${raw_state_zip}`
 });
 
-state_json = task({
+state_json = new Task({
   target: "state.json",
   run: state_json =>
     shell`shp2json ${raw_state_dir}/cb_${year}_${fips}_tract_500k.shp -o ${state_json}`
@@ -22,37 +22,37 @@ state_json = task({
 projection =
   "d3.geoConicEqualArea().parallels([34, 40.5]).rotate([120, 0]).fitSize([960, 960], d)";
 
-state_albers = task({
+state_albers = new Task({
   target: "state-albers.json",
   run: state_albers =>
     shell`geoproject --out ${state_albers} '${projection}' ${state_json}`
 });
 
-state_albers_svg = task({
+state_albers_svg = new Task({
   target: "state-albers.svg",
   run: state_albers_svg =>
     shell`geo2svg --out ${state_albers_svg} -w 960 -h 960 ${state_albers}`
 });
 
-state_albers_ndjson = task({
+state_albers_ndjson = new Task({
   target: "state-albers.ndjson",
   run: state_albers_ndjson =>
     shell`ndjson-split 'd.features' < ${state_albers} > ${state_albers_ndjson}`
 });
 
-state_albers_id = task({
+state_albers_id = new Task({
   target: "state-albers-id.ndjson",
   run: state_albers_id =>
     shell`ndjson-map 'd.id = d.properties.GEOID.slice(2), d' < ${state_albers_ndjson} > ${state_albers_id}`
 });
 
-census_pop_tract_raw = task({
+census_pop_tract_raw = new Task({
   target: "census_pop_tract.json",
   run: census_tract_raw =>
     shell`wget -O ${census_tract_raw} "https://api.census.gov/data/2018/acs/acs5?get=B01003_001E&for=tract:*&in=state:${fips}"`
 });
 
-census_pop_tract_ndjson = task({
+census_pop_tract_ndjson = new Task({
   target: "census_pop_tract.ndjson",
   run: census_pop_tract_ndjson =>
     shell`ndjson-cat ${census_pop_tract_raw} \
@@ -61,70 +61,70 @@ census_pop_tract_ndjson = task({
     > ${census_pop_tract_ndjson}`
 });
 
-state_pop_join_ndjson = task({
+state_pop_join_ndjson = new Task({
   target: "state-albers-census-pop-join.ndjson",
   run: state_pop_join_ndjson =>
     shell`ndjson-join 'd.id' ${state_albers_id} ${census_pop_tract_ndjson} > ${state_pop_join_ndjson}`
 });
 
-state_density_ndjson = task({
+state_density_ndjson = new Task({
   target: "state-albers-density.ndjson",
   run: state_density_ndjson =>
     shell`ndjson-map 'd[0].properties = {density: Math.floor(d[1].B01003 / d[0].properties.ALAND * 2589975.2356)}, d[0]' \
     < ${state_pop_join_ndjson} > ${state_density_ndjson} `
 });
 
-state_density_json = task({
+state_density_json = new Task({
   target: "state-albers-density.json",
   run: state_density_json =>
     shell`ndjson-reduce < ${state_density_ndjson} | ndjson-map '{type: "FeatureCollection", features:d}' > ${state_density_json}`
 });
 
-state_density_color_ndjson = task({
+state_density_color_ndjson = new Task({
   target: "state-albers-color.ndjson",
   run: state_density_color_ndjson => shell`ndjson-map -r d3 '(d.properties.fill = d3.scaleSequential(d3.interpolateViridis).domain([0, 4000])(d.properties.density), d)' \
     < ${state_density_ndjson} \
     > ${state_density_color_ndjson}`
 });
 
-state_density_color_svg = task({
+state_density_color_svg = new Task({
   target: "state-albers-color.svg",
   run: state_density_color_svg => shell`geo2svg -n --stroke none -p 1 -w 960 -h 960 \
     < ${state_density_color_ndjson} \
     > ${state_density_color_svg}`
 });
 
-state_tracts_topo = task({
+state_tracts_topo = new Task({
   target: "state-tracts-topo.json",
   run: state_tracts_topo =>
     shell`geo2topo -n --out ${state_tracts_topo} tracts=${state_density_ndjson}`
 });
 
-state_tracts_simple_topo = task({
+state_tracts_simple_topo = new Task({
   target: "state-tracts-simple-topo.json",
   run: state_tracts_simple_topo =>
     shell`toposimplify -p 1 -f --out ${state_tracts_simple_topo} ${state_tracts_topo}`
 });
 
-state_tracts_quantized_topo = task({
+state_tracts_quantized_topo = new Task({
   target: "state-tracts-quantized-topo.json",
   run: state_tracts_quantized_topo =>
     shell`topoquantize --out ${state_tracts_quantized_topo} 1e5 ${state_tracts_simple_topo}`
 });
 
-state_county_merge_topo = task({
+state_county_merge_topo = new Task({
   target: "state-merge-topo.json",
   run: state_county_merge_topo =>
     shell`topomerge -k 'd.id.slice(0,3)' --out ${state_county_merge_topo} counties=tracts ${state_tracts_quantized_topo}`
 });
 
-state_topo = task({
+state_topo = new Task({
   target: "state-topo.json",
   run: state_topo =>
     shell`topomerge --mesh -f 'a !== b' --out ${state_topo} counties=counties ${state_county_merge_topo}`
 });
 
-state_density_color_sqrt_svg = task({
+state_density_color_sqrt_svg = new Task({
   target: "state-albers-color-sqrt.svg",
   run: state_density_color_sqrt_svg => shell`topo2geo --in ${state_topo} tracts=- \
   | ndjson-map -r d3 'z = d3.scaleSequential(d3.interpolateViridis).domain([0, 100]), d.features.forEach(f => f.properties.fill = z(Math.sqrt(f.properties.density))), d' \
@@ -132,7 +132,7 @@ state_density_color_sqrt_svg = task({
   | geo2svg -n --stroke none -p 1 -w 960 -h 960 --out ${state_density_color_sqrt_svg}`
 });
 
-state_density_color_log_svg = task({
+state_density_color_log_svg = new Task({
   target: "state-albers-color-log.svg",
   run: state_density_color_log_svg => shell`topo2geo --in ${state_topo} tracts=- \
   | ndjson-map -r d3 'z = d3.scaleLog().domain(d3.extent(d.features.filter(f => f.properties.density), f => f.properties.density)).interpolate(() => d3.interpolateViridis), d.features.forEach(f => f.properties.fill = z(f.properties.density)), d'  \
@@ -140,7 +140,7 @@ state_density_color_log_svg = task({
   | geo2svg -n --stroke none -p 1 -w 960 -h 960 --out ${state_density_color_log_svg}`
 });
 
-state_density_color_quantile_svg = task({
+state_density_color_quantile_svg = new Task({
   target: "state-albers-color-quantile.svg",
   run: state_density_color_quantile_svg => shell`topo2geo --in ${state_topo} tracts=- \
   | ndjson-map -r d3 'z = d3.scaleQuantile().domain(d.features.map(f => f.properties.density)).range(d3.quantize(d3.interpolateViridis, 256)), d.features.forEach(f => f.properties.fill = z(f.properties.density)), d'  \
@@ -148,7 +148,7 @@ state_density_color_quantile_svg = task({
   | geo2svg -n --stroke none -p 1 -w 960 -h 960 --out ${state_density_color_quantile_svg}`
 });
 
-state_density_color_threshold_svg = task({
+state_density_color_threshold_svg = new Task({
   target: "state-albers-color-threshold.svg",
   run: state_density_color_threshold_svg => shell`topo2geo --in ${state_topo} tracts=- \
   | ndjson-map -r d3 -r d3-scale-chromatic 'z = d3.scaleThreshold().domain([1, 10, 50, 200, 500, 1000, 2000, 4000]).range(d3.schemeOrRd[9]), d.features.forEach(f => f.properties.fill = z(f.properties.density)), d'  \
@@ -156,7 +156,7 @@ state_density_color_threshold_svg = task({
   | geo2svg -n --stroke none -p 1 -w 960 -h 960 --out ${state_density_color_threshold_svg}`
 });
 
-state_svg = task({
+state_svg = new Task({
   target: "state.svg",
   run: state_svg => shell`(topo2geo --in ${state_topo} tracts=- \
   | ndjson-map -r d3 -r d3-scale-chromatic 'z = d3.scaleThreshold().domain([1, 10, 50, 200, 500, 1000, 2000, 4000]).range(d3.schemeOrRd[9]), d.features.forEach(f => f.properties.fill = z(f.properties.density)), d' \
