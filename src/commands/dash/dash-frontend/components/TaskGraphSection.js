@@ -32,7 +32,7 @@ function createDag(tasks, controls) {
   tasks.map(cell => {
     (cell.taskDeps || []).map(dep => {
       if (!nodeMap.has(cell.name) || !nodeMap.has(dep))
-        throw Error(`${cell.name} or ${dep} not in nodeMap. ${nodeMap.keys()}`);
+        throw Error(`${cell.name} or ${dep} not in nodeMap.`);
       graph.setEdge(nodeMap.get(dep), nodeMap.get(cell.name), {
         fromStatus: graph.node(nodeMap.get(dep)).status,
         toStatus: graph.node(nodeMap.get(cell.name)).status,

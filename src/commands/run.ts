@@ -7,16 +7,16 @@ import {
   hashFile,
   hashString,
   getStat,
-  CellSignature,
 } from "../utils";
 import { dirname, join } from "path";
 import { EventEmitter } from "events";
 import pino from "pino";
 import { fileArgument } from "../cli-utils";
 import { mkdirsSync } from "fs-extra";
-import { OakDB } from "../db";
+import { OakDB, getAndMaybeIntializeOakDB } from "../db";
 import Task from "../Task";
 import { createWriteStream, createFileSync, readFileSync } from "fs-extra";
+import decorator from "../decorator";
 
 async function runTask(
   oakfileHash: string,
@@ -79,141 +79,6 @@ async function runTask(
   });
 }
 
-function runCellDecorator(
-  oakfileHash: string,
-  runHash: string,
-  logger: pino.Logger,
-  logDirectory: string,
-  oakDB: OakDB
-) {
-  return function(
-    cellFunction: (...any) => any,
-    cellName: string,
-    cellReferences: string[],
-    cellHashMap: Map<string, CellSignature>,
-    baseModuleDir: string
-  ): (...any) => any {
-    return async function(...dependencies) {
-      // dont try and get Task for cell depends like `cell` or `shell`
-      let cellDependents = [];
-      dependencies.map(dependency => {
-        if (dependency instanceof Task) {
-          cellDependents.push(dependency);
-        }
-      });
-      let currCell = await cellFunction(...dependencies);
-
-      if (currCell instanceof Task) {
-        await currCell.updateBasePath(baseModuleDir);
-
-        const watchFiles = currCell.watch;
-        const watchStats = await Promise.all(
-          watchFiles.map(async watchFile => {
-            const stat = await getStat(watchFile);
-            return { path: watchFile, stat };
-          })
-        );
-
-        // run recipe if no file or if it's out of date
-        if (currCell.stat === null) {
-          logger.info(
-            "oak-run decorator",
-            `${formatPath(currCell.target)} - Doesn't exist - running recipe...`
-          );
-          await runTask(
-            oakfileHash,
-            runHash,
-            cellName,
-            oakDB,
-            logger,
-            currCell,
-            logDirectory,
-            cellHashMap.get(cellName).ancestorHash
-          );
-          currCell.stat = await getStat(currCell.target);
-          return currCell;
-        }
-        const outOfDateCellDependencies = cellDependents.filter(
-          c => currCell.stat.mtime <= c.stat.mtime
-        );
-        const outOfDateWatchFiles = watchStats.filter(
-          ({ stat }) => currCell.stat.mtime <= stat.mtime
-        );
-        if (
-          outOfDateCellDependencies.length > 0 ||
-          outOfDateWatchFiles.length > 0
-        ) {
-          logger.info(
-            "oak-run decorator",
-            `${formatPath(currCell.target)} - out of date:`
-          );
-          if (outOfDateCellDependencies.length > 0)
-            logger.info(
-              "oak-run decorator",
-              `Cell Dependencies: ${outOfDateCellDependencies
-                .map(d => `\t${formatPath(d.target)}`)
-                .join(",")}`
-            );
-          if (outOfDateWatchFiles.length > 0)
-            logger.info(
-              "oak-run decorator",
-              `Watch Files: ${outOfDateWatchFiles
-                .map(d => `\t${formatPath(d.path)}`)
-                .join(",")}`
-            );
-
-          await runTask(
-            oakfileHash,
-            runHash,
-            cellName,
-            oakDB,
-            logger,
-            currCell,
-            logDirectory,
-            cellHashMap.get(cellName).ancestorHash
-          );
-          currCell.stat = await getStat(currCell.target);
-          return currCell;
-        }
-
-        const cellHashLookup = await oakDB.findMostRecentCellHash(
-          cellHashMap.get(cellName).ancestorHash
-        );
-        if (
-          !cellHashLookup ||
-          cellHashLookup.mtime > currCell.stat.mtime.getTime()
-        ) {
-          logger.info(
-            "oak-run decorator",
-            `${formatPath(
-              currCell.target
-            )} - out of date because direct cell defintion changed since last Oakfile.`
-          );
-          await runTask(
-            oakfileHash,
-            runHash,
-            cellName,
-            oakDB,
-            logger,
-            currCell,
-            logDirectory,
-            cellHashMap.get(cellName).ancestorHash
-          );
-          currCell.stat = await getStat(currCell.target);
-          return currCell;
-        } else {
-          logger.info(
-            "oak-run decorator",
-            `${formatPath(currCell.target)} - not out of date `
-          );
-          return currCell;
-        }
-      }
-      return currCell;
-    };
-  };
-}
-
 export async function oak_run(args: {
   filename: string;
   targets: readonly string[];
@@ -223,7 +88,7 @@ export async function oak_run(args: {
   const targetSet = new Set(args.targets);
   const oakfilePath = fileArgument(args.filename);
   const oakfileStat = await getStat(oakfilePath);
-  const oakDB = new OakDB(oakfilePath);
+  const oakDB = await getAndMaybeIntializeOakDB(oakfilePath);
 
   const startTime = new Date();
 
@@ -238,11 +103,91 @@ export async function oak_run(args: {
     `${oakfileHash}-${startTime.getTime()}`
   );
   mkdirsSync(logDirectory);
-  const { define, cellHashMap } = await compiler.file(
-    oakfilePath,
-    runCellDecorator(oakfileHash, runHash, logger, logDirectory, oakDB),
-    null
+
+  const d = decorator(
+    {
+      onTaskUpToDate: (
+        t,
+        { cellName, cellHashMap, cellFunction, cellReferences, baseModuleDir }
+      ) => {
+        logger.info(
+          "oak-run decorator",
+          `${formatPath(t.target)} - not out of date `
+        );
+        return t;
+      },
+      onTaskCellDefinitionChanged: async (
+        t,
+        { cellName, cellHashMap, cellFunction, cellReferences, baseModuleDir }
+      ) => {
+        logger.info(
+          "oak-run decorator",
+          `${formatPath(
+            t.target
+          )} - out of date because direct cell defintion changed since last Oakfile.`
+        );
+        await runTask(
+          oakfileHash,
+          runHash,
+          cellName,
+          oakDB,
+          logger,
+          t,
+          logDirectory,
+          cellHashMap.get(cellName).ancestorHash
+        );
+        t.stat = await getStat(t.target);
+        return t;
+      },
+      onTaskDependencyChanged: async (
+        t,
+        { cellName, cellHashMap, cellFunction, cellReferences, baseModuleDir }
+      ) => {
+        logger.info(
+          "oak-run decorator",
+          `${formatPath(
+            t.target
+          )} - out of date because one or more of its dependencies are out of date.`
+        );
+        await runTask(
+          oakfileHash,
+          runHash,
+          cellName,
+          oakDB,
+          logger,
+          t,
+          logDirectory,
+          cellHashMap.get(cellName).ancestorHash
+        );
+        t.stat = await getStat(t.target);
+        return t;
+      },
+      onTaskTargetMissing: async (
+        t,
+        { cellName, cellHashMap, cellFunction, cellReferences, baseModuleDir }
+      ) => {
+        logger.info(
+          "oak-run decorator",
+          `${formatPath(t.target)} - Doesn't exist - running recipe...`
+        );
+        await runTask(
+          oakfileHash,
+          runHash,
+          cellName,
+          oakDB,
+          logger,
+          t,
+          logDirectory,
+          cellHashMap.get(cellName).ancestorHash
+        );
+        t.stat = await getStat(t.target);
+        return t;
+      },
+    },
+    oakDB
   );
+
+  const { define, cellHashMap } = await compiler.file(oakfilePath, d, null);
   // on succesful compile, add to oak db
 
   await oakDB.registerOakfile(

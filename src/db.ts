@@ -15,20 +15,33 @@ type DBCell = {
   references: string;
 };
 
+export async function getAndMaybeIntializeOakDB(oakfilePath: string) {
+  const oakMetedataDir = join(dirname(oakfilePath), ".oak");
+  mkdirsSync(oakMetedataDir);
+  const dbPath = join(oakMetedataDir, "oak.db");
+  const dbExists = existsSync(dbPath);
+  const db = await sqlite.open(dbPath, { promise: Promise });
+  if (!dbExists) {
+    await initDb(db);
+  }
+  await db.close();
+  return new OakDB(oakfilePath);
+}
+
 export class OakDB {
   dbPath: string;
 
   constructor(oakfilePath: string) {
-    const oakMetedataDir = join(dirname(oakfilePath), ".oak");
-    mkdirsSync(oakMetedataDir);
-    this.dbPath = join(oakMetedataDir, "oak.db");
+    this.dbPath = join(dirname(oakfilePath), ".oak", "oak.db");
   }
 
   async getDb(): Promise<Database> {
     const dbExists = existsSync(this.dbPath);
     const db = await sqlite.open(this.dbPath, { promise: Promise });
     if (!dbExists) {
-      await initDb(db);
+      throw Error(
+        `Oak Database at ${this.dbPath} does not exist. You probably have to use getAndMaybeIntializeOakDB.`
+      );
     }
     return db;
   }
@@ -230,6 +243,7 @@ export class OakDB {
 }
 
 async function initDb(db: Database) {
+  console.log("initting...");
   await db.run(
     `CREATE TABLE Oakfiles(
           hash TEXT PRIMARY KEY, 
