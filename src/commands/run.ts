@@ -106,20 +106,14 @@ export async function oak_run(args: {
 
   const d = decorator(
     {
-      onTaskUpToDate: (
-        t,
-        { cellName, cellHashMap, cellFunction, cellReferences, baseModuleDir }
-      ) => {
+      onTaskUpToDate: (t, decoratorArgs) => {
         logger.info(
           "oak-run decorator",
           `${formatPath(t.target)} - not out of date `
         );
         return t;
       },
-      onTaskCellDefinitionChanged: async (
-        t,
-        { cellName, cellHashMap, cellFunction, cellReferences, baseModuleDir }
-      ) => {
+      onTaskCellDefinitionChanged: async (t, decoratorArgs) => {
         logger.info(
           "oak-run decorator",
           `${formatPath(
@@ -129,20 +123,17 @@ export async function oak_run(args: {
         await runTask(
           oakfileHash,
           runHash,
-          cellName,
+          decoratorArgs.cellName,
           oakDB,
           logger,
           t,
           logDirectory,
-          cellHashMap.get(cellName).ancestorHash
+          decoratorArgs.cellSignature.ancestorHash
         );
         t.stat = await getStat(t.target);
         return t;
       },
-      onTaskDependencyChanged: async (
-        t,
-        { cellName, cellHashMap, cellFunction, cellReferences, baseModuleDir }
-      ) => {
+      onTaskDependencyChanged: async (t, decoratorArgs) => {
         logger.info(
           "oak-run decorator",
           `${formatPath(
@@ -152,20 +143,17 @@ export async function oak_run(args: {
         await runTask(
           oakfileHash,
           runHash,
-          cellName,
+          decoratorArgs.cellName,
           oakDB,
           logger,
           t,
           logDirectory,
-          cellHashMap.get(cellName).ancestorHash
+          decoratorArgs.cellSignature.ancestorHash
         );
         t.stat = await getStat(t.target);
         return t;
       },
-      onTaskTargetMissing: async (
-        t,
-        { cellName, cellHashMap, cellFunction, cellReferences, baseModuleDir }
-      ) => {
+      onTaskTargetMissing: async (t, decoratorArgs) => {
         logger.info(
           "oak-run decorator",
           `${formatPath(t.target)} - Doesn't exist - running recipe...`
@@ -173,12 +161,12 @@ export async function oak_run(args: {
         await runTask(
           oakfileHash,
           runHash,
-          cellName,
+          decoratorArgs.cellName,
           oakDB,
           logger,
           t,
           logDirectory,
-          cellHashMap.get(cellName).ancestorHash
+          decoratorArgs.cellSignature.ancestorHash
         );
         t.stat = await getStat(t.target);
         return t;

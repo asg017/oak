@@ -12,7 +12,7 @@ function cleanUp() {
 }
 
 test.onFinish(() => {
-  //cleanUp();
+  cleanUp();
 });
 
 cleanUp();
@@ -52,7 +52,7 @@ test("oak-pulse hello", async t => {
   t.true(a !== null);
   t.true(a.status === "up");
   t.true(c !== null);
-  t.skip(); //.true(c.status === "out");
+  t.true(c.status === "out");
 
   t.end();
 });

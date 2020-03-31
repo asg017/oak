@@ -166,7 +166,7 @@ async function createOakDefinition(
                 cellFunction,
                 cellName,
                 cellReferences,
-                cellHashMap,
+                cellHashMap.get(cellName),
                 baseModuleDir
               )
             : cellFunction

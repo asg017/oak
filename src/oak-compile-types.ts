@@ -9,7 +9,7 @@ export type Decorator = (
   cellFunction: (...any) => any,
   cellName: string,
   cellReferences: string[],
-  cellHashMap: Map<string, CellSignature>,
+  cellHashMap: CellSignature,
   baseModuleDir: string
 ) => (...any) => any;
 

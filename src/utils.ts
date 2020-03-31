@@ -18,6 +18,7 @@ export type CellSignature = {
   cellHash: string;
   cellRefs: string[];
   ancestorHash: string;
+  cellContents: string;
 };
 
 type Node = {
@@ -114,7 +115,7 @@ export function parsedCellHashMap(
           return map.get(ref).ancestorHash;
         })}`
       );
-      map.set(cellName, { cellHash, cellRefs, ancestorHash });
+      map.set(cellName, { cellHash, cellRefs, ancestorHash, cellContents });
     }
     if (type === "import") {
       const cellHash = hashString(cellContents);
@@ -128,7 +129,7 @@ export function parsedCellHashMap(
           return map.get(ref).ancestorHash;
         })}${otherOakfileHash}`
       );
-      map.set(cellName, { cellHash, cellRefs, ancestorHash });
+      map.set(cellName, { cellHash, cellRefs, ancestorHash, cellContents });
     }
   }
   return map;

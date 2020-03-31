@@ -7,7 +7,7 @@ type TaskHookDecoratorArguments = {
   cellFunction: (...any) => any;
   cellName: string;
   cellReferences: string[];
-  cellHashMap: Map<string, CellSignature>;
+  cellSignature: CellSignature;
   baseModuleDir: string;
 };
 type TaskHookCellArguments = any[];
@@ -33,7 +33,7 @@ export default function decorator(
     cellFunction: (...any) => any,
     cellName: string,
     cellReferences: string[],
-    cellHashMap: Map<string, CellSignature>,
+    cellSignature: CellSignature,
     baseModuleDir: string
   ): (...any) => any {
     return async function(...dependencies) {
@@ -67,14 +67,14 @@ export default function decorator(
         ({ stat }) => currCell.stat && currCell.stat.mtime <= stat.mtime
       );
       const cellHashLookup = await oakDB.findMostRecentCellHash(
-        cellHashMap.get(cellName).ancestorHash
+        cellSignature.ancestorHash
       );
 
       const decoratorArgs = {
         cellFunction,
         cellName,
         cellReferences,
-        cellHashMap,
+        cellSignature,
         baseModuleDir,
       };
       // no output target
