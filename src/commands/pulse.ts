@@ -8,6 +8,7 @@ import decorator from "../decorator";
 import { getAndMaybeIntializeOakDB, OakDB } from "../db";
 import { Stats } from "fs-extra";
 import { join } from "path";
+import Task from "../Task";
 
 const logger = pino();
 
@@ -26,12 +27,7 @@ type PulseResults = {
   tasks: PulseTaskResult[];
 };
 
-class PulseTask {
-  target: string;
-  stat: Stats | null;
-  run: (any) => any;
-  watch: string[];
-
+class PulseTask extends Task {
   pulse?: {
     name: string;
     taskDeps: string[];
@@ -40,38 +36,36 @@ class PulseTask {
     taskType: string;
     bytes: number;
     status: PulseTaskStatus;
+    cellCode: string;
   };
 
   constructor(params: { target: string; run: (any) => any; watch? }) {
-    let { target, run, watch = [] } = params;
-    watch = Array.isArray(watch) ? watch : [watch];
-
-    this.target = target;
-    this.stat = null;
-    this.run = run;
-    this.watch = watch;
+    super(params);
     this.pulse = null;
   }
 
   addPulse(
     name: string,
     taskDeps: string[],
+    cellCode: string,
     target: string,
     mtime: number,
     taskType: string,
     bytes: number,
     status: PulseTaskStatus
   ) {
-    this.pulse = { name, taskDeps, target, mtime, taskType, bytes, status };
+    this.pulse = {
+      name,
+      taskDeps,
+      cellCode,
+      target,
+      mtime,
+      taskType,
+      bytes,
+      status,
+    };
   }
-  absPath(basePath: string) {
-    return join(basePath, this.target);
-  }
-  async updateBasePath(newBasePath: string) {
-    this.target = this.absPath(newBasePath);
-    this.stat = await getStat(this.target);
-  }
-  runTask() {
+  getType(): string {
     return this.run(this.target);
   }
 }
@@ -93,13 +87,14 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
         decoratorArgs,
         cellDependencies
       ) => {
-        const taskType = await pt.runTask();
+        const taskType = pt.getType();
         const taskDeps = cellDependencies
           .filter(d => d instanceof PulseTask)
           .map(t => t.pulse.name);
         pt.addPulse(
           decoratorArgs.cellName,
           taskDeps,
+          decoratorArgs.cellSignature.cellContents,
           pt.target,
           pt.stat.mtime.getTime(),
           taskType,
@@ -113,13 +108,14 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
         decoratorArgs,
         cellDependencies
       ) => {
-        const taskType = await pt.runTask();
+        const taskType = pt.getType();
         const taskDeps = cellDependencies
           .filter(d => d instanceof PulseTask)
           .map(t => t.pulse.name);
         pt.addPulse(
           decoratorArgs.cellName,
           taskDeps,
+          decoratorArgs.cellSignature.cellContents,
           pt.target,
           pt.stat.mtime.getTime(),
           taskType,
@@ -133,7 +129,7 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
         decoratorArgs,
         cellDependencies
       ) => {
-        const taskType = await pt.runTask();
+        const taskType = pt.getType();
 
         const taskDeps = cellDependencies
           .filter(d => d instanceof PulseTask)
@@ -141,6 +137,7 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
         pt.addPulse(
           decoratorArgs.cellName,
           taskDeps,
+          decoratorArgs.cellSignature.cellContents,
           pt.target,
           pt.stat.mtime.getTime(),
           taskType,
@@ -154,13 +151,14 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
         decoratorArgs,
         cellDependencies
       ) => {
-        const taskType = await pt.runTask();
+        const taskType = pt.getType();
         const taskDeps = cellDependencies
           .filter(d => d instanceof PulseTask)
           .map(t => t.pulse.name);
         pt.addPulse(
           decoratorArgs.cellName,
           taskDeps,
+          decoratorArgs.cellSignature.cellContents,
           pt.target,
           0,
           taskType,
@@ -179,13 +177,14 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
         return taskDepsNotFresh.length > 0;
       },
       value: async (pt: PulseTask, decoratorArgs, cellDependencies) => {
-        const taskType = await pt.runTask();
+        const taskType = pt.getType();
         const taskDeps = cellDependencies
           .filter(d => d instanceof PulseTask)
           .map(t => t.pulse.name);
         pt.addPulse(
           decoratorArgs.cellName,
           taskDeps,
+          decoratorArgs.cellSignature.cellContents,
           pt.target,
           pt.stat?.mtime?.getTime(),
           taskType,
@@ -222,15 +221,7 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
   await runtime._compute();
   await Promise.all(Array.from(cells).map(cell => m1.value(cell)));
   runtime.dispose();
-  return {
-    tasks: tasks
-      .map(t => t.pulse)
-      .map(pulse => {
-        const cell = parseResultsMap.get(pulse.name);
-        const cellCode = cell.input.substring(cell.start, cell.end);
-        return Object.assign(pulse, { cellCode });
-      }),
-  };
+  return { tasks };
 }
 
 export async function oak_pulse(args: { filename: string }): Promise<void> {

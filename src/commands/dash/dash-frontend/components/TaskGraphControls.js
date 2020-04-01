@@ -1,9 +1,11 @@
 import { h, Component } from "preact";
+import "./TaskGraphControls.less";
+
 export default class TaskGraphControls extends Component {
   render() {
     const { controls, onUpdate } = this.props;
     return (
-      <div>
+      <div className="taskgraphcontrols">
         <div>
           <div>rankdir</div>
           <select

@@ -4,15 +4,16 @@
 @taskgraphmeta-value-width: 500px;
 
 .taskgraphmeta {
-    width: @taskgraphmeta-width;
     margin: 0 auto;
     &-name {
-        font-size: 1.5rem;
-        font-weight: 650;
+    }
+    &-container {
+        display:grid;
+        grid-template-columns: auto auto;
     }
     &-table {
         font-size: 1.1rem;
-        width: @taskgraphmeta-width;
+        //width: @taskgraphmeta-width;
         margin: 0 auto;
     }
     &-row {
@@ -25,23 +26,18 @@
         overflow: auto;
     }
     &-code {
-        width: @taskgraphmeta-width;
-        border-radius: 1rem;
-        
-    }
-    &-code-header {
-        margin-top: 1rem;
-        font-size: 1.2rem;
-        font-weight: 600;
+        width: 100%;
+        border-radius: 1rem;   
     }
 }
 
 .CodeMirror {
+    font-size: 16px;
     border-radius: .2rem;
+    height: auto;
 }
 
 @media screen and (min-width: 1000px) {
     .taskgraphmeta {
-        margin-left: 1rem;
     }
 }

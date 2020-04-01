@@ -22,7 +22,7 @@ test("oak-pulse hello", async t => {
   t.true(result.tasks.length === 3);
   t.equals(result.tasks[0].status, "dne");
   t.equals(result.tasks[1].status, "dne");
-  t.equals(result.tasks[2].status, "upstream-out");
+  t.equals(result.tasks[2].status, "out-upstream");
 
   await oak_run({ filename: env("Oakfile"), targets: [] });
   result = await getPulse(env("Oakfile"));
@@ -50,8 +50,8 @@ test("oak-pulse hello", async t => {
   t.true(a !== null);
   t.true(c !== null);
   // a should be out of date bc oak didnt change the file.
-  t.equal(a.status, "out");
-  t.equal(c.status, "upstream-out");
+  t.equal(a.status, "out-dep");
+  t.equal(c.status, "out-upstream");
 
   t.end();
 });

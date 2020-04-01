@@ -30069,7 +30069,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.colorVariable = void 0;
 var colorVariable = new Map([// palette 1
 ["blue-dark", "#31666b"], ["blue-light", "#8bd9e3"], ["gold", "#f4c654"], ["red-light", "#f4362a"], ["red-dark", "#9b1617"], // status
-["dne", "#9b1617"], ["out", "#f4362a"], ["up", "#595"]]);
+["dne", "#9b1617"], ["out", "#f4362a"], ["out-dep", "#f4362a"], ["out-def", "#f4362a"], ["out-upstream", "#f4362a"], ["up", "#595"]]);
 exports.colorVariable = colorVariable;
 },{}],"components/TaskGraphNode.js":[function(require,module,exports) {
 "use strict";
@@ -30117,21 +30117,23 @@ function TaskGraphNodeContainer(props) {
   var node = props.node,
       hover = props.hover,
       selected = props.selected;
+  var pulse = node.pulse;
   return (0, _preact.h)("rect", {
     className: "taskgraphnode-container ".concat(selected || hover ? "taskgraphnode-container--".concat(selected ? "selected" : "hover") : ""),
     rx: 7.5,
     ry: 7.5,
     width: node.width,
     height: node.height,
-    stroke: _colors.colorVariable.get(node.status),
+    stroke: _colors.colorVariable.get(pulse.status),
     strokeWidth: 3
   });
 }
 
 function TaskGraphNodeStatusBar(props) {
   var node = props.node;
+  var pulse = node.pulse;
   return (0, _preact.h)("g", null, (0, _preact.h)("path", {
-    className: "taskgraphnode-status-bar taskgraphnode-status-bar-".concat(node.status),
+    className: "taskgraphnode-status-bar taskgraphnode-status-bar-".concat(pulse.status),
     d: "M0 7.5C0 3.35786 3.35786 0 7.5 0H9V".concat(node.height, "H7.5C3.35786 ").concat(node.height, " 0 ").concat(node.height - 3.35, " 0 ").concat(node.height - 7.5, "V7.5Z")
   }));
 }
@@ -30149,30 +30151,55 @@ function getIcon(type) {
 
 function TaskGraphNodeType(props) {
   var node = props.node;
+  var pulse = node.pulse;
   return (0, _preact.h)("g", {
     className: "taskgraphnode-type",
     transform: "translate(16, 8)"
   }, (0, _preact.h)("image", {
     width: 18,
     height: 18,
-    xlinkHref: "https://simpleicons.org/icons/".concat(getIcon(node.type), ".svg")
+    xlinkHref: "https://simpleicons.org/icons/".concat(getIcon(pulse.type), ".svg")
   }));
 }
 
 function TaskGraphNodeStatusLabel(props) {
   var node = props.node;
+  var pulse = node.pulse;
+  var status;
+
+  switch (pulse.status) {
+    case "up":
+      status = "Up to date";
+      break;
+
+    case "dne":
+      status = "Does not exist";
+      break;
+
+    case "out-dep":
+    case "out-def":
+    case "out-upstream":
+      status = "Out of date";
+      break;
+
+    default:
+      status = "".concat(pulse.status, " not recognized.");
+      break;
+  }
+
   return (0, _preact.h)("g", {
     className: "taskgraphnode-status-label",
     transform: "translate(16, ".concat(node.height - 10, ")")
-  }, (0, _preact.h)("text", null, (0, _preact.h)("tspan", null, node.mtime > 0 ? (0, _format.duration)(new Date(node.mtime)) : ""), (0, _preact.h)("tspan", null, node.mtime > 0 ? " - " : ""), (0, _preact.h)("tspan", null, node.status == "up" ? "Up to date" : node.status === "out" ? "Out of date" : "Does not exist")));
+  }, (0, _preact.h)("text", null, (0, _preact.h)("tspan", null, pulse.mtime > 0 ? (0, _format.duration)(new Date(pulse.mtime)) : ""), (0, _preact.h)("tspan", null, pulse.mtime > 0 ? " - " : ""), (0, _preact.h)("tspan", null, status)));
 }
 
 function TaskGraphNodeTargetSize(props) {
   var node = props.node;
+  var pulse = node.pulse;
   return (0, _preact.h)("g", {
     className: "taskgraphnode-target-size",
     transform: "translate(".concat(node.width - 16, ", ").concat(node.height - 10, ")")
-  }, (0, _preact.h)("text", null, (0, _format.bytesToSize)(node.bytes)));
+  }, (0, _preact.h)("text", null, (0, _format.bytesToSize)(pulse.bytes)));
 }
 
 var TaskGraphNodeName = /*#__PURE__*/function (_Component) {
@@ -30191,8 +30218,7 @@ var TaskGraphNodeName = /*#__PURE__*/function (_Component) {
 
     _this = _possibleConstructorReturn(this, (_getPrototypeOf2 = _getPrototypeOf(TaskGraphNodeName)).call.apply(_getPrototypeOf2, [this].concat(args)));
 
-    _defineProperty(_assertThisInitialized(_this), "state", {
-      nameLength: _this.props.node.label.length
+    _defineProperty(_assertThisInitialized(_this), "state", {//nameLength: this.props.node.label.length,
     });
 
     _defineProperty(_assertThisInitialized(_this), "textRef", (0, _preact.createRef)());
@@ -30201,35 +30227,30 @@ var TaskGraphNodeName = /*#__PURE__*/function (_Component) {
   }
 
   _createClass(TaskGraphNodeName, [{
-    key: "componentDidMount",
-    value: function componentDidMount() {
-      var node = this.props.node;
-      var t = d3.select(this.textRef.current);
-      var textLength = t.node().getComputedTextLength();
-      var text = t.text();
+    key: "render",
 
+    /*
+    componentDidMount() {
+      const { node } = this.props;
+      const t = d3.select(this.textRef.current);
+      let textLength = t.node().getComputedTextLength();
+      let text = t.text();
       while (textLength > node.width - (28 + 16 + 12) && text.length > 0) {
         text = text.slice(0, -1);
         t.text(text + "...");
         textLength = t.node().getComputedTextLength();
       }
-
-      this.setState({
-        nameLength: text.length
-      });
-    }
-  }, {
-    key: "render",
+       this.setState({ nameLength: text.length });
+    }*/
     value: function render() {
       var node = this.props.node;
-      var nameLength = this.state.nameLength;
       return (0, _preact.h)("g", {
         class: "taskgraphnode-name",
         transform: "translate(".concat(16 + 28, ",22)")
       }, (0, _preact.h)("text", {
         ref: this.textRef,
         alignmentBaseline: "hanging"
-      }, "".concat(node.label.substring(0, nameLength)).concat(node.label.length !== nameLength ? "..." : "")));
+      }, node.label));
     }
   }]);
 
@@ -41400,21 +41421,49 @@ function Row(props) {
   }, (0, _preact.h)("div", null, name), (0, _preact.h)("div", null, value));
 }
 
-var TaskGraphMeta = /*#__PURE__*/function (_Component) {
-  _inherits(TaskGraphMeta, _Component);
+function TaskGraphMetaTable(props) {
+  var task = props.task,
+      pulse = props.pulse;
+  return (0, _preact.h)("div", {
+    className: "taskgraphmeta-table"
+  }, (0, _preact.h)(Row, {
+    name: "Target",
+    value: (0, _preact.h)("div", {
+      className: "taskgraphmeta-target"
+    }, (0, _preact.h)("code", null, task.targetOriginal))
+  }), (0, _preact.h)(Row, {
+    name: "Path",
+    value: (0, _preact.h)("div", {
+      className: "taskgraphmeta-path"
+    }, (0, _preact.h)("code", null, pulse.target))
+  }), (0, _preact.h)(Row, {
+    name: "Size",
+    value: (0, _preact.h)("div", {
+      className: "taskgraphmeta-size"
+    }, (0, _format.bytesToSize)(pulse.bytes))
+  }), (0, _preact.h)(Row, {
+    name: "Last Modified",
+    value: (0, _preact.h)("div", {
+      className: "taskgraphmeta-mtime"
+    }, pulse.mtime ? (0, _format.duration)(new Date(pulse.mtime)) : "-")
+  }));
+}
 
-  function TaskGraphMeta() {
+var TaskGraphMetaCode = /*#__PURE__*/function (_Component) {
+  _inherits(TaskGraphMetaCode, _Component);
+
+  function TaskGraphMetaCode() {
     var _getPrototypeOf2;
 
     var _this;
 
-    _classCallCheck(this, TaskGraphMeta);
+    _classCallCheck(this, TaskGraphMetaCode);
 
     for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
       args[_key] = arguments[_key];
     }
 
-    _this = _possibleConstructorReturn(this, (_getPrototypeOf2 = _getPrototypeOf(TaskGraphMeta)).call.apply(_getPrototypeOf2, [this].concat(args)));
+    _this = _possibleConstructorReturn(this, (_getPrototypeOf2 = _getPrototypeOf(TaskGraphMetaCode)).call.apply(_getPrototypeOf2, [this].concat(args)));
 
     _defineProperty(_assertThisInitialized(_this), "codemirrorRef", (0, _preact.createRef)());
 
@@ -41423,79 +41472,105 @@ var TaskGraphMeta = /*#__PURE__*/function (_Component) {
     return _this;
   }
 
-  _createClass(TaskGraphMeta, [{
+  _createClass(TaskGraphMetaCode, [{
     key: "_attachCode",
     value: function _attachCode() {}
   }, {
     key: "componentDidMount",
     value: function componentDidMount() {
-      var _this$props = this.props,
-          dag = _this$props.dag,
-          selectedTask = _this$props.selectedTask;
-      var task = dag.node(selectedTask);
+      var task = this.props.task;
       this.codemirror = (0, _codemirror.default)(this.codemirrorRef.current, {
-        value: task.cellCode,
+        value: task.pulse.cellCode,
         mode: "javascript",
         theme: "twilight",
         readOnly: true,
         lineNumbers: true,
-        scrollbarStyle: "simple"
+        scrollbarStyle: "simple",
+        viewportMargin: Infinity
       }); // omg very hack pls fix
 
-      this.codemirror.setSize(580, task.cellCode.split("\n").length * 20);
+      this.codemirror.setSize(null, this.codemirror.lineCount() * (this.codemirror.defaultTextHeight() + 2));
     }
   }, {
     key: "componentDidUpdate",
     value: function componentDidUpdate(prevProp) {
-      var _this$props2 = this.props,
-          dag = _this$props2.dag,
-          selectedTask = _this$props2.selectedTask;
+      var task = this.props.task;
 
-      if (prevProp.selectedTask !== selectedTask) {
-        var task = dag.node(selectedTask);
-        this.codemirror.setValue(task.cellCode); // omg very hack pls fix
+      if (prevProp.task.taskIndex !== task.taskIndex) {
+        this.codemirror.setValue(task.pulse.cellCode); // omg very hack pls fix
 
-        this.codemirror.setSize(580, task.cellCode.split("\n").length * 20);
+        this.codemirror.setSize(null, this.codemirror.lineCount() * (this.codemirror.defaultTextHeight() + 2));
       }
     }
   }, {
     key: "render",
     value: function render() {
-      var _this$props3 = this.props,
-          dag = _this$props3.dag,
-          tasks = _this$props3.tasks,
-          selectedTask = _this$props3.selectedTask;
+      return (0, _preact.h)("div", null, (0, _preact.h)("div", {
+        className: "taskgraphmeta-code",
+        ref: this.codemirrorRef
+      }));
+    }
+  }]);
+
+  return TaskGraphMetaCode;
+}(_preact.Component);
+
+function TaskGraphMetaDependenciesList(props) {
+  var dependencies = props.dependencies;
+  return (0, _preact.h)("div", null, dependencies.map(function (d) {
+    return (0, _preact.h)("div", null, (0, _preact.h)("h4", null, d.pulse.name), (0, _preact.h)("div", null, d.pulse.status));
+  }));
+}
+
+function TaskGraphMetaDependencies(props) {
+  var dag = props.dag,
+      nodeMap = props.nodeMap,
+      pulse = props.pulse;
+  var dependencies = pulse.taskDeps.map(function (dep) {
+    return dag.node(nodeMap.get(dep));
+  });
+  return (0, _preact.h)("div", {
+    className: "tasgraphmeta-depedencies"
+  }, (0, _preact.h)("h3", null, "Task Dependencies"), dependencies.length === 0 ? "There are no dependencies for ".concat(pulse.name, "!") : (0, _preact.h)(TaskGraphMetaDependenciesList, {
+    dependencies: dependencies
+  }));
+}
+
+var TaskGraphMeta = /*#__PURE__*/function (_Component2) {
+  _inherits(TaskGraphMeta, _Component2);
+
+  function TaskGraphMeta() {
+    _classCallCheck(this, TaskGraphMeta);
+
+    return _possibleConstructorReturn(this, _getPrototypeOf(TaskGraphMeta).apply(this, arguments));
+  }
+
+  _createClass(TaskGraphMeta, [{
+    key: "render",
+    value: function render() {
+      var _this$props = this.props,
+          dag = _this$props.dag,
+          selectedTask = _this$props.selectedTask,
+          nodeMap = _this$props.nodeMap;
       if (selectedTask === null) return (0, _preact.h)("div", {
         className: "taskgraphmeta"
       }, (0, _preact.h)("div", null, "none selected"));
       var task = dag.node(selectedTask);
+      var pulse = task.pulse;
       return (0, _preact.h)("div", {
         className: "taskgraphmeta"
-      }, (0, _preact.h)("div", {
+      }, (0, _preact.h)("div", null, (0, _preact.h)("h2", {
         className: "taskgraphmeta-name"
-      }, task.label), (0, _preact.h)("div", {
-        className: "taskgraphmeta-table"
-      }, (0, _preact.h)(Row, {
-        name: "Path",
-        value: (0, _preact.h)("div", {
-          className: "taskgraphmeta-path"
-        }, (0, _preact.h)("code", null, task.target))
-      }), (0, _preact.h)(Row, {
-        name: "Size",
-        value: (0, _preact.h)("div", {
-          className: "taskgraphmeta-size"
-        }, (0, _format.bytesToSize)(task.bytes))
-      }), (0, _preact.h)(Row, {
-        name: "Last Modified",
-        value: (0, _preact.h)("div", {
-          className: "taskgraphmeta-mtime"
-        }, task.mtime ? (0, _format.duration)(new Date(task.mtime)) : "-")
-      })), (0, _preact.h)("div", {
-        className: "taskgraphmeta-code-header"
-      }, "Task Code"), (0, _preact.h)("div", {
-        className: "taskgraphmeta-code",
-        ref: this.codemirrorRef
-      }));
+      }, task.label), (0, _preact.h)(TaskGraphMetaCode, {
+        task: task
+      }), (0, _preact.h)(TaskGraphMetaTable, {
+        task: task,
+        pulse: pulse
+      }), (0, _preact.h)(TaskGraphMetaDependencies, {
+        dag: dag,
+        pulse: pulse,
+        nodeMap: nodeMap
+      })));
     }
   }]);
 
@@ -41503,7 +41578,12 @@ var TaskGraphMeta = /*#__PURE__*/function (_Component) {
 }(_preact.Component);
 
 exports.default = TaskGraphMeta;
-},{"preact":"node_modules/preact/dist/preact.module.js","../utils/format":"utils/format.js","./TaskGraphMeta.less":"components/TaskGraphMeta.less","codemirror":"node_modules/codemirror/lib/codemirror.js","codemirror/mode/javascript/javascript":"node_modules/codemirror/mode/javascript/javascript.js","codemirror/addon/scroll/simplescrollbars":"node_modules/codemirror/addon/scroll/simplescrollbars.js","codemirror/addon/scroll/simplescrollbars.css":"node_modules/codemirror/addon/scroll/simplescrollbars.css"}],"components/TaskGraphControls.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.module.js","../utils/format":"utils/format.js","./TaskGraphMeta.less":"components/TaskGraphMeta.less","codemirror":"node_modules/codemirror/lib/codemirror.js","codemirror/mode/javascript/javascript":"node_modules/codemirror/mode/javascript/javascript.js","codemirror/addon/scroll/simplescrollbars":"node_modules/codemirror/addon/scroll/simplescrollbars.js","codemirror/addon/scroll/simplescrollbars.css":"node_modules/codemirror/addon/scroll/simplescrollbars.css"}],"components/TaskGraphControls.less":[function(require,module,exports) {
+var reloadCSS = require('_css_loader');
+
+module.hot.dispose(reloadCSS);
+module.hot.accept(reloadCSS);
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"components/TaskGraphControls.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -41512,6 +41592,8 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 
 var _preact = require("preact");
+
+require("./TaskGraphControls.less");
 
 function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
@@ -41546,7 +41628,9 @@ var TaskGraphControls = /*#__PURE__*/function (_Component) {
       var _this$props = this.props,
           controls = _this$props.controls,
           onUpdate = _this$props.onUpdate;
-      return (0, _preact.h)("div", null, (0, _preact.h)("div", null, (0, _preact.h)("div", null, "rankdir"), (0, _preact.h)("select", {
+      return (0, _preact.h)("div", {
+        className: "taskgraphcontrols"
+      }, (0, _preact.h)("div", null, (0, _preact.h)("div", null, "rankdir"), (0, _preact.h)("select", {
         onChange: function onChange(e) {
           return onUpdate(Object.assign(controls, {
             rankdir: e.target.value
@@ -41566,7 +41650,7 @@ var TaskGraphControls = /*#__PURE__*/function (_Component) {
 }(_preact.Component);
 
 exports.default = TaskGraphControls;
-},{"preact":"node_modules/preact/dist/preact.module.js"}],"node_modules/lodash/_listCacheClear.js":[function(require,module,exports) {
+},{"preact":"node_modules/preact/dist/preact.module.js","./TaskGraphControls.less":"components/TaskGraphControls.less"}],"node_modules/lodash/_listCacheClear.js":[function(require,module,exports) {
 /**
  * Removes all key-value entries from the list cache.
  *
@@ -62176,7 +62260,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 function createDag(tasks, controls) {
   var graph = new _graphlib.default.Graph().setGraph(_objectSpread({
-    rankdir: "TB"
+    rankdir: "LR"
   }, controls)).setDefaultEdgeLabel(function () {
     return {};
   });
@@ -62184,9 +62268,9 @@ function createDag(tasks, controls) {
   var nodeMap = new Map(); // create nodes
 
   tasks.map(function (cell, i) {
-    nodeMap.set(cell.name, n);
+    nodeMap.set(cell.pulse.name, n);
     graph.setNode(n++, _objectSpread({
-      label: cell.name,
+      label: cell.pulse.name,
       taskIndex: i
     }, cell, {
       width: 275,
@@ -62195,11 +62279,11 @@ function createDag(tasks, controls) {
   }); // create edges
 
   tasks.map(function (cell) {
-    (cell.taskDeps || []).map(function (dep) {
-      if (!nodeMap.has(cell.name) || !nodeMap.has(dep)) throw Error("".concat(cell.name, " or ").concat(dep, " not in nodeMap."));
-      graph.setEdge(nodeMap.get(dep), nodeMap.get(cell.name), {
-        fromStatus: graph.node(nodeMap.get(dep)).status,
-        toStatus: graph.node(nodeMap.get(cell.name)).status,
+    (cell.pulse.taskDeps || []).map(function (dep) {
+      if (!nodeMap.has(cell.pulse.name) || !nodeMap.has(dep)) throw Error("".concat(cell.pulse.name, " or ").concat(dep, " not in nodeMap."));
+      graph.setEdge(nodeMap.get(dep), nodeMap.get(cell.pulse.name), {
+        fromStatus: graph.node(nodeMap.get(dep)).pulse.status,
+        toStatus: graph.node(nodeMap.get(cell.pulse.name)).pulse.status,
         fromWidth: graph.node(nodeMap.get(dep)).width,
         fromHeight: graph.node(nodeMap.get(dep)).height
       });
@@ -62208,7 +62292,10 @@ function createDag(tasks, controls) {
 
   _dagre.default.layout(graph);
 
-  return graph;
+  return {
+    dag: graph,
+    nodeMap: nodeMap
+  };
 }
 
 var TaskGraphSection = /*#__PURE__*/function (_Component) {
@@ -62244,19 +62331,29 @@ var TaskGraphSection = /*#__PURE__*/function (_Component) {
       var socket = _socket.default.connect("/");
 
       socket.on("oakfile", function (data) {
-        console.log("socket.on oakfile", data);
         var pulse = data.pulse;
+
+        var _createDag = createDag(pulse.tasks, _this2.state.controls),
+            dag = _createDag.dag,
+            nodeMap = _createDag.nodeMap;
 
         _this2.setState({
           tasks: pulse.tasks,
-          dag: createDag(pulse.tasks, _this2.state.controls)
+          dag: dag,
+          nodeMap: nodeMap
         });
       });
       (0, _api.getPulse)().then(function (_ref) {
         var pulseResult = _ref.pulseResult;
-        return _this2.setState({
+
+        var _createDag2 = createDag(pulseResult.tasks, _this2.state.controls),
+            dag = _createDag2.dag,
+            nodeMap = _createDag2.nodeMap;
+
+        _this2.setState({
           tasks: pulseResult.tasks,
-          dag: createDag(pulseResult.tasks, _this2.state.controls)
+          dag: dag,
+          nodeMap: nodeMap
         });
       });
     }
@@ -62269,13 +62366,14 @@ var TaskGraphSection = /*#__PURE__*/function (_Component) {
           tasks = _this$state.tasks,
           dag = _this$state.dag,
           selectedTask = _this$state.selectedTask,
-          controls = _this$state.controls;
+          controls = _this$state.controls,
+          nodeMap = _this$state.nodeMap;
       if (!tasks || !dag) return (0, _preact.h)("div", {
         className: "taskgraph-section"
       }, "Loading...");
       return (0, _preact.h)("div", {
         className: "taskgraph-section"
-      }, (0, _preact.h)("div", null, (0, _preact.h)(_TaskGraph.default, {
+      }, (0, _preact.h)(_TaskGraph.default, {
         dag: dag,
         tasks: tasks,
         onTaskSelect: function onTaskSelect(selectedTask) {
@@ -62287,14 +62385,20 @@ var TaskGraphSection = /*#__PURE__*/function (_Component) {
       }), (0, _preact.h)(_TaskGraphControls.default, {
         controls: controls,
         onUpdate: function onUpdate(controls) {
-          return _this3.setState({
+          var _createDag3 = createDag(tasks, controls),
+              dag = _createDag3.dag,
+              nodeMap = _createDag3.nodeMap;
+
+          _this3.setState({
             controls: controls,
-            dag: createDag(tasks, controls)
+            dag: dag,
+            nodeMap: nodeMap
           });
         }
-      })), (0, _preact.h)(_TaskGraphMeta.default, {
+      }), (0, _preact.h)(_TaskGraphMeta.default, {
         dag: dag,
         tasks: tasks,
+        nodeMap: nodeMap,
         selectedTask: selectedTask
       }));
     }
@@ -62407,6 +62511,28 @@ function LogsSectionLogSelectorItem(props) {
   }, (0, _format.duration)(new Date(time))));
 }
 
+function LogsSectionLogViewerHeader(props) {
+  var log = props.log;
+  return (0, _preact.h)("div", {
+    className: "logssection-logviewerheader"
+  }, (0, _preact.h)("div", {
+    className: "logssection-logviewerheader-name"
+  }, log.cellName), (0, _preact.h)("div", {
+    className: "logssection-logviewerheader-id"
+  }, log.rowid), (0, _preact.h)("div", {
+    className: "logssection-logviewerheader-time"
+  }, (0, _format.duration)(new Date(log.time))), (0, _preact.h)("div", {
+    className: "logssection-logviewerheader-path"
+  }, (0, _preact.h)("code", null, log.path)));
+}
+
+function LogsSectionLogViewerLog(props) {
+  var data = props.data;
+  return (0, _preact.h)("div", {
+    className: "logssection-logviewerlog"
+  }, (0, _preact.h)("code", null, (0, _preact.h)("pre", null, data || "Logfile is empty.")));
+}
+
 var LogsSectionLogViewer = /*#__PURE__*/function (_Component2) {
   _inherits(LogsSectionLogViewer, _Component2);
 
@@ -62472,7 +62598,11 @@ var LogsSectionLogViewer = /*#__PURE__*/function (_Component2) {
       }, "Select a log to view.");
       return (0, _preact.h)("div", {
         className: "logssection-logviewer"
-      }, (0, _preact.h)("div", null, selectedLog.cellName), (0, _preact.h)("div", null, selectedLog.rowid), (0, _preact.h)("div", null, (0, _format.duration)(new Date(selectedLog.time))), (0, _preact.h)("div", null, (0, _preact.h)("code", null, selectedLog.path)), (0, _preact.h)("code", null, (0, _preact.h)("pre", null, data)));
+      }, (0, _preact.h)(LogsSectionLogViewerHeader, {
+        log: selectedLog
+      }), (0, _preact.h)(LogsSectionLogViewerLog, {
+        data: data
+      }));
     }
   }]);
 

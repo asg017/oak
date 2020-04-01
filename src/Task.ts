@@ -7,6 +7,7 @@ type WatchArg = string | string[];
 
 export default class Task {
   target: string;
+  targetOriginal: string;
   stat: Stats | null;
   run: (any) => any;
   watch: string[];
@@ -14,6 +15,7 @@ export default class Task {
     let { target, run, watch = [] } = params;
     watch = Array.isArray(watch) ? watch : [watch];
 
+    this.targetOriginal = target;
     this.target = target;
     this.stat = null;
     this.run = run;

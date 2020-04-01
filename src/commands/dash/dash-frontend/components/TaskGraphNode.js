@@ -6,6 +6,7 @@ import { colorVariable } from "../utils/colors";
 
 function TaskGraphNodeContainer(props) {
   const { node, hover, selected } = props;
+  const { pulse } = node;
   return (
     <rect
       className={`taskgraphnode-container ${
@@ -17,7 +18,7 @@ function TaskGraphNodeContainer(props) {
       ry={7.5}
       width={node.width}
       height={node.height}
-      stroke={colorVariable.get(node.status)}
+      stroke={colorVariable.get(pulse.status)}
       strokeWidth={3}
     ></rect>
   );
@@ -25,10 +26,11 @@ function TaskGraphNodeContainer(props) {
 
 function TaskGraphNodeStatusBar(props) {
   const { node } = props;
+  const { pulse } = node;
   return (
     <g>
       <path
-        className={`taskgraphnode-status-bar taskgraphnode-status-bar-${node.status}`}
+        className={`taskgraphnode-status-bar taskgraphnode-status-bar-${pulse.status}`}
         d={`M0 7.5C0 3.35786 3.35786 0 7.5 0H9V${node.height}H7.5C3.35786 ${
           node.height
         } 0 ${node.height - 3.35} 0 ${node.height - 7.5}V7.5Z`}
@@ -49,12 +51,13 @@ function getIcon(type) {
 
 function TaskGraphNodeType(props) {
   const { node } = props;
+  const { pulse } = node;
   return (
     <g className="taskgraphnode-type" transform={`translate(16, 8)`}>
       <image
         width={18}
         height={18}
-        xlinkHref={`https://simpleicons.org/icons/${getIcon(node.type)}.svg`}
+        xlinkHref={`https://simpleicons.org/icons/${getIcon(pulse.type)}.svg`}
       ></image>
     </g>
   );
@@ -62,21 +65,33 @@ function TaskGraphNodeType(props) {
 
 function TaskGraphNodeStatusLabel(props) {
   const { node } = props;
+  const { pulse } = node;
+  let status;
+  switch (pulse.status) {
+    case "up":
+      status = `Up to date`;
+      break;
+    case "dne":
+      status = `Does not exist`;
+      break;
+    case "out-dep":
+    case "out-def":
+    case "out-upstream":
+      status = "Out of date";
+      break;
+    default:
+      status = `${pulse.status} not recognized.`;
+      break;
+  }
   return (
     <g
       className="taskgraphnode-status-label"
       transform={`translate(16, ${node.height - 10})`}
     >
       <text>
-        <tspan>{node.mtime > 0 ? duration(new Date(node.mtime)) : ""}</tspan>
-        <tspan>{node.mtime > 0 ? " - " : ""}</tspan>
-        <tspan>
-          {node.status == "up"
-            ? "Up to date"
-            : node.status === "out"
-            ? "Out of date"
-            : "Does not exist"}
-        </tspan>
+        <tspan>{pulse.mtime > 0 ? duration(new Date(pulse.mtime)) : ""}</tspan>
+        <tspan>{pulse.mtime > 0 ? " - " : ""}</tspan>
+        <tspan>{status}</tspan>
       </text>
     </g>
   );
@@ -84,21 +99,23 @@ function TaskGraphNodeStatusLabel(props) {
 
 function TaskGraphNodeTargetSize(props) {
   const { node } = props;
+  const { pulse } = node;
   return (
     <g
       className="taskgraphnode-target-size"
       transform={`translate(${node.width - 16}, ${node.height - 10})`}
     >
-      <text>{bytesToSize(node.bytes)}</text>
+      <text>{bytesToSize(pulse.bytes)}</text>
     </g>
   );
 }
 
 class TaskGraphNodeName extends Component {
   state = {
-    nameLength: this.props.node.label.length,
+    //nameLength: this.props.node.label.length,
   };
   textRef = createRef();
+  /*
   componentDidMount() {
     const { node } = this.props;
     const t = d3.select(this.textRef.current);
@@ -111,16 +128,13 @@ class TaskGraphNodeName extends Component {
     }
 
     this.setState({ nameLength: text.length });
-  }
+  }*/
   render() {
     const { node } = this.props;
-    const { nameLength } = this.state;
     return (
       <g class="taskgraphnode-name" transform={`translate(${16 + 28},22)`}>
         <text ref={this.textRef} alignmentBaseline="hanging">
-          {`${node.label.substring(0, nameLength)}${
-            node.label.length !== nameLength ? "..." : ""
-          }`}
+          {node.label}
         </text>
       </g>
     );
