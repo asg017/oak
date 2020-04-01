@@ -11,7 +11,7 @@ import { join } from "path";
 
 const logger = pino();
 
-type PulseTaskStatus = "dne" | "up" | "out";
+type PulseTaskStatus = "dne" | "up" | "out-dep" | "out-def" | "out-upstream";
 
 type PulseTaskResult = {
   name: string;
@@ -88,7 +88,11 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
   const compiler = new OakCompiler();
   const d = decorator(
     {
-      onTaskUpToDate: async (pt, decoratorArgs, cellDependencies) => {
+      onTaskUpToDate: async (
+        pt: PulseTask,
+        decoratorArgs,
+        cellDependencies
+      ) => {
         const taskType = await pt.runTask();
         const taskDeps = cellDependencies
           .filter(d => d instanceof PulseTask)
@@ -105,7 +109,7 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
         return pt;
       },
       onTaskCellDefinitionChanged: async (
-        pt,
+        pt: PulseTask,
         decoratorArgs,
         cellDependencies
       ) => {
@@ -120,11 +124,15 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
           pt.stat.mtime.getTime(),
           taskType,
           pt.stat.size,
-          "out"
+          "out-def"
         );
         return pt;
       },
-      onTaskDependencyChanged: async (pt, decoratorArgs, cellDependencies) => {
+      onTaskDependencyChanged: async (
+        pt: PulseTask,
+        decoratorArgs,
+        cellDependencies
+      ) => {
         const taskType = await pt.runTask();
 
         const taskDeps = cellDependencies
@@ -137,11 +145,15 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
           pt.stat.mtime.getTime(),
           taskType,
           pt.stat.size,
-          "out"
+          "out-dep"
         );
         return pt;
       },
-      onTaskTargetMissing: async (pt, decoratorArgs, cellDependencies) => {
+      onTaskTargetMissing: async (
+        pt: PulseTask,
+        decoratorArgs,
+        cellDependencies
+      ) => {
         const taskType = await pt.runTask();
         const taskDeps = cellDependencies
           .filter(d => d instanceof PulseTask)
@@ -160,13 +172,13 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
     },
     oakDB,
     {
-      check: (pt, decoratorArgs, cellDependencies) => {
+      check: (pt: PulseTask, decoratorArgs, cellDependencies) => {
         const taskDepsNotFresh = cellDependencies
           .filter(d => d instanceof PulseTask)
           .filter(pt => pt.pulse.status !== "up");
         return taskDepsNotFresh.length > 0;
       },
-      value: async (pt, decoratorArgs, cellDependencies) => {
+      value: async (pt: PulseTask, decoratorArgs, cellDependencies) => {
         const taskType = await pt.runTask();
         const taskDeps = cellDependencies
           .filter(d => d instanceof PulseTask)
@@ -178,7 +190,7 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
           pt.stat?.mtime?.getTime(),
           taskType,
           pt.stat?.size,
-          "upstream-out"
+          "out-upstream"
         );
         return pt;
       },

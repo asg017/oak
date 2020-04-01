@@ -1,5 +1,4 @@
-import { getStat, CellSignature, getSignature, hashString } from "./utils";
-import pino from "pino";
+import { CellSignature, getSignature, hashString } from "./utils";
 import { OakDB } from "./db";
 import Task from "./Task";
 

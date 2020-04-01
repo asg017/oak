@@ -46,7 +46,6 @@ test("oak-pulse hello", async t => {
 
   a = result.tasks.find(task => task.name === "a");
   c = result.tasks.find(task => task.name === "c");
-  console.log(c.status);
   t.equals(result.tasks.length, 3);
   t.true(a !== null);
   t.true(c !== null);
