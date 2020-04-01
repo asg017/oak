@@ -192,6 +192,68 @@ export class OakDB {
     }
   }
 
+  async getLastRelatedTaskExection(ancestorHash: string) {
+    const db = await this.getDb();
+    const row = await db.get(SQL`SELECT *
+    FROM TaskExecutions 
+    WHERE TaskExecutions.cellAncestorHash = ${ancestorHash}
+    ORDER BY TaskExecutions.timeStart DESC
+    LIMIT 1`);
+    await db.close();
+    return row;
+  }
+
+  async updateTaskExection(
+    rowid: number,
+    targetSignature: string,
+    runProcessStart: number,
+    runProcessEnd: number,
+    runProcessExitCode: number,
+    runProcessPID: string
+  ) {
+    const db = await this.getDb();
+    const { lastID } = await db.run(SQL`UPDATE TaskExecutions 
+    SET 
+      targetSignature = ${targetSignature},
+      runProcessStart = ${runProcessStart},
+      runProcessEnd = ${runProcessEnd},
+      runProcessExitCode = ${runProcessExitCode},
+      runProcessPID = ${runProcessPID}
+    WHERE rowid=${rowid}`);
+    await db.close();
+    return lastID;
+  }
+  async addTaskExecution(
+    runHash: string,
+    cellName: string,
+    anecestorHash: string,
+    dependenciesSignature: string,
+    freshStatus: string,
+    timeStart: number,
+    runLog: string
+  ) {
+    const db = await this.getDb();
+    const { lastID } = await db.run(SQL`INSERT INTO TaskExecutions (
+      run,
+      cellName,
+      cellAncestorHash,
+      dependenciesSignature,
+      freshStatus,
+      timeStart,
+      runLog
+    ) 
+    VALUES (
+      ${runHash},
+      ${cellName},
+      ${anecestorHash},
+      ${dependenciesSignature},
+      ${freshStatus},
+      ${timeStart},
+      ${runLog}
+    )`);
+    await db.close();
+    return lastID;
+  }
   async getOakfile(oakfileHash: string): Promise<DBOakfile> {
     const db = await this.getDb();
     const row = await db.get(
@@ -283,6 +345,23 @@ async function initDb(db: Database) {
             path TEXT,
             time INTEGER,
             FOREIGN KEY (oakfile) REFERENCES Oakfiles(hash),
+            FOREIGN KEY (run) REFERENCES Runs(hash)
+        ); `
+    ),
+    db.run(
+      `CREATE TABLE TaskExecutions(
+            run TEXT,
+            cellName TEXT,
+            cellAncestorHash TEXT,
+            dependenciesSignature TEXT,
+            targetSignature TEXT,
+            freshStatus TEXT,
+            timeStart INTEGER,
+            runLog TEXT,
+            runProcessStart INTEGER,
+            runProcessEnd INTEGER,
+            runProcessExitCode INTEGER,
+            runProcessPID TEXT,
             FOREIGN KEY (run) REFERENCES Runs(hash)
         ); `
     ),

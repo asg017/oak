@@ -1,4 +1,4 @@
-import { getStat, CellSignature } from "./utils";
+import { getStat, CellSignature, getSignature, hashString } from "./utils";
 import pino from "pino";
 import { OakDB } from "./db";
 import Task from "./Task";
@@ -11,10 +11,14 @@ type TaskHookDecoratorArguments = {
   baseModuleDir: string;
 };
 type TaskHookCellArguments = any[];
+type TaskHookTaskContext = {
+  dependenciesSignature: string;
+};
 type TaskHookArguments = [
   any,
   TaskHookDecoratorArguments,
-  TaskHookCellArguments
+  TaskHookCellArguments,
+  TaskHookTaskContext
 ];
 
 type TaskHook = (...args: TaskHookArguments) => any;
@@ -27,6 +31,10 @@ export default function decorator(
     onTaskTargetMissing: TaskHook;
   },
   oakDB: OakDB,
+  customFreshHook?: {
+    check: (...args: TaskHookArguments) => boolean;
+    value: (...args: TaskHookArguments) => any;
+  },
   TaskClass: any = Task
 ) {
   return function(
@@ -42,33 +50,40 @@ export default function decorator(
       if (!(currCell instanceof TaskClass)) {
         return currCell;
       }
+      const lastTaskExection = await oakDB.getLastRelatedTaskExection(
+        cellSignature.ancestorHash
+      );
+
       await currCell.updateBasePath(baseModuleDir);
 
       // dont try and get Task for cell dependencies like `Task` or `shell`
-      let cellDependents = [];
-      dependencies.map(dependency => {
-        if (dependency instanceof TaskClass) {
-          cellDependents.push(dependency);
-        }
-      });
-
-      const watchFiles = currCell.watch;
-      const watchStats = await Promise.all(
-        watchFiles.map(async watchFile => {
-          const stat = await getStat(watchFile);
-          return { path: watchFile, stat };
-        })
+      const taskDependencies = dependencies.filter(
+        dependency => dependency instanceof TaskClass
       );
 
-      const outOfDateCellDependencies = cellDependents.filter(
-        ({ stat }) => currCell.stat && currCell.stat.mtime <= stat.mtime
-      );
-      const outOfDateWatchFiles = watchStats.filter(
-        ({ stat }) => currCell.stat && currCell.stat.mtime <= stat.mtime
-      );
-      const cellHashLookup = await oakDB.findMostRecentCellHash(
-        cellSignature.ancestorHash
-      );
+      const dependenciesSignatures: string[] = await Promise.all([
+        ...taskDependencies
+          .map(t => t.target)
+          .map(async path => {
+            const sig = await getSignature(path);
+            if (!sig) return "<nosignature>";
+            /*throw Error(
+                `Problem getting signature for ${path}. Does the file exist?`
+              );*/
+            return sig;
+          }),
+        ...currCell.watch.map(async path => {
+          const sig = await getSignature(path);
+          if (!sig) return "<nosignature>";
+          /*throw Error(
+              `Problem getting signature for ${path}. Does the file exist?`
+            );*/
+          return sig;
+        }),
+      ]);
+      const dependenciesSignature = hashString(dependenciesSignatures.join(""));
+
+      const currentTargetSignature = await getSignature(currCell.target);
 
       const decoratorArgs = {
         cellFunction,
@@ -77,39 +92,65 @@ export default function decorator(
         cellSignature,
         baseModuleDir,
       };
+      const taskContext = {
+        dependenciesSignature,
+      };
+
+      if (
+        customFreshHook &&
+        customFreshHook.check(
+          currCell,
+          decoratorArgs,
+          dependencies,
+          taskContext
+        )
+      ) {
+        return await customFreshHook.value(
+          currCell,
+          decoratorArgs,
+          dependencies,
+          taskContext
+        );
+      }
       // no output target
       if (currCell.stat === null) {
         return await hooks.onTaskTargetMissing(
           currCell,
           decoratorArgs,
-          dependencies
+          dependencies,
+          taskContext
+        );
+      }
+
+      // cell definition changed
+      if (!lastTaskExection) {
+        return await hooks.onTaskCellDefinitionChanged(
+          currCell,
+          decoratorArgs,
+          dependencies,
+          taskContext
         );
       }
 
       // out of date dependency
       if (
-        outOfDateCellDependencies.length > 0 ||
-        outOfDateWatchFiles.length > 0
+        lastTaskExection.dependenciesSignature !== dependenciesSignature ||
+        lastTaskExection.targetSignature !== currentTargetSignature
       ) {
         return await hooks.onTaskDependencyChanged(
           currCell,
           decoratorArgs,
-          dependencies
+          dependencies,
+          taskContext
         );
       }
 
-      // cell definition changed
-      if (
-        !cellHashLookup ||
-        cellHashLookup.mtime > currCell.stat.mtime.getTime()
-      ) {
-        return await hooks.onTaskCellDefinitionChanged(
-          currCell,
-          decoratorArgs,
-          dependencies
-        );
-      }
-      return await hooks.onTaskUpToDate(currCell, decoratorArgs, dependencies);
+      return await hooks.onTaskUpToDate(
+        currCell,
+        decoratorArgs,
+        dependencies,
+        taskContext
+      );
     };
   };
 }

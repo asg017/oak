@@ -7,6 +7,7 @@ import {
   hashFile,
   hashString,
   getStat,
+  getSignature,
 } from "../utils";
 import { dirname, join } from "path";
 import { EventEmitter } from "events";
@@ -26,7 +27,9 @@ async function runTask(
   logger: pino.Logger,
   cell: Task,
   logDirectory: string,
-  ancestorHash: string
+  ancestorHash: string,
+  dependenciesSignature: string,
+  freshStatus: string
 ): Promise<number> {
   const logFile = join(logDirectory, `${cellName}.log`);
   logger.info(`Running task for ${cell.target}. Logfile: ${logFile}`);
@@ -38,13 +41,23 @@ async function runTask(
     logFile,
     new Date().getTime()
   );
-
+  const taskExecutionRowID = await oakDB.addTaskExecution(
+    runHash,
+    cellName,
+    ancestorHash,
+    dependenciesSignature,
+    freshStatus,
+    new Date().getTime(),
+    logFile
+  );
+  const runProcessStart = new Date().getTime();
   const {
     process: childProcess,
     outStream: taskOutStream,
     config: taskConfig,
   } = cell.runTask();
   createFileSync(logFile);
+  const runProcessPID = process.pid;
   const logStream = createWriteStream(logFile);
 
   childProcess.stdout.on("data", chunk => {
@@ -61,22 +74,34 @@ async function runTask(
     }
   });
 
-  return new Promise((resolve, reject) => {
-    childProcess.on("error", err => {
-      logger.error(`childProcess error event.`);
-      logStream.end();
-      reject(err);
-    });
-    childProcess.on("exit", code => {
-      logStream.end();
-      if (code !== 0) {
-        // TODO lets log with chunks
-        console.log(readFileSync(logFile, { encoding: "utf8" }));
-        return reject({ code });
-      }
-      resolve(code);
-    });
-  });
+  const { runExitCode, runProcessEnd } = await new Promise(
+    (resolve, reject) => {
+      childProcess.on("error", err => {
+        logger.error(`childProcess error event.`);
+        logStream.end();
+        reject(err);
+      });
+      childProcess.on("exit", code => {
+        logStream.end();
+        if (code !== 0) {
+          // TODO lets log with chunks
+          console.log(readFileSync(logFile, { encoding: "utf8" }));
+          return reject({ code });
+        }
+        resolve({ runExitCode: code, runProcessEnd: new Date().getTime() });
+      });
+    }
+  );
+  const finalTargetSignature = await getSignature(cell.target);
+  await oakDB.updateTaskExection(
+    taskExecutionRowID,
+    finalTargetSignature,
+    runProcessStart,
+    runProcessEnd,
+    runExitCode,
+    runProcessPID.toString()
+  );
+  return runExitCode;
 }
 
 export async function oak_run(args: {
@@ -113,13 +138,19 @@ export async function oak_run(args: {
         );
         return t;
       },
-      onTaskCellDefinitionChanged: async (t, decoratorArgs) => {
+      onTaskCellDefinitionChanged: async (
+        t,
+        decoratorArgs,
+        cellArgs,
+        taskContext
+      ) => {
         logger.info(
           "oak-run decorator",
           `${formatPath(
             t.target
           )} - out of date because direct cell defintion changed since last Oakfile.`
         );
+        t.watch;
         await runTask(
           oakfileHash,
           runHash,
@@ -128,12 +159,18 @@ export async function oak_run(args: {
           logger,
           t,
           logDirectory,
-          decoratorArgs.cellSignature.ancestorHash
+          decoratorArgs.cellSignature.ancestorHash,
+          taskContext.dependenciesSignature,
+          "out-def"
         );
-        t.stat = await getStat(t.target);
         return t;
       },
-      onTaskDependencyChanged: async (t, decoratorArgs) => {
+      onTaskDependencyChanged: async (
+        t,
+        decoratorArgs,
+        cellArgs,
+        taskContext
+      ) => {
         logger.info(
           "oak-run decorator",
           `${formatPath(
@@ -148,12 +185,13 @@ export async function oak_run(args: {
           logger,
           t,
           logDirectory,
-          decoratorArgs.cellSignature.ancestorHash
+          decoratorArgs.cellSignature.ancestorHash,
+          taskContext.dependenciesSignature,
+          "out-dep"
         );
-        t.stat = await getStat(t.target);
         return t;
       },
-      onTaskTargetMissing: async (t, decoratorArgs) => {
+      onTaskTargetMissing: async (t, decoratorArgs, cellArgs, taskContext) => {
         logger.info(
           "oak-run decorator",
           `${formatPath(t.target)} - Doesn't exist - running recipe...`
@@ -166,9 +204,10 @@ export async function oak_run(args: {
           logger,
           t,
           logDirectory,
-          decoratorArgs.cellSignature.ancestorHash
+          decoratorArgs.cellSignature.ancestorHash,
+          taskContext.dependenciesSignature,
+          "dne"
         );
-        t.stat = await getStat(t.target);
         return t;
       },
     },

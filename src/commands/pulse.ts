@@ -3,18 +3,11 @@ import { OakCompiler } from "../oak-compile";
 import { Library } from "../Library";
 import pino from "pino";
 import { fileArgument } from "../cli-utils";
-import {
-  bytesToSize,
-  duration,
-  OakCell,
-  getStat,
-  CellSignature,
-} from "../utils";
+import { bytesToSize, duration, OakCell, getStat } from "../utils";
 import decorator from "../decorator";
 import { getAndMaybeIntializeOakDB, OakDB } from "../db";
 import { Stats } from "fs-extra";
 import { join } from "path";
-import TaskGraphSection from "./dash/dash-frontend/components/TaskGraphSection";
 
 const logger = pino();
 
@@ -133,7 +126,6 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
       },
       onTaskDependencyChanged: async (pt, decoratorArgs, cellDependencies) => {
         const taskType = await pt.runTask();
-        console.log(cellDependencies);
 
         const taskDeps = cellDependencies
           .filter(d => d instanceof PulseTask)
@@ -167,6 +159,30 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
       },
     },
     oakDB,
+    {
+      check: (pt, decoratorArgs, cellDependencies) => {
+        const taskDepsNotFresh = cellDependencies
+          .filter(d => d instanceof PulseTask)
+          .filter(pt => pt.pulse.status !== "up");
+        return taskDepsNotFresh.length > 0;
+      },
+      value: async (pt, decoratorArgs, cellDependencies) => {
+        const taskType = await pt.runTask();
+        const taskDeps = cellDependencies
+          .filter(d => d instanceof PulseTask)
+          .map(t => t.pulse.name);
+        pt.addPulse(
+          decoratorArgs.cellName,
+          taskDeps,
+          pt.target,
+          pt.stat?.mtime?.getTime(),
+          taskType,
+          pt.stat?.size,
+          "upstream-out"
+        );
+        return pt;
+      },
+    },
     PulseTask
   );
   const { parseResults, define } = await compiler.file(oakfilePath, d, null);

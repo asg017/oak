@@ -10,7 +10,7 @@ raw_state_zip = new Task({
 raw_state_dir = new Task({
   target: "raw_state",
   run: raw_state_dir =>
-    shell`mkdir -p ${raw_state_dir} && unzip -d ${raw_state_dir} ${raw_state_zip}`
+    shell`mkdir -p ${raw_state_dir} && unzip -o -d ${raw_state_dir} ${raw_state_zip}`
 });
 
 state_json = new Task({
