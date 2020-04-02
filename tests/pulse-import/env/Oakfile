@@ -1,0 +1,11 @@
+import { b as myB } from "./sub/Oakfile";
+
+x = new Task({
+  target: "x",
+  run: x => shell`echo -n "x" > ${x}`
+});
+
+y = new Task({
+  target: "y",
+  run: y => shell`cat ${x} ${myB} > ${y}`
+});

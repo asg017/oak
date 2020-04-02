@@ -31,6 +31,12 @@ export type ObservableImportDeclaration = {
     imported: { type: "Identifier"; name: string };
     local: { type: "Identifier"; name: string };
   }[];
+  injections: {
+    type: "ImportSpecifier";
+    view: boolean;
+    imported: { type: "Identifier"; name: string };
+    local: { type: "Identifier"; name: string };
+  }[];
   source: { type: "Literal"; value: string; raw: string };
   start: number;
   end: number;
@@ -57,6 +63,9 @@ export type ObservableCell = {
       name: string;
     };
   } | null;
+  input: string;
+  start: number;
+  end: number;
   async: boolean;
   generator: boolean;
   references: { type: string; name: string }[];

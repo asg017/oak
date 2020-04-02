@@ -3,21 +3,20 @@ import { OakCompiler } from "../oak-compile";
 import { Library } from "../Library";
 import pino from "pino";
 import { fileArgument } from "../cli-utils";
-import { bytesToSize, duration, OakCell, getStat } from "../utils";
+import { bytesToSize, duration } from "../utils";
 import decorator, {
   TaskHookDecoratorArguments,
   TaskHookTaskContext,
 } from "../decorator";
 import { getAndMaybeIntializeOakDB, OakDB } from "../db";
-import { Stats } from "fs-extra";
-import { join } from "path";
 import Task from "../Task";
+import { ObservableCell } from "../oak-compile-types";
 
 const logger = pino();
 
 type PulseTaskStatus = "dne" | "up" | "out-dep" | "out-def" | "out-upstream";
 
-class PulseTask extends Task {
+export class PulseTask extends Task {
   pulse?: {
     name: string;
     taskDeps: string[];
@@ -138,7 +137,7 @@ export async function getPulse(
   );
   const { parseResults, define } = await compiler.file(oakfilePath, d, null);
 
-  const parseResultsMap: Map<string, OakCell> = new Map();
+  const parseResultsMap: Map<string, ObservableCell> = new Map();
   for (let cell of parseResults.module.cells) {
     if (cell.id?.name) parseResultsMap.set(cell.id?.name, cell);
   }

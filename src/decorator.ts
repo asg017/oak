@@ -45,7 +45,7 @@ export default function decorator(
   ): (...any) => any {
     return async function(...dependencies) {
       let currCell = await cellFunction(...dependencies);
-
+      console.log(cellName, baseModuleDir);
       if (!(currCell instanceof TaskClass)) {
         return currCell;
       }

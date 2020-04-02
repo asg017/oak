@@ -5,6 +5,7 @@ import { dirname, join } from "path";
 import { merge } from "d3-array";
 import hasha from "hasha";
 import { LibraryKeys } from "./Library";
+import { ObservableCell } from "./oak-compile-types";
 
 export const formatPath = (s: string) => chalk.black.bgWhiteBright.bold(s);
 export const formatCellName = (s: string) => chalk.black.bgCyanBright.bold(s);
@@ -225,86 +226,9 @@ export const getStat = (filename: string): Promise<Stats | null> =>
     });
   });
 
-export type OakCell = {
-  start: number;
-  end: number;
-  input: string;
-  references: {
-    type: string;
-    start: number;
-    end: number;
-    name: string;
-  }[];
-  id?: {
-    type: string;
-    name?: string;
-    // used only for viewof and mutable i believe
-    id?: {
-      type: string;
-      start: number;
-      end: number;
-      name: string;
-    };
-  };
-  body: {
-    type: string;
-    start: number;
-    end: number;
-    // import only
-    specifiers?: {
-      type: string;
-      start: number;
-      end: number;
-      view: boolean;
-      mutable: boolean;
-      imported: {
-        type: string;
-        start: number;
-        end: number;
-        name: string;
-      };
-      local: {
-        type: string;
-        start: number;
-        end: number;
-        name: string;
-      };
-    }[];
-    // import only
-    injections?: {
-      type: string;
-      start: number;
-      end: number;
-      view: boolean;
-      mutable: boolean;
-      imported: {
-        type: string;
-        start: number;
-        end: number;
-        name: string;
-      };
-      local: {
-        type: string;
-        start: number;
-        end: number;
-        name: string;
-      };
-    }[];
-    source?: {
-      // import only
-      type: string;
-      start: number;
-      end: number;
-      value: string;
-      raw: string;
-    };
-  };
-  async: boolean;
-  generator: boolean;
-};
 export type ParseOakfileResults = {
   module: {
-    cells: OakCell[];
+    cells: ObservableCell[];
   };
   contents: string;
 };

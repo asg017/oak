@@ -19,7 +19,6 @@ cleanUp();
 
 test("oak-pulse hello", async t => {
   let result = await getPulse(env("Oakfile"));
-  console.log(result);
   t.true(result.tasks.length === 3);
   t.equals(result.tasks[0].pulse.status, "dne");
   t.equals(result.tasks[1].pulse.status, "dne");

@@ -54,12 +54,12 @@ export const createRegularCellDefintion = (
 
 async function createOakDefinition(
   path: string, // absolute path to the oakfile
-  source: string,
-  module: any,
+  parseResults: ParseOakfileResults,
   cellHashMap: Map<string, CellSignature>,
   decorator: Decorator,
   injectingSource?: InjectingSource
 ) {
+  const { contents: oakfileContents, module } = parseResults;
   const depMap: Map<string, (runtime: any, observer: any) => void> = new Map();
 
   const importCells = module.cells.filter(
@@ -141,11 +141,15 @@ async function createOakDefinition(
       if (injections.length > 0) {
         const child = other.derive(injections, main);
         specifiers.map(specifier => {
-          main.import(specifier.name, specifier.alias, child);
+          main
+            .variable(observer(specifier.alias))
+            .import(specifier.name, specifier.alias, child);
         });
       } else {
         specifiers.map(specifier => {
-          main.import(specifier.name, specifier.alias, other);
+          main
+            .variable(observer(specifier.alias))
+            .import(specifier.name, specifier.alias, other);
         });
       }
     });
@@ -155,7 +159,7 @@ async function createOakDefinition(
         cellName,
         cellFunction,
         cellReferences,
-      } = createRegularCellDefintion(cell, source);
+      } = createRegularCellDefintion(cell, oakfileContents);
       main
         .variable(observer(cellName))
         .define(
@@ -196,8 +200,7 @@ export class OakCompiler {
 
     const define = await createOakDefinition(
       path,
-      parseResults.contents,
-      parseResults.module,
+      parseResults,
       cellHashMap,
       decorator,
       injectingSource
