@@ -39,6 +39,7 @@ process.stdout.write("C1");
   t.true(a_file.stat.mtime < c_file.stat.mtime);
   t.true(b_file.stat.mtime < c_file.stat.mtime);
 
+  // when we change build_c, only c should update.
   createBuildC(`
 const { readFileSync } = require("fs");
 const ins = process.argv.slice(2);

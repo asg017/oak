@@ -24,7 +24,7 @@ type PulseTaskResult = {
   status: PulseTaskStatus;
 };
 type PulseResults = {
-  tasks: PulseTaskResult[];
+  tasks: PulseTask[];
 };
 
 class PulseTask extends Task {
@@ -227,11 +227,11 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
 export async function oak_pulse(args: { filename: string }): Promise<void> {
   const oakfilePath = fileArgument(args.filename);
   const pulseResult = await getPulse(oakfilePath);
-  for (let task of pulseResult.tasks) {
+  for (let { pulse } of pulseResult.tasks) {
     logger.info(
-      `${task.name} - ${task.status} - ${bytesToSize(task.bytes)} - ${duration(
-        new Date(task.mtime)
-      )}`
+      `${pulse.name} - ${pulse.status} - ${bytesToSize(
+        pulse.bytes
+      )} - ${duration(new Date(pulse.mtime))}`
     );
   }
 }
