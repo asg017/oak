@@ -4,7 +4,10 @@ import { Library } from "../Library";
 import pino from "pino";
 import { fileArgument } from "../cli-utils";
 import { bytesToSize, duration, OakCell, getStat } from "../utils";
-import decorator from "../decorator";
+import decorator, {
+  TaskHookDecoratorArguments,
+  TaskHookTaskContext,
+} from "../decorator";
 import { getAndMaybeIntializeOakDB, OakDB } from "../db";
 import { Stats } from "fs-extra";
 import { join } from "path";
@@ -32,23 +35,23 @@ class PulseTask extends Task {
   }
 
   addPulse(
-    name: string,
-    taskDeps: string[],
-    cellCode: string,
-    target: string,
-    mtime: number,
-    taskType: string,
-    bytes: number,
+    decoratorArgs: TaskHookDecoratorArguments,
+    cellDependencies: any[],
+    taskContext: TaskHookTaskContext,
     status: PulseTaskStatus
   ) {
+    const taskType = this.getType();
+    const taskDeps = cellDependencies
+      .filter(d => d instanceof PulseTask)
+      .map(t => t.pulse.name);
     this.pulse = {
-      name,
+      name: decoratorArgs.cellName,
       taskDeps,
-      cellCode,
-      target,
-      mtime,
+      cellCode: decoratorArgs.cellSignature.cellContents,
+      target: this.target,
+      mtime: this.stat?.mtime?.getTime(),
       taskType,
-      bytes,
+      bytes: this.stat?.size,
       status,
     };
   }
@@ -74,86 +77,37 @@ export async function getPulse(
       onTaskUpToDate: async (
         pt: PulseTask,
         decoratorArgs,
-        cellDependencies
+        cellDependencies,
+        taskContext
       ) => {
-        const taskType = pt.getType();
-        const taskDeps = cellDependencies
-          .filter(d => d instanceof PulseTask)
-          .map(t => t.pulse.name);
-        pt.addPulse(
-          decoratorArgs.cellName,
-          taskDeps,
-          decoratorArgs.cellSignature.cellContents,
-          pt.target,
-          pt.stat.mtime.getTime(),
-          taskType,
-          pt.stat.size,
-          "up"
-        );
+        pt.addPulse(decoratorArgs, cellDependencies, taskContext, "up");
         return pt;
       },
       onTaskCellDefinitionChanged: async (
         pt: PulseTask,
         decoratorArgs,
-        cellDependencies
+        cellDependencies,
+        taskContext
       ) => {
-        const taskType = pt.getType();
-        const taskDeps = cellDependencies
-          .filter(d => d instanceof PulseTask)
-          .map(t => t.pulse.name);
-        pt.addPulse(
-          decoratorArgs.cellName,
-          taskDeps,
-          decoratorArgs.cellSignature.cellContents,
-          pt.target,
-          pt.stat.mtime.getTime(),
-          taskType,
-          pt.stat.size,
-          "out-def"
-        );
+        pt.addPulse(decoratorArgs, cellDependencies, taskContext, "out-def");
         return pt;
       },
-      onTaskDependencyChanged: async (
+      onTaskDependencyChanged: (
         pt: PulseTask,
         decoratorArgs,
-        cellDependencies
+        cellDependencies,
+        taskContext
       ) => {
-        const taskType = pt.getType();
-
-        const taskDeps = cellDependencies
-          .filter(d => d instanceof PulseTask)
-          .map(t => t.pulse.name);
-        pt.addPulse(
-          decoratorArgs.cellName,
-          taskDeps,
-          decoratorArgs.cellSignature.cellContents,
-          pt.target,
-          pt.stat.mtime.getTime(),
-          taskType,
-          pt.stat.size,
-          "out-dep"
-        );
+        pt.addPulse(decoratorArgs, cellDependencies, taskContext, "out-dep");
         return pt;
       },
       onTaskTargetMissing: async (
-        pt: PulseTask,
+        pt,
         decoratorArgs,
-        cellDependencies
+        cellDependencies,
+        taskContext
       ) => {
-        const taskType = pt.getType();
-        const taskDeps = cellDependencies
-          .filter(d => d instanceof PulseTask)
-          .map(t => t.pulse.name);
-        pt.addPulse(
-          decoratorArgs.cellName,
-          taskDeps,
-          decoratorArgs.cellSignature.cellContents,
-          pt.target,
-          0,
-          taskType,
-          0,
-          "dne"
-        );
+        pt.addPulse(decoratorArgs, cellDependencies, taskContext, "dne");
         return pt;
       },
     },
@@ -165,19 +119,16 @@ export async function getPulse(
           .filter(pt => pt.pulse.status !== "up");
         return taskDepsNotFresh.length > 0;
       },
-      value: async (pt: PulseTask, decoratorArgs, cellDependencies) => {
-        const taskType = pt.getType();
-        const taskDeps = cellDependencies
-          .filter(d => d instanceof PulseTask)
-          .map(t => t.pulse.name);
+      value: async (
+        pt: PulseTask,
+        decoratorArgs,
+        cellDependencies,
+        taskContext
+      ) => {
         pt.addPulse(
-          decoratorArgs.cellName,
-          taskDeps,
-          decoratorArgs.cellSignature.cellContents,
-          pt.target,
-          pt.stat?.mtime?.getTime(),
-          taskType,
-          pt.stat?.size,
+          decoratorArgs,
+          cellDependencies,
+          taskContext,
           "out-upstream"
         );
         return pt;
@@ -195,6 +146,8 @@ export async function getPulse(
   const cells: Set<string> = new Set();
   const m1 = runtime.module(define, name => {
     cells.add(name);
+    console.log(`In observer. name=${name}`);
+
     return {
       pending() {},
       fulfilled(value) {
@@ -222,5 +175,6 @@ export async function oak_pulse(args: { filename: string }): Promise<void> {
         pulse.bytes
       )} - ${duration(new Date(pulse.mtime))}`
     );
+    console.log(pulse);
   }
 }

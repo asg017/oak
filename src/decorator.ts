@@ -2,7 +2,7 @@ import { CellSignature, getSignature, hashString } from "./utils";
 import { OakDB } from "./db";
 import Task from "./Task";
 
-type TaskHookDecoratorArguments = {
+export type TaskHookDecoratorArguments = {
   cellFunction: (...any) => any;
   cellName: string;
   cellReferences: string[];
@@ -10,7 +10,7 @@ type TaskHookDecoratorArguments = {
   baseModuleDir: string;
 };
 type TaskHookCellArguments = any[];
-type TaskHookTaskContext = {
+export type TaskHookTaskContext = {
   dependenciesSignature: string;
 };
 type TaskHookArguments = [
