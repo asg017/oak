@@ -14,19 +14,6 @@ const logger = pino();
 
 type PulseTaskStatus = "dne" | "up" | "out-dep" | "out-def" | "out-upstream";
 
-type PulseTaskResult = {
-  name: string;
-  taskDeps: string[];
-  target: string;
-  mtime: number;
-  type: string;
-  bytes: number;
-  status: PulseTaskStatus;
-};
-type PulseResults = {
-  tasks: PulseTask[];
-};
-
 class PulseTask extends Task {
   pulse?: {
     name: string;
@@ -70,7 +57,9 @@ class PulseTask extends Task {
   }
 }
 
-export async function getPulse(oakfilePath: string): Promise<PulseResults> {
+export async function getPulse(
+  oakfilePath: string
+): Promise<{ tasks: PulseTask[] }> {
   const runtime = new Runtime(
     Object.assign(new Library(), {
       shell: () => () => "shell",
