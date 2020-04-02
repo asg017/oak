@@ -3,7 +3,6 @@ import Header from "./Header";
 import AppSection from "./AppSection";
 
 export default class App extends Component {
-  componentDidMount() {}
   render() {
     return (
       <div>

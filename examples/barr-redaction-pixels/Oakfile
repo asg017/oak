@@ -1,4 +1,4 @@
-report_pdf = task({
+report_pdf = new Task({
   target: 'report.pdf',
   run: report_pdf => command('curl', [
     '-o', report_pdf,
@@ -6,7 +6,7 @@ report_pdf = task({
   ])
 })
 
-pages_dir = task({
+pages_dir = new Task({
   target: 'pages',
   run: pages_dir => command('pdftoppm', [
     '-png',
@@ -16,7 +16,7 @@ pages_dir = task({
   ])
 })
 
-histogram_dir = task({
+histogram_dir = new Task({
   target: 'histograms',
   run: hisogram_dir => shell({path: '/bin/bash'})
   ``

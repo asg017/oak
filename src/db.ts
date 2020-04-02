@@ -15,34 +15,60 @@ type DBCell = {
   references: string;
 };
 
+export async function getAndMaybeIntializeOakDB(oakfilePath: string) {
+  const oakMetedataDir = join(dirname(oakfilePath), ".oak");
+  mkdirsSync(oakMetedataDir);
+  const dbPath = join(oakMetedataDir, "oak.db");
+  const dbExists = existsSync(dbPath);
+  const db = await sqlite.open(dbPath, { promise: Promise });
+  if (!dbExists) {
+    await initDb(db);
+  }
+  await db.close();
+  return new OakDB(oakfilePath);
+}
+
 export class OakDB {
   dbPath: string;
 
   constructor(oakfilePath: string) {
-    const oakMetedataDir = join(dirname(oakfilePath), ".oak");
-    mkdirsSync(oakMetedataDir);
-    this.dbPath = join(oakMetedataDir, "oak.db");
+    this.dbPath = join(dirname(oakfilePath), ".oak", "oak.db");
   }
 
   async getDb(): Promise<Database> {
     const dbExists = existsSync(this.dbPath);
     const db = await sqlite.open(this.dbPath, { promise: Promise });
     if (!dbExists) {
-      await initDb(db);
+      throw Error(
+        `Oak Database at ${this.dbPath} does not exist. You probably have to use getAndMaybeIntializeOakDB.`
+      );
     }
     return db;
   }
   async addEvents(
     runHash: string,
-    events: { type: string; name: string; time: number; meta?: string }[]
+    events: {
+      type: string;
+      ancestorHash: string;
+      name: string;
+      time: number;
+      meta?: string;
+    }[]
   ) {
     const db = await this.getDb();
 
     await Promise.all(
       events.map(event => {
-        const { type, name, time, meta } = event;
+        const { type, ancestorHash, name, time, meta } = event;
         db.run(
-          SQL`INSERT INTO Events VALUES (${runHash}, ${type}, ${name}, ${time}, ${meta})`
+          SQL`INSERT INTO Events VALUES (
+            ${runHash}, 
+            ${ancestorHash}, 
+            ${type}, 
+            ${name}, 
+            ${time}, 
+            ${meta}
+          )`
         );
       })
     );
@@ -57,6 +83,61 @@ export class OakDB {
     WHERE Logs.cellName = ${cellName}
     ORDER BY Logs.time DESC
     LIMIT 1`);
+    await db.close();
+    return result;
+  }
+
+  async getLogById(rowid: number) {
+    const db = await this.getDb();
+    const result = await db.get(SQL`SELECT 
+      path
+    FROM Logs
+    WHERE Logs.rowid = ${rowid}`);
+    await db.close();
+    return result;
+  }
+
+  async getRunById(hash: string) {
+    const db = await this.getDb();
+    const result = await db.get(SQL`SELECT 
+      hash
+    FROM Runs
+    WHERE Runs.hash = ${hash}`);
+    await db.close();
+    return result;
+  }
+
+  async getLogs() {
+    const db = await this.getDb();
+    const result = await db.all(SQL`SELECT 
+      rowid,
+      oakfile,
+      run,
+      cellName,
+      cellAncestorHash,
+      path,
+      time
+    FROM Logs
+    ORDER BY Logs.time DESC`);
+    await db.close();
+    return result;
+  }
+
+  async getRuns() {
+    const db = await this.getDb();
+    const result = await db.all(SQL`SELECT
+    Runs.hash,
+    Runs.oakfile,
+    Runs.time,
+    Runs.arguments,
+    COUNT(*) as logCount
+  FROM
+    Runs
+    INNER JOIN Logs ON Runs.hash = Logs.run
+  GROUP BY
+    Logs.run
+  ORDER BY
+    Runs.time DESC`);
     await db.close();
     return result;
   }
@@ -111,6 +192,68 @@ export class OakDB {
     }
   }
 
+  async getLastRelatedTaskExection(ancestorHash: string) {
+    const db = await this.getDb();
+    const row = await db.get(SQL`SELECT *
+    FROM TaskExecutions 
+    WHERE TaskExecutions.cellAncestorHash = ${ancestorHash}
+    ORDER BY TaskExecutions.timeStart DESC
+    LIMIT 1`);
+    await db.close();
+    return row;
+  }
+
+  async updateTaskExection(
+    rowid: number,
+    targetSignature: string,
+    runProcessStart: number,
+    runProcessEnd: number,
+    runProcessExitCode: number,
+    runProcessPID: string
+  ) {
+    const db = await this.getDb();
+    const { lastID } = await db.run(SQL`UPDATE TaskExecutions 
+    SET 
+      targetSignature = ${targetSignature},
+      runProcessStart = ${runProcessStart},
+      runProcessEnd = ${runProcessEnd},
+      runProcessExitCode = ${runProcessExitCode},
+      runProcessPID = ${runProcessPID}
+    WHERE rowid=${rowid}`);
+    await db.close();
+    return lastID;
+  }
+  async addTaskExecution(
+    runHash: string,
+    cellName: string,
+    anecestorHash: string,
+    dependenciesSignature: string,
+    freshStatus: string,
+    timeStart: number,
+    runLog: string
+  ) {
+    const db = await this.getDb();
+    const { lastID } = await db.run(SQL`INSERT INTO TaskExecutions (
+      run,
+      cellName,
+      cellAncestorHash,
+      dependenciesSignature,
+      freshStatus,
+      timeStart,
+      runLog
+    ) 
+    VALUES (
+      ${runHash},
+      ${cellName},
+      ${anecestorHash},
+      ${dependenciesSignature},
+      ${freshStatus},
+      ${timeStart},
+      ${runLog}
+    )`);
+    await db.close();
+    return lastID;
+  }
   async getOakfile(oakfileHash: string): Promise<DBOakfile> {
     const db = await this.getDb();
     const row = await db.get(
@@ -145,9 +288,13 @@ export class OakDB {
       Array.from(cellHashMap).map(
         ([cellName, { cellHash, ancestorHash, cellRefs }]) => {
           return db.run(
-            SQL`INSERT INTO Cells VALUES (${oakfileHash}, ${cellHash}, ${ancestorHash}, ${cellName}, ${JSON.stringify(
-              cellRefs
-            )})`
+            SQL`INSERT INTO Cells VALUES (
+              ${oakfileHash}, 
+              ${cellHash}, 
+              ${ancestorHash}, 
+              ${cellName}, 
+              ${JSON.stringify(cellRefs)}
+            )`
           );
         }
       )
@@ -158,6 +305,7 @@ export class OakDB {
 }
 
 async function initDb(db: Database) {
+  console.log("initting...");
   await db.run(
     `CREATE TABLE Oakfiles(
           hash TEXT PRIMARY KEY, 
@@ -201,8 +349,26 @@ async function initDb(db: Database) {
         ); `
     ),
     db.run(
+      `CREATE TABLE TaskExecutions(
+            run TEXT,
+            cellName TEXT,
+            cellAncestorHash TEXT,
+            dependenciesSignature TEXT,
+            targetSignature TEXT,
+            freshStatus TEXT,
+            timeStart INTEGER,
+            runLog TEXT,
+            runProcessStart INTEGER,
+            runProcessEnd INTEGER,
+            runProcessExitCode INTEGER,
+            runProcessPID TEXT,
+            FOREIGN KEY (run) REFERENCES Runs(hash)
+        ); `
+    ),
+    db.run(
       `CREATE TABLE Events(
             run TEXT,
+            ancestorHash TEXT,
             type TEXT,
             name TEXT,
             time INTEGER,

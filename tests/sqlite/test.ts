@@ -25,19 +25,19 @@ test("sqlite", async t => {
   writeOakfile(`
     text = "originalText"
 
-a = task({
+a = new Task({
     target: "a",
     run: a => shell\`echo "Running a..."; \
     echo -n "\${text}" > \${a}\`
 })
 
-b = task({
+b = new Task({
     target: "b",
     run: b => shell\`echo "Running b..."; \
     echo -n "b" > \${b}\`
 })
 
-c = task({
+c = new Task({
     target: "c",
     run: c => shell\`echo "Running c..."; \
     cat \${a} \${b} > \${c}\`
@@ -64,19 +64,19 @@ c = task({
   writeOakfile(`
 text = "originalText"
 
-a = task({
+a = new Task({
     target: "a",
     run: a => shell\`echo "Running a..."; \
     echo -n "\${text}" > \${a}\`
 })
 
-b = task({
+b = new Task({
     target: "b",
     run: b => shell\`echo "Running b..."; \
     echo -n "newB" > \${b}\`
 })
 
-c = task({
+c = new Task({
     target: "c",
     run: c => shell\`echo "Running c..."; \
     cat \${a} \${b} > \${c}\`
@@ -105,19 +105,19 @@ c = task({
   writeOakfile(`
 text = "newText"
 
-a = task({
+a = new Task({
     target: "a",
     run: a => shell\`echo "Running a..."; \
     echo -n "\${text}" > \${a}\`
 })
 
-b = task({
+b = new Task({
     target: "b",
     run: b => shell\`echo "Running b..."; \
     echo -n "newB" > \${b}\`
 })
 
-c = task({
+c = new Task({
     target: "c",
     run: c => shell\`echo "Running c..."; \
     cat \${a} \${b} > \${c}\`

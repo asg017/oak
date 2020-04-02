@@ -9,6 +9,7 @@ import { getStat } from "../../utils";
 import { Server } from "http";
 import socketio from "socket.io";
 import chokidar from "chokidar";
+import { OakDB } from "../../db";
 
 type OakfileEvent = "oakfile" | "target";
 
@@ -25,8 +26,11 @@ async function watchOakfileEvents(
     .on("all", async (eventName, path, stats) => {
       if (path.includes(oakdatadir) && eventName === "add") {
         callback("target");
+        return;
       }
       if (path === oakfilePath) {
+        // since the oakfile changed, the targets may be different now.
+        // so, unwatch the old targets, find the new ones, and watch them.
         watcher.unwatch(targets);
         const pulse = await getPulse(oakfilePath);
         targets = pulse.tasks.map(task => task.target);
@@ -45,9 +49,12 @@ async function watchOakfileEvents(
 
 export default function oak_dash(args: { filename: string; port: string }) {
   const oakfilePath = fileArgument(args.filename);
+  const oakDB = new OakDB(oakfilePath);
+
   const app = express();
   const server = new Server(app);
   const io = socketio(server);
+
   app.get("/api/oakfile", (req, res) => {
     createReadStream(oakfilePath).pipe(res);
   });
@@ -59,9 +66,25 @@ export default function oak_dash(args: { filename: string; port: string }) {
     const stat = await getStat(oakfilePath);
     res.json({ ACK: true, oakfilePath, stat });
   });
+  app.get("/api/logs", express.json(), cors(), async (req, res) => {
+    const logs = await oakDB.getLogs();
+    res.json({ logs });
+  });
+  app.get("/api/log", express.json(), cors(), async (req, res) => {
+    const log = await oakDB.getLogById(req.query.rowid);
+    createReadStream(log.path).pipe(res);
+  });
+  app.get("/api/runs", express.json(), cors(), async (req, res) => {
+    const runs = await oakDB.getRuns();
+    res.json({ runs });
+  });
 
   app.use(express.static(join(__dirname, "dash-frontend", "dist")));
-
+  app.use("/", (req, res) => {
+    res
+      .status(200)
+      .sendFile(join(__dirname, "dash-frontend", "dist", "index.html"));
+  });
   io.on("connection", async socket => {
     const cleanUpWatcher = await watchOakfileEvents(
       oakfilePath,

@@ -1,13 +1,26 @@
 import { h } from "preact";
+import { Link } from "preact-router/match";
 import "./NavBar.less";
 
-export default function(props) {
+function NavBarItem(props) {
+  const { label, href, disabled = false } = props;
+  return (
+    <Link
+      activeClassName="navbar-item--selected"
+      className={`navbar-item ${disabled ? "navbar-item--disabled" : ""}`}
+      href={href}
+    >
+      {label}
+    </Link>
+  );
+}
+export default function NavBar() {
   return (
     <div className="navbar">
-      <div className="navbar-item">Task Graph</div>
-      <div className="navbar-item navbar-item--disabled">Code</div>
-      <div className="navbar-item navbar-item--disabled">Runs</div>
-      <div className="navbar-item navbar-item--disabled">Logs</div>
+      <NavBarItem label="Task Graph" href="/task-graph" />
+      <NavBarItem label="Code" disabled />
+      <NavBarItem label="Runs" href="/runs" />
+      <NavBarItem label="Logs" href="/logs" />
     </div>
   );
 }

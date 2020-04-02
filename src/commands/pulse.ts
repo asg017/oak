@@ -3,126 +3,190 @@ import { OakCompiler } from "../oak-compile";
 import { Library } from "../Library";
 import pino from "pino";
 import { fileArgument } from "../cli-utils";
-import {
-  bytesToSize,
-  duration,
-  OakCell,
-  getStat,
-  CellSignature,
-} from "../utils";
+import { bytesToSize, duration, OakCell, getStat } from "../utils";
+import decorator from "../decorator";
+import { getAndMaybeIntializeOakDB, OakDB } from "../db";
+import { Stats } from "fs-extra";
+import { join } from "path";
 import Task from "../Task";
 
 const logger = pino();
 
-type PulseTaskStatus = "dne" | "up" | "out";
+type PulseTaskStatus = "dne" | "up" | "out-dep" | "out-def" | "out-upstream";
 
-type PulseTaskResult = {
-  name: string;
-  taskDeps: string[];
-  target: string;
-  mtime: number;
-  type: string;
-  bytes: number;
-  status: PulseTaskStatus;
-};
-type PulseResults = {
-  tasks: PulseTaskResult[];
-};
-
-function pulseCellDecorator(
-  cellFunction: (...args: any) => any,
-  cellName: string,
-  cellReferences: string[],
-  cellHashMap: Map<string, CellSignature>,
-  baseModuleDir: string
-): (...any) => any {
-  return async function(...dependencies) {
-    let taskDependents: number[] = [];
-    dependencies.map((dependency, i) => {
-      if (dependency.__task) {
-        taskDependents.push(i);
-      }
-    });
-    let currCell = await cellFunction(...dependencies);
-
-    if (currCell instanceof Task) {
-      await currCell.updateBasePath(baseModuleDir);
-
-      const watchFiles = currCell.watch;
-      const watchStats = await Promise.all(
-        watchFiles.map(async watchFile => {
-          const stat = await getStat(watchFile);
-          return { path: watchFile, stat };
-        })
-      );
-
-      // assuming that the library passed into this runtime
-      // isnt running the tasks, but actually returning the "type" of tasks
-      const taskType = await currCell.runTask();
-      if (currCell.stat === null) {
-        return {
-          __task: true,
-          name: cellName,
-          taskDeps: taskDependents.map(i => cellReferences[i]),
-          target: currCell.target,
-          mtime: 0,
-          type: taskType,
-          bytes: 0,
-          status: "dne",
-        };
-      }
-
-      const outOfDateTaskDependencies = taskDependents.filter(
-        i =>
-          currCell.stat.mtime.getTime() <= dependencies[i].mtime ||
-          dependencies[i].status !== "up"
-      );
-      const outOfDateWatchFiles = watchStats.filter(
-        ({ stat }) => currCell.stat.mtime.getTime() <= stat.mtime
-      );
-      if (
-        outOfDateTaskDependencies.length > 0 ||
-        outOfDateWatchFiles.length > 0
-      ) {
-        return {
-          __task: true,
-          name: cellName,
-          taskDeps: taskDependents.map(i => cellReferences[i]),
-          target: currCell.target,
-          mtime: currCell.stat.mtime.getTime(),
-          type: taskType,
-          bytes: currCell.stat.size,
-          status: "out",
-        };
-      }
-      return {
-        __task: true,
-        name: cellName,
-        taskDeps: taskDependents.map(i => cellReferences[i]),
-        target: currCell.target,
-        mtime: currCell.stat.mtime.getTime(),
-        type: taskType,
-        bytes: currCell.stat.size,
-        status: "up",
-      };
-    }
-    return currCell;
+class PulseTask extends Task {
+  pulse?: {
+    name: string;
+    taskDeps: string[];
+    target: string;
+    mtime: number;
+    taskType: string;
+    bytes: number;
+    status: PulseTaskStatus;
+    cellCode: string;
   };
+
+  constructor(params: { target: string; run: (any) => any; watch? }) {
+    super(params);
+    this.pulse = null;
+  }
+
+  addPulse(
+    name: string,
+    taskDeps: string[],
+    cellCode: string,
+    target: string,
+    mtime: number,
+    taskType: string,
+    bytes: number,
+    status: PulseTaskStatus
+  ) {
+    this.pulse = {
+      name,
+      taskDeps,
+      cellCode,
+      target,
+      mtime,
+      taskType,
+      bytes,
+      status,
+    };
+  }
+  getType(): string {
+    return this.run(this.target);
+  }
 }
 
-export async function getPulse(oakfilePath: string): Promise<PulseResults> {
+export async function getPulse(
+  oakfilePath: string
+): Promise<{ tasks: PulseTask[] }> {
   const runtime = new Runtime(
     Object.assign(new Library(), {
       shell: () => () => "shell",
       command: () => (script, args, out) => script,
+      Task: () => PulseTask,
     })
   );
+  const oakDB = await getAndMaybeIntializeOakDB(oakfilePath);
   const compiler = new OakCompiler();
-  const { parseResults, define } = await compiler.file(
-    oakfilePath,
-    pulseCellDecorator,
-    null
+  const d = decorator(
+    {
+      onTaskUpToDate: async (
+        pt: PulseTask,
+        decoratorArgs,
+        cellDependencies
+      ) => {
+        const taskType = pt.getType();
+        const taskDeps = cellDependencies
+          .filter(d => d instanceof PulseTask)
+          .map(t => t.pulse.name);
+        pt.addPulse(
+          decoratorArgs.cellName,
+          taskDeps,
+          decoratorArgs.cellSignature.cellContents,
+          pt.target,
+          pt.stat.mtime.getTime(),
+          taskType,
+          pt.stat.size,
+          "up"
+        );
+        return pt;
+      },
+      onTaskCellDefinitionChanged: async (
+        pt: PulseTask,
+        decoratorArgs,
+        cellDependencies
+      ) => {
+        const taskType = pt.getType();
+        const taskDeps = cellDependencies
+          .filter(d => d instanceof PulseTask)
+          .map(t => t.pulse.name);
+        pt.addPulse(
+          decoratorArgs.cellName,
+          taskDeps,
+          decoratorArgs.cellSignature.cellContents,
+          pt.target,
+          pt.stat.mtime.getTime(),
+          taskType,
+          pt.stat.size,
+          "out-def"
+        );
+        return pt;
+      },
+      onTaskDependencyChanged: async (
+        pt: PulseTask,
+        decoratorArgs,
+        cellDependencies
+      ) => {
+        const taskType = pt.getType();
+
+        const taskDeps = cellDependencies
+          .filter(d => d instanceof PulseTask)
+          .map(t => t.pulse.name);
+        pt.addPulse(
+          decoratorArgs.cellName,
+          taskDeps,
+          decoratorArgs.cellSignature.cellContents,
+          pt.target,
+          pt.stat.mtime.getTime(),
+          taskType,
+          pt.stat.size,
+          "out-dep"
+        );
+        return pt;
+      },
+      onTaskTargetMissing: async (
+        pt: PulseTask,
+        decoratorArgs,
+        cellDependencies
+      ) => {
+        const taskType = pt.getType();
+        const taskDeps = cellDependencies
+          .filter(d => d instanceof PulseTask)
+          .map(t => t.pulse.name);
+        pt.addPulse(
+          decoratorArgs.cellName,
+          taskDeps,
+          decoratorArgs.cellSignature.cellContents,
+          pt.target,
+          0,
+          taskType,
+          0,
+          "dne"
+        );
+        return pt;
+      },
+    },
+    oakDB,
+    {
+      check: (pt: PulseTask, decoratorArgs, cellDependencies) => {
+        const taskDepsNotFresh = cellDependencies
+          .filter(d => d instanceof PulseTask)
+          .filter(pt => pt.pulse.status !== "up");
+        return taskDepsNotFresh.length > 0;
+      },
+      value: async (pt: PulseTask, decoratorArgs, cellDependencies) => {
+        const taskType = pt.getType();
+        const taskDeps = cellDependencies
+          .filter(d => d instanceof PulseTask)
+          .map(t => t.pulse.name);
+        pt.addPulse(
+          decoratorArgs.cellName,
+          taskDeps,
+          decoratorArgs.cellSignature.cellContents,
+          pt.target,
+          pt.stat?.mtime?.getTime(),
+          taskType,
+          pt.stat?.size,
+          "out-upstream"
+        );
+        return pt;
+      },
+    },
+    PulseTask
   );
+  const { parseResults, define } = await compiler.file(oakfilePath, d, null);
+
   const parseResultsMap: Map<string, OakCell> = new Map();
   for (let cell of parseResults.module.cells) {
     if (cell.id?.name) parseResultsMap.set(cell.id?.name, cell);
@@ -134,12 +198,8 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
     return {
       pending() {},
       fulfilled(value) {
-        if (value && value.__task) {
-          if (parseResultsMap.has(value.name)) {
-            const cell = parseResultsMap.get(value.name);
-            const cellCode = cell.input.substring(cell.start, cell.end);
-            tasks.push(Object.assign(value, { cellCode }));
-          } else tasks.push(value);
+        if (value instanceof PulseTask) {
+          tasks.push(value);
         }
       },
       rejected(error) {
@@ -156,11 +216,11 @@ export async function getPulse(oakfilePath: string): Promise<PulseResults> {
 export async function oak_pulse(args: { filename: string }): Promise<void> {
   const oakfilePath = fileArgument(args.filename);
   const pulseResult = await getPulse(oakfilePath);
-  for (let task of pulseResult.tasks) {
+  for (let { pulse } of pulseResult.tasks) {
     logger.info(
-      `${task.name} - ${task.status} - ${bytesToSize(task.bytes)} - ${duration(
-        new Date(task.mtime)
-      )}`
+      `${pulse.name} - ${pulse.status} - ${bytesToSize(
+        pulse.bytes
+      )} - ${duration(new Date(pulse.mtime))}`
     );
   }
 }

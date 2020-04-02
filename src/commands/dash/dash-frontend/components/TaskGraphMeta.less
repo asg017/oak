@@ -1,35 +1,43 @@
 @import "../defintions.less";
 
+@taskgraphmeta-name-width: 100px;
+@taskgraphmeta-value-width: 500px;
+
 .taskgraphmeta {
-    width: @taskgraphmeta-width;
-    margin: auto;
+    margin: 0 auto;
     &-name {
-        font-size: 1.5rem;
-        font-weight: 650;
+    }
+    &-container {
+        display:grid;
+        grid-template-columns: auto auto;
     }
     &-table {
         font-size: 1.1rem;
-        width: @taskgraphmeta-width;
+        //width: @taskgraphmeta-width;
         margin: 0 auto;
     }
-    &-code {
-        width: @taskgraphmeta-width;
-        border-radius: 1rem;
-        
+    &-row {
+        display: grid;
+        grid-template-columns: @taskgraphmeta-name-width @taskgraphmeta-value-width;
     }
-    &-code-header {
-        margin-top: 1rem;
-        font-size: 1.2rem;
-        font-weight: 600;
+    &-path {
+        font-family: "Roboto Mono";
+        white-space: nowrap;
+        overflow: auto;
+    }
+    &-code {
+        width: 100%;
+        border-radius: 1rem;   
     }
 }
 
 .CodeMirror {
+    font-size: 16px;
     border-radius: .2rem;
+    height: auto;
 }
 
 @media screen and (min-width: 1000px) {
     .taskgraphmeta {
-        margin-left: 1rem;
     }
 }

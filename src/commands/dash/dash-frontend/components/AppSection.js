@@ -1,17 +1,25 @@
-import { h } from "preact";
+import { h, Component } from "preact";
+import { Router } from "preact-router";
 import TaskGraphSection from "./TaskGraphSection";
+import LogsSection from "./LogsSection";
+import RunsSection from "./RunsSection";
+
 import "./AppSection.less";
 
-export default function AppSection(props) {
-  const section = "task-graph";
-  switch (section) {
-    case "task-graph":
-      return (
-        <div class="app-section">
-          <TaskGraphSection />
-        </div>
-      );
-    default:
-      throw Error(`${section} not defined in AppSection.`);
+class A extends Component {
+  render() {
+    return <div>hi a</div>;
   }
+}
+export default function AppSection(props) {
+  const { section } = props;
+  return (
+    <div class="app-section">
+      <Router>
+        <TaskGraphSection path="task-graph" default />
+        <LogsSection path="logs/:logid?" />
+        <RunsSection path="runs" />
+      </Router>
+    </div>
+  );
 }

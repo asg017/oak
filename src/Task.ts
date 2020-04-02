@@ -3,19 +3,21 @@ import { join, dirname } from "path";
 import { getStat } from "./utils";
 import { Execution } from "./Execution";
 
+type WatchArg = string | string[];
+
 export default class Task {
   target: string;
+  targetOriginal: string;
   stat: Stats | null;
   run: (any) => any;
   watch: string[];
-  constructor(
-    path: string,
-    stat: Stats | null,
-    run: (any) => Execution,
-    watch: string[]
-  ) {
-    this.target = path;
-    this.stat = stat;
+  constructor(params: { target: string; run: (any) => any; watch?: WatchArg }) {
+    let { target, run, watch = [] } = params;
+    watch = Array.isArray(watch) ? watch : [watch];
+
+    this.targetOriginal = target;
+    this.target = target;
+    this.stat = null;
     this.run = run;
     this.watch = watch;
   }

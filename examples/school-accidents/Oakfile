@@ -1,0 +1,5 @@
+raw_accidents = new Task({
+  target: "raw_accidents.csv",
+  run: raw_accidents =>
+    shell`wget -O ${raw_accidents} --no-verbose "https://data.lacity.org/api/views/d5tf-ez2w/rows.csv?accessType=DOWNLOAD"`
+});

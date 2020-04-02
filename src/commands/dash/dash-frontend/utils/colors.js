@@ -9,5 +9,8 @@ export const colorVariable = new Map([
   // status
   ["dne", "#9b1617"],
   ["out", "#f4362a"],
+  ["out-dep", "#f4362a"],
+  ["out-def", "#f4362a"],
+  ["out-upstream", "#f4362a"],
   ["up", "#595"],
 ]);

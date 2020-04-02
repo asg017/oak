@@ -18,6 +18,7 @@ export type CellSignature = {
   cellHash: string;
   cellRefs: string[];
   ancestorHash: string;
+  cellContents: string;
 };
 
 type Node = {
@@ -114,7 +115,7 @@ export function parsedCellHashMap(
           return map.get(ref).ancestorHash;
         })}`
       );
-      map.set(cellName, { cellHash, cellRefs, ancestorHash });
+      map.set(cellName, { cellHash, cellRefs, ancestorHash, cellContents });
     }
     if (type === "import") {
       const cellHash = hashString(cellContents);
@@ -128,7 +129,7 @@ export function parsedCellHashMap(
           return map.get(ref).ancestorHash;
         })}${otherOakfileHash}`
       );
-      map.set(cellName, { cellHash, cellRefs, ancestorHash });
+      map.set(cellName, { cellHash, cellRefs, ancestorHash, cellContents });
     }
   }
   return map;
@@ -175,6 +176,37 @@ export async function getDirectoryStat(
     mtime: new Date(maxMTime),
     size: totalSize,
   });
+}
+
+export async function getDirectorySignature(
+  directoryPath: string
+): Promise<string> {
+  const filesInDirectory = readdirSync(directoryPath);
+  const fileStats = await Promise.all(
+    filesInDirectory.map(filename => stat(join(directoryPath, filename)))
+  );
+  return hashString(fileStats.map(fileSignature).join(""));
+}
+
+function fileSignature(s: Stats): string {
+  return hashString(
+    `${s.mtime.getTime()},${s.size},${s.ino},${s.mode},${s.uid},${s.gid}`
+  );
+}
+
+export async function getSignature(path: string): Promise<string> {
+  const s: Stats | null = await stat(path).catch(e => {
+    if (e.code === "ENOENT") return null;
+    throw e;
+  });
+  if (s === null) {
+    return null;
+  }
+  if (s.isDirectory()) {
+    return getDirectorySignature(path);
+  }
+  if (s.isFile()) return fileSignature(s);
+  throw Error(`Unrecognized Stat, not a file or directory.`);
 }
 export const getStat = (filename: string): Promise<Stats | null> =>
   new Promise(function(res, rej) {

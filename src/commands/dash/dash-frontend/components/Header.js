@@ -12,6 +12,7 @@ export default class Header extends Component {
     getMeta().then(meta => this.setState({ meta }));
   }
   render() {
+    const { onSelectionSection, section } = this.props;
     const { meta } = this.state;
     if (!meta) return <div className="header">Loading...</div>;
     return (
@@ -24,7 +25,10 @@ export default class Header extends Component {
             </div>
           </div>
         </div>
-        <NavBar />
+        <NavBar
+          section={section}
+          onSelect={section => onSelectionSection(section)}
+        />
       </div>
     );
   }
