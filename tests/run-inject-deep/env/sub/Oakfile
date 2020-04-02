@@ -5,7 +5,7 @@ return `B ${s}`;
 
 import {x} with {wrap} from "./subsub/Oakfile";
 
-y = task({
+y = new Task({
     target: "y", 
     run: y => shell`cat ${x} > ${y}`
 })

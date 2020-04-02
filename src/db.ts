@@ -15,20 +15,33 @@ type DBCell = {
   references: string;
 };
 
+export async function getAndMaybeIntializeOakDB(oakfilePath: string) {
+  const oakMetedataDir = join(dirname(oakfilePath), ".oak");
+  mkdirsSync(oakMetedataDir);
+  const dbPath = join(oakMetedataDir, "oak.db");
+  const dbExists = existsSync(dbPath);
+  const db = await sqlite.open(dbPath, { promise: Promise });
+  if (!dbExists) {
+    await initDb(db);
+  }
+  await db.close();
+  return new OakDB(oakfilePath);
+}
+
 export class OakDB {
   dbPath: string;
 
   constructor(oakfilePath: string) {
-    const oakMetedataDir = join(dirname(oakfilePath), ".oak");
-    mkdirsSync(oakMetedataDir);
-    this.dbPath = join(oakMetedataDir, "oak.db");
+    this.dbPath = join(dirname(oakfilePath), ".oak", "oak.db");
   }
 
   async getDb(): Promise<Database> {
     const dbExists = existsSync(this.dbPath);
     const db = await sqlite.open(this.dbPath, { promise: Promise });
     if (!dbExists) {
-      await initDb(db);
+      throw Error(
+        `Oak Database at ${this.dbPath} does not exist. You probably have to use getAndMaybeIntializeOakDB.`
+      );
     }
     return db;
   }
@@ -179,6 +192,68 @@ export class OakDB {
     }
   }
 
+  async getLastRelatedTaskExection(ancestorHash: string) {
+    const db = await this.getDb();
+    const row = await db.get(SQL`SELECT *
+    FROM TaskExecutions 
+    WHERE TaskExecutions.cellAncestorHash = ${ancestorHash}
+    ORDER BY TaskExecutions.timeStart DESC
+    LIMIT 1`);
+    await db.close();
+    return row;
+  }
+
+  async updateTaskExection(
+    rowid: number,
+    targetSignature: string,
+    runProcessStart: number,
+    runProcessEnd: number,
+    runProcessExitCode: number,
+    runProcessPID: string
+  ) {
+    const db = await this.getDb();
+    const { lastID } = await db.run(SQL`UPDATE TaskExecutions 
+    SET 
+      targetSignature = ${targetSignature},
+      runProcessStart = ${runProcessStart},
+      runProcessEnd = ${runProcessEnd},
+      runProcessExitCode = ${runProcessExitCode},
+      runProcessPID = ${runProcessPID}
+    WHERE rowid=${rowid}`);
+    await db.close();
+    return lastID;
+  }
+  async addTaskExecution(
+    runHash: string,
+    cellName: string,
+    anecestorHash: string,
+    dependenciesSignature: string,
+    freshStatus: string,
+    timeStart: number,
+    runLog: string
+  ) {
+    const db = await this.getDb();
+    const { lastID } = await db.run(SQL`INSERT INTO TaskExecutions (
+      run,
+      cellName,
+      cellAncestorHash,
+      dependenciesSignature,
+      freshStatus,
+      timeStart,
+      runLog
+    ) 
+    VALUES (
+      ${runHash},
+      ${cellName},
+      ${anecestorHash},
+      ${dependenciesSignature},
+      ${freshStatus},
+      ${timeStart},
+      ${runLog}
+    )`);
+    await db.close();
+    return lastID;
+  }
   async getOakfile(oakfileHash: string): Promise<DBOakfile> {
     const db = await this.getDb();
     const row = await db.get(
@@ -230,6 +305,7 @@ export class OakDB {
 }
 
 async function initDb(db: Database) {
+  console.log("initting...");
   await db.run(
     `CREATE TABLE Oakfiles(
           hash TEXT PRIMARY KEY, 
@@ -269,6 +345,23 @@ async function initDb(db: Database) {
             path TEXT,
             time INTEGER,
             FOREIGN KEY (oakfile) REFERENCES Oakfiles(hash),
+            FOREIGN KEY (run) REFERENCES Runs(hash)
+        ); `
+    ),
+    db.run(
+      `CREATE TABLE TaskExecutions(
+            run TEXT,
+            cellName TEXT,
+            cellAncestorHash TEXT,
+            dependenciesSignature TEXT,
+            targetSignature TEXT,
+            freshStatus TEXT,
+            timeStart INTEGER,
+            runLog TEXT,
+            runProcessStart INTEGER,
+            runProcessEnd INTEGER,
+            runProcessExitCode INTEGER,
+            runProcessPID TEXT,
             FOREIGN KEY (run) REFERENCES Runs(hash)
         ); `
     ),

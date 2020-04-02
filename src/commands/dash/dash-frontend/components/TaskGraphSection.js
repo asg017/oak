@@ -10,7 +10,7 @@ import io from "socket.io-client";
 
 function createDag(tasks, controls) {
   const graph = new graphlib.Graph()
-    .setGraph({ rankdir: "TB", ...controls })
+    .setGraph({ rankdir: "LR", ...controls })
     .setDefaultEdgeLabel(() => ({}));
 
   let n = 0;
@@ -18,9 +18,9 @@ function createDag(tasks, controls) {
 
   // create nodes
   tasks.map((cell, i) => {
-    nodeMap.set(cell.name, n);
+    nodeMap.set(cell.pulse.name, n);
     graph.setNode(n++, {
-      label: cell.name,
+      label: cell.pulse.name,
       taskIndex: i,
       ...cell,
       width: 275,
@@ -30,12 +30,12 @@ function createDag(tasks, controls) {
 
   // create edges
   tasks.map(cell => {
-    (cell.taskDeps || []).map(dep => {
-      if (!nodeMap.has(cell.name) || !nodeMap.has(dep))
-        throw Error(`${cell.name} or ${dep} not in nodeMap. ${nodeMap.keys()}`);
-      graph.setEdge(nodeMap.get(dep), nodeMap.get(cell.name), {
-        fromStatus: graph.node(nodeMap.get(dep)).status,
-        toStatus: graph.node(nodeMap.get(cell.name)).status,
+    (cell.pulse.taskDeps || []).map(dep => {
+      if (!nodeMap.has(cell.pulse.name) || !nodeMap.has(dep))
+        throw Error(`${cell.pulse.name} or ${dep} not in nodeMap.`);
+      graph.setEdge(nodeMap.get(dep), nodeMap.get(cell.pulse.name), {
+        fromStatus: graph.node(nodeMap.get(dep)).pulse.status,
+        toStatus: graph.node(nodeMap.get(cell.pulse.name)).pulse.status,
         fromWidth: graph.node(nodeMap.get(dep)).width,
         fromHeight: graph.node(nodeMap.get(dep)).height,
       });
@@ -43,7 +43,7 @@ function createDag(tasks, controls) {
   });
 
   dagre.layout(graph);
-  return graph;
+  return { dag: graph, nodeMap };
 }
 
 export default class TaskGraphSection extends Component {
@@ -51,41 +51,52 @@ export default class TaskGraphSection extends Component {
   componentDidMount() {
     const socket = io.connect("/");
     socket.on("oakfile", data => {
-      console.log("socket.on oakfile", data);
       const { pulse } = data;
+      const { dag, nodeMap } = createDag(pulse.tasks, this.state.controls);
       this.setState({
         tasks: pulse.tasks,
-        dag: createDag(pulse.tasks, this.state.controls),
+        dag,
+        nodeMap,
       });
     });
-    getPulse().then(({ pulseResult }) =>
+    getPulse().then(({ pulseResult }) => {
+      const { dag, nodeMap } = createDag(
+        pulseResult.tasks,
+        this.state.controls
+      );
       this.setState({
         tasks: pulseResult.tasks,
-        dag: createDag(pulseResult.tasks, this.state.controls),
-      })
-    );
+        dag,
+        nodeMap,
+      });
+    });
   }
   render() {
-    const { tasks, dag, selectedTask, controls } = this.state;
+    const { tasks, dag, selectedTask, controls, nodeMap } = this.state;
     if (!tasks || !dag)
       return <div className="taskgraph-section">Loading...</div>;
     return (
       <div className="taskgraph-section">
-        <div>
-          <TaskGraph
-            dag={dag}
-            tasks={tasks}
-            onTaskSelect={selectedTask => this.setState({ selectedTask })}
-            selectedTask={selectedTask}
-          />
-          <TaskGraphControls
-            controls={controls}
-            onUpdate={controls =>
-              this.setState({ controls, dag: createDag(tasks, controls) })
-            }
-          />
-        </div>
-        <TaskGraphMeta dag={dag} tasks={tasks} selectedTask={selectedTask} />
+        <TaskGraph
+          dag={dag}
+          tasks={tasks}
+          onTaskSelect={selectedTask => this.setState({ selectedTask })}
+          selectedTask={selectedTask}
+        />
+        <TaskGraphControls
+          controls={controls}
+          onUpdate={controls => {
+            const { dag, nodeMap } = createDag(tasks, controls);
+            this.setState({ controls, dag, nodeMap });
+          }}
+        />
+
+        <TaskGraphMeta
+          dag={dag}
+          tasks={tasks}
+          nodeMap={nodeMap}
+          selectedTask={selectedTask}
+        />
       </div>
     );
   }

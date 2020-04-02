@@ -1,9 +1,9 @@
-a = task({
-    target: 'a',
-    run: a => shell`echo -n "a" > ${a}`
-})
+a = new Task({
+  target: "a",
+  run: a => shell`echo -n "a" > ${a}`
+});
 
-b = task({
-    target: 'b',
-    run: b => shell`cat ${a} > ${b}`
-})
+b = new Task({
+  target: "b",
+  run: b => shell`cat ${a} > ${b}`
+});

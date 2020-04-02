@@ -1,4 +1,4 @@
-backfill_raw = task({
+backfill_raw = new Task({
   target: "backfill_raw",
   // could/should be a python script too, idk
   run: backfill_raw => shell` mkdir -p ${backfill_raw};
@@ -8,7 +8,7 @@ backfill_raw = task({
   done`
 });
 
-backfill = task({
+backfill = new Task({
   target: "backfill.db",
   run: backfill =>
     command("pipenv", [
@@ -20,7 +20,7 @@ backfill = task({
     ])
 });
 
-curr_year_raw = task({
+curr_year_raw = new Task({
   target: "curr_year_raw.csv.gz",
   run: curr_year_raw =>
     command("wget", [
@@ -30,7 +30,7 @@ curr_year_raw = task({
     ])
 });
 
-curr_year = task({
+curr_year = new Task({
   target: "curr_year.db",
   run: curr_year =>
     command("pipenv", [

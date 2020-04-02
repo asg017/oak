@@ -18,7 +18,8 @@ test.onFinish(() => {
 
 cleanUp();
 
-test("oak-clean", async t => {
+// skipping since this should use oak pulse now.
+test.skip("oak-clean", async t => {
   // create all files
   await oak_run({ filename: env("Oakfile"), targets: [] });
   const t1 = await getTree(outs, env);

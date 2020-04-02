@@ -43,6 +43,33 @@ function LogsSectionLogSelectorItem(props) {
   );
 }
 
+function LogsSectionLogViewerHeader(props) {
+  const { log } = props;
+  return (
+    <div className="logssection-logviewerheader">
+      <div className="logssection-logviewerheader-name">{log.cellName}</div>
+      <div className="logssection-logviewerheader-id">{log.rowid}</div>
+      <div className="logssection-logviewerheader-time">
+        {duration(new Date(log.time))}
+      </div>
+      <div className="logssection-logviewerheader-path">
+        <code>{log.path}</code>
+      </div>
+    </div>
+  );
+}
+
+function LogsSectionLogViewerLog(props) {
+  const { data } = props;
+  return (
+    <div className="logssection-logviewerlog">
+      <code>
+        <pre>{data || "Logfile is empty."}</pre>
+      </code>
+    </div>
+  );
+}
+
 class LogsSectionLogViewer extends Component {
   state = { error: false, loading: false, data: null };
   componentDidUpdate(prevProp) {
@@ -71,15 +98,8 @@ class LogsSectionLogViewer extends Component {
       return <div className="logssection-logviewer">Select a log to view.</div>;
     return (
       <div className="logssection-logviewer">
-        <div>{selectedLog.cellName}</div>
-        <div>{selectedLog.rowid}</div>
-        <div>{duration(new Date(selectedLog.time))}</div>
-        <div>
-          <code>{selectedLog.path}</code>
-        </div>
-        <code>
-          <pre>{data}</pre>
-        </code>
+        <LogsSectionLogViewerHeader log={selectedLog} />
+        <LogsSectionLogViewerLog data={data} />
       </div>
     );
   }

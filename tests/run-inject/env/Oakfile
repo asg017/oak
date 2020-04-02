@@ -2,7 +2,7 @@ STATE = "CA"
 
 import {c} with {STATE} from "./sub/Oakfile"
 
-d = task({
+d = new Task({
     target: "d",
     run: d => shell`cat ${c} > ${d}`
 })

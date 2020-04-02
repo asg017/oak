@@ -1,12 +1,12 @@
-a = task({
+a = new Task({
   target: "a",
   run: a => shell`echo -n "a" > ${a}`
 });
-b = task({
+b = new Task({
   target: "b",
   run: b => shell`echo -n "b" > ${b}`
 });
-c = task({
+c = new Task({
   target: "c",
   run: c => shell`cat ${a} ${b} > ${c}`
 });

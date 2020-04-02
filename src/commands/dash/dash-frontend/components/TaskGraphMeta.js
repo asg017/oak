@@ -16,35 +16,116 @@ function Row(props) {
   );
 }
 
-export default class TaskGraphMeta extends Component {
+function TaskGraphMetaTable(props) {
+  const { task, pulse } = props;
+  return (
+    <div className="taskgraphmeta-table">
+      <Row
+        name="Target"
+        value={
+          <div className="taskgraphmeta-target">
+            <code>{task.targetOriginal}</code>
+          </div>
+        }
+      />
+      <Row
+        name="Path"
+        value={
+          <div className="taskgraphmeta-path">
+            <code>{pulse.target}</code>
+          </div>
+        }
+      />
+      <Row
+        name="Size"
+        value={
+          <div className="taskgraphmeta-size">{bytesToSize(pulse.bytes)}</div>
+        }
+      />
+      <Row
+        name="Last Modified"
+        value={
+          <div className="taskgraphmeta-mtime">
+            {pulse.mtime ? duration(new Date(pulse.mtime)) : "-"}
+          </div>
+        }
+      />
+    </div>
+  );
+}
+class TaskGraphMetaCode extends Component {
   codemirrorRef = createRef();
   codemirror = null;
   _attachCode() {}
   componentDidMount() {
-    const { dag, selectedTask } = this.props;
-    const task = dag.node(selectedTask);
+    const { task } = this.props;
     this.codemirror = CodeMirror(this.codemirrorRef.current, {
-      value: task.cellCode,
+      value: task.pulse.cellCode,
       mode: "javascript",
       theme: "twilight",
       readOnly: true,
       lineNumbers: true,
       scrollbarStyle: "simple",
+      viewportMargin: Infinity,
     });
     // omg very hack pls fix
-    this.codemirror.setSize(580, task.cellCode.split("\n").length * 20);
+    this.codemirror.setSize(
+      null,
+      this.codemirror.lineCount() * (this.codemirror.defaultTextHeight() + 2)
+    );
   }
   componentDidUpdate(prevProp) {
-    const { dag, selectedTask } = this.props;
-    if (prevProp.selectedTask !== selectedTask) {
-      const task = dag.node(selectedTask);
-      this.codemirror.setValue(task.cellCode);
+    const { task } = this.props;
+    if (prevProp.task.taskIndex !== task.taskIndex) {
+      this.codemirror.setValue(task.pulse.cellCode);
       // omg very hack pls fix
-      this.codemirror.setSize(580, task.cellCode.split("\n").length * 20);
+      this.codemirror.setSize(
+        null,
+        this.codemirror.lineCount() * (this.codemirror.defaultTextHeight() + 2)
+      );
     }
   }
   render() {
-    const { dag, tasks, selectedTask } = this.props;
+    return (
+      <div>
+        <div className="taskgraphmeta-code" ref={this.codemirrorRef}></div>
+      </div>
+    );
+  }
+}
+function TaskGraphMetaDependenciesList(props) {
+  const { dependencies } = props;
+  return (
+    <div>
+      {dependencies.map(d => (
+        <div>
+          <h4>{d.pulse.name}</h4>
+          <div>{d.pulse.status}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+function TaskGraphMetaDependencies(props) {
+  const { dag, nodeMap, pulse } = props;
+  const dependencies = pulse.taskDeps.map(dep => {
+    return dag.node(nodeMap.get(dep));
+  });
+  return (
+    <div className="tasgraphmeta-depedencies">
+      <h3>Task Dependencies</h3>
+      {dependencies.length === 0 ? (
+        `There are no dependencies for ${pulse.name}!`
+      ) : (
+        <TaskGraphMetaDependenciesList dependencies={dependencies} />
+      )}
+    </div>
+  );
+}
+
+export default class TaskGraphMeta extends Component {
+  render() {
+    const { dag, selectedTask, nodeMap } = this.props;
     if (selectedTask === null)
       return (
         <div className="taskgraphmeta">
@@ -52,37 +133,19 @@ export default class TaskGraphMeta extends Component {
         </div>
       );
     const task = dag.node(selectedTask);
+    const { pulse } = task;
     return (
       <div className="taskgraphmeta">
-        <div className="taskgraphmeta-name">{task.label}</div>
-        <div className="taskgraphmeta-table">
-          <Row
-            name="Path"
-            value={
-              <div className="taskgraphmeta-path">
-                <code>{task.target}</code>
-              </div>
-            }
-          />
-          <Row
-            name="Size"
-            value={
-              <div className="taskgraphmeta-size">
-                {bytesToSize(task.bytes)}
-              </div>
-            }
-          />
-          <Row
-            name="Last Modified"
-            value={
-              <div className="taskgraphmeta-mtime">
-                {task.mtime ? duration(new Date(task.mtime)) : "-"}
-              </div>
-            }
+        <div>
+          <h2 className="taskgraphmeta-name">{task.label}</h2>
+          <TaskGraphMetaCode task={task} />
+          <TaskGraphMetaTable task={task} pulse={pulse} />
+          <TaskGraphMetaDependencies
+            dag={dag}
+            pulse={pulse}
+            nodeMap={nodeMap}
           />
         </div>
-        <div className="taskgraphmeta-code-header">Task Code</div>
-        <div className="taskgraphmeta-code" ref={this.codemirrorRef}></div>
       </div>
     );
   }

@@ -1,11 +1,11 @@
-import  {b} from "sub/Oakfile";
+import { b } from "sub/Oakfile";
 
-x = task({
-    target: 'x',
-    run: x => shell`echo -n "x" > ${x}`
-})
+x = new Task({
+  target: "x",
+  run: x => shell`echo -n "x" > ${x}`
+});
 
-y = task({
-    target: 'y',
-    run: y => shell`cat ${x} ${b} > ${y}`
-})
+y = new Task({
+  target: "y",
+  run: y => shell`cat ${x} ${b} > ${y}`
+});

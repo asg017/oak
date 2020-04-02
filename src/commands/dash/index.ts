@@ -26,8 +26,11 @@ async function watchOakfileEvents(
     .on("all", async (eventName, path, stats) => {
       if (path.includes(oakdatadir) && eventName === "add") {
         callback("target");
+        return;
       }
       if (path === oakfilePath) {
+        // since the oakfile changed, the targets may be different now.
+        // so, unwatch the old targets, find the new ones, and watch them.
         watcher.unwatch(targets);
         const pulse = await getPulse(oakfilePath);
         targets = pulse.tasks.map(task => task.target);

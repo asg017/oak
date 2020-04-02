@@ -1,7 +1,13 @@
-STATE = 'NY'
+STATE = "NY";
 
-a = task({target: 'a', run: a => shell`wget -O ${a} --quiet http://oak-test.surge.sh/data/${STATE}/a` })
+a = new Task({
+  target: "a",
+  run: a => shell`wget -O ${a} --quiet http://oak-test.surge.sh/data/${STATE}/a`
+});
 
-b = task({target: 'b', run: b => shell`wget -O ${b} --quiet http://oak-test.surge.sh/data/${STATE}/b` })
+b = new Task({
+  target: "b",
+  run: b => shell`wget -O ${b} --quiet http://oak-test.surge.sh/data/${STATE}/b`
+});
 
-c = task({target: 'c', run: c => shell`cat ${a} ${b} > ${c}` })
+c = new Task({ target: "c", run: c => shell`cat ${a} ${b} > ${c}` });
