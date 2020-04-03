@@ -17,7 +17,9 @@ function Row(props) {
 }
 
 function TaskGraphMetaTable(props) {
-  const { task, pulse } = props;
+  const { node } = props;
+  const { task } = node;
+  const { pulse } = task;
   return (
     <div className="taskgraphmeta-table">
       <Row
@@ -58,9 +60,11 @@ class TaskGraphMetaCode extends Component {
   codemirror = null;
   _attachCode() {}
   componentDidMount() {
-    const { task } = this.props;
+    const { node } = this.props;
+    const { task } = node;
+    const { signature } = node;
     this.codemirror = CodeMirror(this.codemirrorRef.current, {
-      value: task.pulse.cellCode,
+      value: signature.cellContents,
       mode: "javascript",
       theme: "twilight",
       readOnly: true,
@@ -75,13 +79,14 @@ class TaskGraphMetaCode extends Component {
     );
   }
   componentDidUpdate(prevProp) {
-    const { task } = this.props;
-    if (prevProp.task.taskIndex !== task.taskIndex) {
-      this.codemirror.setValue(task.pulse.cellCode);
+    const { node } = this.props;
+    const { signature } = node;
+    if (prevProp.node.taskIndex !== node.taskIndex) {
+      this.codemirror.setValue(signature.cellContents);
       // omg very hack pls fix
       this.codemirror.setSize(
         null,
-        this.codemirror.lineCount() * (this.codemirror.defaultTextHeight() + 2)
+        this.codemirror.lineCount() * (this.codemirror.defaultTextHeight() + 5)
       );
     }
   }
@@ -99,8 +104,8 @@ function TaskGraphMetaDependenciesList(props) {
     <div>
       {dependencies.map(d => (
         <div>
-          <h4>{d.pulse.name}</h4>
-          <div>{d.pulse.status}</div>
+          <h4>{d.name}</h4>
+          <div>{d.task?.pulse?.status || ""}</div>
         </div>
       ))}
     </div>
@@ -108,8 +113,12 @@ function TaskGraphMetaDependenciesList(props) {
 }
 function TaskGraphMetaDependencies(props) {
   const { dag, nodeMap, pulse } = props;
+  console.log(pulse, nodeMap);
   const dependencies = pulse.taskDeps.map(dep => {
-    return dag.node(nodeMap.get(dep));
+    return dag.node(
+      nodeMap.get(dep.importId ? `${dep.importId}/${dep.name}` : dep.name)
+        .taskIndex
+    );
   });
   return (
     <div className="tasgraphmeta-depedencies">
@@ -132,14 +141,15 @@ export default class TaskGraphMeta extends Component {
           <div>{"none selected"}</div>
         </div>
       );
-    const task = dag.node(selectedTask);
-    const { pulse } = task;
+    const node = dag.node(selectedTask);
+    const { task } = node;
+    const pulse = task?.pulse;
     return (
       <div className="taskgraphmeta">
         <div>
-          <h2 className="taskgraphmeta-name">{task.label}</h2>
-          <TaskGraphMetaCode task={task} />
-          <TaskGraphMetaTable task={task} pulse={pulse} />
+          <h2 className="taskgraphmeta-name">{node.label}</h2>
+          <TaskGraphMetaCode node={node} />
+          <TaskGraphMetaTable node={node} pulse={pulse} />
           <TaskGraphMetaDependencies
             dag={dag}
             pulse={pulse}

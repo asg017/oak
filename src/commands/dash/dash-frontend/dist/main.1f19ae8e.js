@@ -30114,26 +30114,29 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function TaskGraphNodeContainer(props) {
+  var _task$pulse;
+
   var node = props.node,
       hover = props.hover,
       selected = props.selected;
-  var pulse = node.pulse;
+  var task = node.task;
   return (0, _preact.h)("rect", {
     className: "taskgraphnode-container ".concat(selected || hover ? "taskgraphnode-container--".concat(selected ? "selected" : "hover") : ""),
     rx: 7.5,
     ry: 7.5,
     width: node.width,
     height: node.height,
-    stroke: _colors.colorVariable.get(pulse.status),
+    stroke: _colors.colorVariable.get(task === null || task === void 0 ? void 0 : (_task$pulse = task.pulse) === null || _task$pulse === void 0 ? void 0 : _task$pulse.status),
     strokeWidth: 3
   });
 }
 
 function TaskGraphNodeStatusBar(props) {
   var node = props.node;
-  var pulse = node.pulse;
+  var task = node.task;
+  if (!task) return null;
   return (0, _preact.h)("g", null, (0, _preact.h)("path", {
-    className: "taskgraphnode-status-bar taskgraphnode-status-bar-".concat(pulse.status),
+    className: "taskgraphnode-status-bar taskgraphnode-status-bar-".concat(task.pulse.status),
     d: "M0 7.5C0 3.35786 3.35786 0 7.5 0H9V".concat(node.height, "H7.5C3.35786 ").concat(node.height, " 0 ").concat(node.height - 3.35, " 0 ").concat(node.height - 7.5, "V7.5Z")
   }));
 }
@@ -30151,20 +30154,23 @@ function getIcon(type) {
 
 function TaskGraphNodeType(props) {
   var node = props.node;
-  var pulse = node.pulse;
+  var task = node.task;
+  if (!task) return null;
   return (0, _preact.h)("g", {
     className: "taskgraphnode-type",
     transform: "translate(16, 8)"
   }, (0, _preact.h)("image", {
     width: 18,
     height: 18,
-    xlinkHref: "https://simpleicons.org/icons/".concat(getIcon(pulse.type), ".svg")
+    xlinkHref: "https://simpleicons.org/icons/".concat(getIcon(task.pulse.type), ".svg")
   }));
 }
 
 function TaskGraphNodeStatusLabel(props) {
   var node = props.node;
-  var pulse = node.pulse;
+  var task = node.task;
+  if (!task || !task.pulse) return null;
+  var pulse = task.pulse;
   var status;
 
   switch (pulse.status) {
@@ -30195,11 +30201,12 @@ function TaskGraphNodeStatusLabel(props) {
 
 function TaskGraphNodeTargetSize(props) {
   var node = props.node;
-  var pulse = node.pulse;
+  var task = node.task;
+  if (!task) return null;
   return (0, _preact.h)("g", {
     className: "taskgraphnode-target-size",
     transform: "translate(".concat(node.width - 16, ", ").concat(node.height - 10, ")")
-  }, (0, _preact.h)("text", null, (0, _format.bytesToSize)(pulse.bytes)));
+  }, (0, _preact.h)("text", null, (0, _format.bytesToSize)(task.pulse.bytes)));
 }
 
 var TaskGraphNodeName = /*#__PURE__*/function (_Component) {
@@ -41422,8 +41429,9 @@ function Row(props) {
 }
 
 function TaskGraphMetaTable(props) {
-  var task = props.task,
-      pulse = props.pulse;
+  var node = props.node;
+  var task = node.task;
+  var pulse = task.pulse;
   return (0, _preact.h)("div", {
     className: "taskgraphmeta-table"
   }, (0, _preact.h)(Row, {
@@ -41478,9 +41486,11 @@ var TaskGraphMetaCode = /*#__PURE__*/function (_Component) {
   }, {
     key: "componentDidMount",
     value: function componentDidMount() {
-      var task = this.props.task;
+      var node = this.props.node;
+      var task = node.task;
+      var signature = node.signature;
       this.codemirror = (0, _codemirror.default)(this.codemirrorRef.current, {
-        value: task.pulse.cellCode,
+        value: signature.cellContents,
         mode: "javascript",
         theme: "twilight",
         readOnly: true,
@@ -41494,12 +41504,13 @@ var TaskGraphMetaCode = /*#__PURE__*/function (_Component) {
   }, {
     key: "componentDidUpdate",
     value: function componentDidUpdate(prevProp) {
-      var task = this.props.task;
+      var node = this.props.node;
+      var signature = node.signature;
 
-      if (prevProp.task.taskIndex !== task.taskIndex) {
-        this.codemirror.setValue(task.pulse.cellCode); // omg very hack pls fix
+      if (prevProp.node.taskIndex !== node.taskIndex) {
+        this.codemirror.setValue(signature.cellContents); // omg very hack pls fix
 
-        this.codemirror.setSize(null, this.codemirror.lineCount() * (this.codemirror.defaultTextHeight() + 2));
+        this.codemirror.setSize(null, this.codemirror.lineCount() * (this.codemirror.defaultTextHeight() + 5));
       }
     }
   }, {
@@ -41518,7 +41529,9 @@ var TaskGraphMetaCode = /*#__PURE__*/function (_Component) {
 function TaskGraphMetaDependenciesList(props) {
   var dependencies = props.dependencies;
   return (0, _preact.h)("div", null, dependencies.map(function (d) {
-    return (0, _preact.h)("div", null, (0, _preact.h)("h4", null, d.pulse.name), (0, _preact.h)("div", null, d.pulse.status));
+    var _d$task, _d$task$pulse;
+
+    return (0, _preact.h)("div", null, (0, _preact.h)("h4", null, d.name), (0, _preact.h)("div", null, ((_d$task = d.task) === null || _d$task === void 0 ? void 0 : (_d$task$pulse = _d$task.pulse) === null || _d$task$pulse === void 0 ? void 0 : _d$task$pulse.status) || ""));
   }));
 }
 
@@ -41526,8 +41539,9 @@ function TaskGraphMetaDependencies(props) {
   var dag = props.dag,
       nodeMap = props.nodeMap,
       pulse = props.pulse;
+  console.log(pulse, nodeMap);
   var dependencies = pulse.taskDeps.map(function (dep) {
-    return dag.node(nodeMap.get(dep));
+    return dag.node(nodeMap.get(dep.importId ? "".concat(dep.importId, "/").concat(dep.name) : dep.name).taskIndex);
   });
   return (0, _preact.h)("div", {
     className: "tasgraphmeta-depedencies"
@@ -41555,16 +41569,17 @@ var TaskGraphMeta = /*#__PURE__*/function (_Component2) {
       if (selectedTask === null) return (0, _preact.h)("div", {
         className: "taskgraphmeta"
       }, (0, _preact.h)("div", null, "none selected"));
-      var task = dag.node(selectedTask);
-      var pulse = task.pulse;
+      var node = dag.node(selectedTask);
+      var task = node.task;
+      var pulse = task === null || task === void 0 ? void 0 : task.pulse;
       return (0, _preact.h)("div", {
         className: "taskgraphmeta"
       }, (0, _preact.h)("div", null, (0, _preact.h)("h2", {
         className: "taskgraphmeta-name"
-      }, task.label), (0, _preact.h)(TaskGraphMetaCode, {
-        task: task
+      }, node.label), (0, _preact.h)(TaskGraphMetaCode, {
+        node: node
       }), (0, _preact.h)(TaskGraphMetaTable, {
-        task: task,
+        node: node,
         pulse: pulse
       }), (0, _preact.h)(TaskGraphMetaDependencies, {
         dag: dag,
@@ -62267,28 +62282,102 @@ function createDag(tasks, controls) {
   var n = 0;
   var nodeMap = new Map(); // create nodes
 
-  tasks.map(function (cell, i) {
-    nodeMap.set(cell.pulse.name, n);
-    graph.setNode(n++, _objectSpread({
-      label: cell.pulse.name,
-      taskIndex: i
-    }, cell, {
-      width: 275,
-      height: 75
-    }));
-  }); // create edges
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
 
-  tasks.map(function (cell) {
-    (cell.pulse.taskDeps || []).map(function (dep) {
-      if (!nodeMap.has(cell.pulse.name) || !nodeMap.has(dep)) throw Error("".concat(cell.pulse.name, " or ").concat(dep, " not in nodeMap."));
-      graph.setEdge(nodeMap.get(dep), nodeMap.get(cell.pulse.name), {
-        fromStatus: graph.node(nodeMap.get(dep)).pulse.status,
-        toStatus: graph.node(nodeMap.get(cell.pulse.name)).pulse.status,
-        fromWidth: graph.node(nodeMap.get(dep)).width,
-        fromHeight: graph.node(nodeMap.get(dep)).height
+  try {
+    for (var _iterator = tasks[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var _step$value = _step.value,
+          task = _step$value.task,
+          name = _step$value.name,
+          signature = _step$value.signature;
+      var node = {
+        label: name,
+        name: name,
+        taskIndex: n,
+        signature: signature,
+        task: task,
+        width: 275,
+        height: 75
+      };
+      nodeMap.set(name, node);
+      graph.setNode(n++, node);
+      task.pulse.taskDeps.map(function (dep) {
+        if (dep.importId) {
+          var _node = {
+            label: "(imported cell) ".concat(dep.name),
+            name: "".concat(dep.importId, "/").concat(dep.name),
+            taskIndex: n,
+            task: null,
+            signature: null,
+            width: 275,
+            height: 75
+          };
+          nodeMap.set("".concat(dep.importId, "/").concat(dep.name), _node);
+          graph.setNode(n++, _node);
+        }
       });
-    });
-  });
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return != null) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+
+  console.log(tasks, nodeMap); // create edges
+
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    var _loop = function _loop() {
+      var _step2$value = _step2.value,
+          task = _step2$value.task,
+          name = _step2$value.name;
+      (task.pulse.taskDeps || []).map(function (dep) {
+        var _from$task, _from$task$pulse;
+
+        var depKey = dep.importId ? "".concat(dep.importId, "/").concat(dep.name) : dep.name;
+        if (!nodeMap.has(name) || !nodeMap.has(depKey)) throw Error("".concat(name, " or ").concat(depKey, " not in nodeMap."));
+        var from = graph.node(nodeMap.get(depKey).taskIndex);
+        var to = graph.node(nodeMap.get(name).taskIndex);
+        graph.setEdge(from.taskIndex, to.taskIndex, {
+          fromStatus: ((_from$task = from.task) === null || _from$task === void 0 ? void 0 : (_from$task$pulse = _from$task.pulse) === null || _from$task$pulse === void 0 ? void 0 : _from$task$pulse.status) || "import",
+          toStatus: to.task.pulse.status,
+          fromWidth: to.width,
+          fromHeight: to.height
+        });
+      });
+    };
+
+    for (var _iterator2 = tasks[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      _loop();
+    }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
+        _iterator2.return();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
+  }
 
   _dagre.default.layout(graph);
 

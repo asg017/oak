@@ -3,7 +3,7 @@ import { OakCompiler } from "../oak-compile";
 import { Library } from "../Library";
 import pino from "pino";
 import { fileArgument } from "../cli-utils";
-import { bytesToSize, duration } from "../utils";
+import { bytesToSize, duration, CellSignature } from "../utils";
 import decorator, {
   TaskHookDecoratorArguments,
   TaskHookTaskContext,
@@ -12,14 +12,24 @@ import { getAndMaybeIntializeOakDB, OakDB } from "../db";
 import Task from "../Task";
 import { ObservableCell } from "../oak-compile-types";
 
-const logger = pino();
+const logger = pino({
+  prettyPrint: true,
+});
 
 type PulseTaskStatus = "dne" | "up" | "out-dep" | "out-def" | "out-upstream";
 
 export class PulseTask extends Task {
   pulse?: {
     name: string;
-    taskDeps: string[];
+    modulePath: string;
+    oakfilePath: string;
+    importId: string;
+    taskDeps: {
+      name: string;
+      modulePath: string;
+      oakfilePath: string;
+      importId: string;
+    }[];
     target: string;
     mtime: number;
     taskType: string;
@@ -28,7 +38,7 @@ export class PulseTask extends Task {
     cellCode: string;
   };
 
-  constructor(params: { target: string; run: (any) => any; watch? }) {
+  constructor(params) {
     super(params);
     this.pulse = null;
   }
@@ -42,15 +52,23 @@ export class PulseTask extends Task {
     const taskType = this.getType();
     const taskDeps = cellDependencies
       .filter(d => d instanceof PulseTask)
-      .map(t => t.pulse.name);
+      .map(t => ({
+        name: t.pulse.name,
+        modulePath: t.pulse.modulePath,
+        oakfilePath: t.pulse.oakfilePath,
+        importId: t.pulse.importId,
+      }));
     this.pulse = {
       name: decoratorArgs.cellName,
+      modulePath: decoratorArgs.baseModuleDir,
+      oakfilePath: decoratorArgs.oakfilePath,
+      importId: decoratorArgs.importId,
       taskDeps,
       cellCode: decoratorArgs.cellSignature.cellContents,
       target: this.target,
       mtime: this.stat?.mtime?.getTime(),
       taskType,
-      bytes: this.stat?.size,
+      bytes: this.stat?.size || 0,
       status,
     };
   }
@@ -61,7 +79,7 @@ export class PulseTask extends Task {
 
 export async function getPulse(
   oakfilePath: string
-): Promise<{ tasks: PulseTask[] }> {
+): Promise<{ tasks: { task: PulseTask; name: string }[]; imports: any }> {
   const runtime = new Runtime(
     Object.assign(new Library(), {
       shell: () => () => "shell",
@@ -116,6 +134,12 @@ export async function getPulse(
         const taskDepsNotFresh = cellDependencies
           .filter(d => d instanceof PulseTask)
           .filter(pt => pt.pulse.status !== "up");
+        if (taskDepsNotFresh.length > 0)
+          console.log(
+            "123456",
+            decoratorArgs.cellName,
+            taskDepsNotFresh.map(t => [t.pulse.status, t.pulse.name])
+          );
         return taskDepsNotFresh.length > 0;
       },
       value: async (
@@ -135,23 +159,22 @@ export async function getPulse(
     },
     PulseTask
   );
-  const { parseResults, define } = await compiler.file(oakfilePath, d, null);
+  const { cellHashMap, define } = await compiler.file(oakfilePath, d, null);
 
-  const parseResultsMap: Map<string, ObservableCell> = new Map();
-  for (let cell of parseResults.module.cells) {
-    if (cell.id?.name) parseResultsMap.set(cell.id?.name, cell);
-  }
-  const tasks: any[] = [];
+  const tasks: {
+    task: PulseTask;
+    name: string;
+    signature: CellSignature;
+  }[] = [];
   const cells: Set<string> = new Set();
   const m1 = runtime.module(define, name => {
     cells.add(name);
-    console.log(`In observer. name=${name}`);
 
     return {
       pending() {},
       fulfilled(value) {
         if (value instanceof PulseTask) {
-          tasks.push(value);
+          tasks.push({ task: value, name, signature: cellHashMap.get(name) });
         }
       },
       rejected(error) {
@@ -162,18 +185,31 @@ export async function getPulse(
   await runtime._compute();
   await Promise.all(Array.from(cells).map(cell => m1.value(cell)));
   runtime.dispose();
-  return { tasks };
+  const imports = Array.from(cellHashMap.values()).filter(
+    d => d.type === "import"
+  );
+  const importReferences = [];
+  for (let { task, name } of tasks) {
+    for (let { name, importId } of task.pulse?.taskDeps) {
+      if (importId) {
+        importReferences.push({ importId, name });
+      }
+    }
+  }
+  console.log(imports, importReferences);
+  return { tasks, imports };
 }
 
 export async function oak_pulse(args: { filename: string }): Promise<void> {
   const oakfilePath = fileArgument(args.filename);
   const pulseResult = await getPulse(oakfilePath);
-  for (let { pulse } of pulseResult.tasks) {
+  for (let { task, name } of pulseResult.tasks) {
+    const { pulse } = task;
     logger.info(
-      `${pulse.name} - ${pulse.status} - ${bytesToSize(
+      name,
+      ` ${pulse.name} - ${pulse.status} - ${bytesToSize(
         pulse.bytes
       )} - ${duration(new Date(pulse.mtime))}`
     );
-    console.log(pulse);
   }
 }

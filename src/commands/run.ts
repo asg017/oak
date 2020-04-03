@@ -13,7 +13,7 @@ import { dirname, join } from "path";
 import { EventEmitter } from "events";
 import pino from "pino";
 import { fileArgument } from "../cli-utils";
-import { mkdirsSync } from "fs-extra";
+import { mkdirsSync, ensureFile, ensureDir } from "fs-extra";
 import { OakDB, getAndMaybeIntializeOakDB } from "../db";
 import Task from "../Task";
 import { createWriteStream, createFileSync, readFileSync } from "fs-extra";
@@ -41,6 +41,8 @@ async function runTask(
     logFile,
     new Date().getTime()
   );
+  if (cell.createFileBeforeRun) await ensureFile(cell.target);
+  if (cell.createDirectoryBeforeRun) await ensureDir(cell.target);
   const taskExecutionRowID = await oakDB.addTaskExecution(
     runHash,
     cellName,

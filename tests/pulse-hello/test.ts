@@ -20,24 +20,24 @@ cleanUp();
 test("oak-pulse hello", async t => {
   let result = await getPulse(env("Oakfile"));
   t.true(result.tasks.length === 3);
-  t.equals(result.tasks[0].pulse.status, "dne");
-  t.equals(result.tasks[1].pulse.status, "dne");
-  t.equals(result.tasks[2].pulse.status, "out-upstream");
+  t.equals(result.tasks[0].task.pulse.status, "dne");
+  t.equals(result.tasks[1].task.pulse.status, "dne");
+  t.equals(result.tasks[2].task.pulse.status, "out-upstream");
 
   await oak_run({ filename: env("Oakfile"), targets: [] });
   result = await getPulse(env("Oakfile"));
 
-  let a = result.tasks.find(task => task.pulse.name === "a");
-  let b = result.tasks.find(task => task.pulse.name === "b");
-  let c = result.tasks.find(task => task.pulse.name === "c");
+  let a = result.tasks.find(task => task.task.pulse.name === "a");
+  let b = result.tasks.find(task => task.task.pulse.name === "b");
+  let c = result.tasks.find(task => task.task.pulse.name === "c");
   console.log(result);
   t.true(result.tasks.length === 3);
   t.true(a);
   t.true(b);
   t.true(c);
-  t.equals(a.pulse.status, "up");
-  t.equals(b.pulse.status, "up");
-  t.equals(c.pulse.status, "up");
+  t.equals(a.task.pulse.status, "up");
+  t.equals(b.task.pulse.status, "up");
+  t.equals(c.task.pulse.status, "up");
 
   const c_file = await open(env.data("c"));
 
@@ -45,14 +45,14 @@ test("oak-pulse hello", async t => {
 
   result = await getPulse(env("Oakfile"));
 
-  a = result.tasks.find(task => task.pulse.name === "a");
-  c = result.tasks.find(task => task.pulse.name === "c");
+  a = result.tasks.find(task => task.task.pulse.name === "a");
+  c = result.tasks.find(task => task.task.pulse.name === "c");
   t.equals(result.tasks.length, 3);
   t.true(a !== null);
   t.true(c !== null);
   // a should be out of date bc oak didnt change the file.
-  t.equal(a.pulse.status, "out-dep");
-  t.equal(c.pulse.status, "out-upstream");
+  t.equal(a.task.pulse.status, "out-dep");
+  t.equal(c.task.pulse.status, "out-upstream");
 
   t.end();
 });

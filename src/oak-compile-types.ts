@@ -10,7 +10,9 @@ export type Decorator = (
   cellName: string,
   cellReferences: string[],
   cellHashMap: CellSignature,
-  baseModuleDir: string
+  baseModuleDir: string,
+  oakfilePath: string,
+  importId: string
 ) => (...any) => any;
 
 export type Inspector = {

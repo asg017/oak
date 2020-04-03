@@ -58,7 +58,7 @@ process.stdout.write("C2");
   t.true(b_file2.stat.mtime < c_file2.stat.mtime);
 
   t.equal(a_file.stat.mtime.getTime(), a_file2.stat.mtime.getTime());
-  t.equal(b_file.stat.mtime.getTime(), b_file2.stat.mtime.getTime());
+  t.equal(b_file.stat.mtime.getTime(), b_file2.stat.mtime.getTime()); // flaky?
   t.true(c_file.stat.mtime < c_file2.stat.mtime);
 
   t.end();

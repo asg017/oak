@@ -1,30 +1,38 @@
+fopUrl = "https://www.youtube.com/watch?v=QE_vO6Ti9l4"
 
-ytUrl = "https://www.youtube.com/watch?v=Rb4lgOiHBZo"
+import {barcode_png as fop} with {fopUrl as ytUrl} from "./generator/Oakfile"
 
-video_mp4 = task({
-  target: 'video.mp4',
-  run: video_mp4 => command('youtube-dl', [ytUrl], video_mp4)
+sbspUrl = "https://www.youtube.com/watch?v=-FRXiHx-IDA"
+
+import {barcode_png as sbsp} with {sbspUrl as ytUrl} from "./generator/Oakfile"
+
+
+pf_mp4 = new Task({
+    target: "pf.mp4",
+    run: pf_mp4 => command("youtube-dl", ["https://www.youtube.com/watch?v=IQL3B4o5rLk", "--output", pf_mp4])
+});
+
+import {barcode_png as pf} with {pf_mp4 as video_mp4} from "./generator/Oakfile"
+
+
+
+/*
+lol = new Task({
+    target: "a.png",
+    run: lol => shell`cp ${barcode_png} ${lol}`
+})
+*/
+
+/*
+
+import * {barcode_png as barcode} from "./generator/Oakfile"
+
+fop = barcode({
+    ytUrl: "https:/...."
 })
 
-frames_dir = task({
-  target: 'frames',
-  run: frames_dir => command('docker',
-    [
-      'run', '-it', '--rm', 
-      '-v', '$PWD:/tmp', 
-      'jrottenberg/ffmpeg:4.1-alpine',
-      '-i', "/tmp/OK Go - Skyscrapers - Official Video-Rb4lgOiHBZo.mp4", 
-      '-r', '30',
-      '/tmp/frames/$filename%09d.jpg',
-    ], frames_dir)
+sbsp = barcode({
+    ytUrl: "https:/...."
 })
 
-barcode_png = task({
-  target: 'barcode.png',
-  run: barcode_png => command('docker', [ 
-    'run', '-it', '--rm', 
-    '-v'. '$PWD:/tmp',
-    'pillow-test', 
-    'python3', '/tmp/gen_bars.py'
-  ], barcode_png)
-})
+*/

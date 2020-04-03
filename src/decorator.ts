@@ -1,6 +1,7 @@
 import { CellSignature, getSignature, hashString } from "./utils";
 import { OakDB } from "./db";
 import Task from "./Task";
+import { dirname, join } from "path";
 
 export type TaskHookDecoratorArguments = {
   cellFunction: (...any) => any;
@@ -8,6 +9,8 @@ export type TaskHookDecoratorArguments = {
   cellReferences: string[];
   cellSignature: CellSignature;
   baseModuleDir: string;
+  oakfilePath: string;
+  importId: string;
 };
 type TaskHookCellArguments = any[];
 export type TaskHookTaskContext = {
@@ -41,11 +44,12 @@ export default function decorator(
     cellName: string,
     cellReferences: string[],
     cellSignature: CellSignature,
-    baseModuleDir: string
+    baseModuleDir: string,
+    oakfilePath: string,
+    importId: string
   ): (...any) => any {
     return async function(...dependencies) {
       let currCell = await cellFunction(...dependencies);
-      console.log(cellName, baseModuleDir);
       if (!(currCell instanceof TaskClass)) {
         return currCell;
       }
@@ -72,7 +76,7 @@ export default function decorator(
             return sig;
           }),
         ...currCell.watch.map(async path => {
-          const sig = await getSignature(path);
+          const sig = await getSignature(join(dirname(oakfilePath), path));
           if (!sig) return "<nosignature>";
           /*throw Error(
               `Problem getting signature for ${path}. Does the file exist?`
@@ -90,6 +94,8 @@ export default function decorator(
         cellReferences,
         cellSignature,
         baseModuleDir,
+        oakfilePath,
+        importId,
       };
       const taskContext = {
         dependenciesSignature,
