@@ -2,6 +2,14 @@
 # yarn lockfile v1
 
 
+"@alex.garcia/oak-parser@0.2.0-beta.3":
+  version "0.2.0-beta.3"
+  resolved "https://registry.yarnpkg.com/@alex.garcia/oak-parser/-/oak-parser-0.2.0-beta.3.tgz#a51aba2a2d53a4f444051ce1bbc250a1358c2f46"
+  integrity sha512-U1OMdSo3jr8drNvnmd9/4BPSedVNiS73ku4zvJg0CB4f5Hrl5bhp6jBMUsuByHhwh/WOErLDQfVgLHDIYHrK6Q==
+  dependencies:
+    acorn "^7.1.1"
+    acorn-walk "^7.0.0"
+
 "@hapi/bourne@^1.3.2":
   version "1.3.2"
   resolved "https://registry.yarnpkg.com/@hapi/bourne/-/bourne-1.3.2.tgz#0a7095adea067243ce3283e1b56b8a8f453b242a"
@@ -13,14 +21,6 @@
   integrity sha512-U8EASUAUYCQmCprOF9HafRMnU4yyD0IXjRuDwAjBMjVpm36KXPzXWxHcdzlt/3CbIEu8GOhKQqHBAX9pv6OyUQ==
   dependencies:
     esm "^3.2.25"
-
-"@observablehq/parser@^4.0.1":
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/@observablehq/parser/-/parser-4.0.1.tgz#5415862125d183f015a5a5b8f9e7e52d43f4364d"
-  integrity sha512-NgwY0Q/akPOtmb+b4uudfw+WbDoKdFA5ihjJqZSAK5x+ga8jusXZWQrWftt3F+/yaPFSaFXZ7rzY527Ec+8hQw==
-  dependencies:
-    acorn "^7.0.0"
-    acorn-walk "^7.0.0"
 
 "@observablehq/runtime@4.4.4":
   version "4.4.4"
@@ -177,7 +177,7 @@ acorn-walk@^7.0.0:
   resolved "https://registry.yarnpkg.com/acorn-walk/-/acorn-walk-7.1.1.tgz#345f0dffad5c735e7373d2fec9a1023e6a44b83e"
   integrity sha512-wdlPY2tm/9XBr7QkKlq0WQVgiuGTX6YWPyRyBviSoScBuLfTVQhvwg6wJ369GJ/1nPfTLMfnrFIfjqVg6d+jQQ==
 
-acorn@^7.0.0:
+acorn@^7.1.1:
   version "7.1.1"
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-7.1.1.tgz#e35668de0b402f359de515c5482a1ab9f89a69bf"
   integrity sha512-add7dgA5ppRPxCFJoAGfMDi7PIBXq1RtGo7BhbLaxwrXPOmw8gq48Y9ozT01hUKy9byMjlR20EJhu5zlkErEkg==

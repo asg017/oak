@@ -1,0 +1,16 @@
+text = "origText";
+
+a = new Task({
+  target: "a.txt",
+  run: a => shell`echo -n "a" > ${a}`
+});
+
+b = new Task({
+  target: "b.txt",
+  run: b => shell`echo -n "${text}" > ${b}`
+});
+
+c = new Task({
+  target: "c.txt",
+  run: c => shell`cat ${a} ${b} > ${c}`
+});

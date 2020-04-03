@@ -1,0 +1,20 @@
+import * {c} from "./sub/Oakfile"
+
+x = c({
+    text: "newTextX"
+})
+
+y = c({
+    text: "newTextY"
+})
+
+lol = new Task({
+    target: "lol.txt",
+    run: lol => shell`echo -n "lol" > ${lol}`
+})
+
+z = c({
+    text: "newTextZ",
+    a: lol
+})
+

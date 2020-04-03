@@ -145,7 +145,24 @@ async function createOakDefinition(
       const other = runtime.module(
         depMap.get([importCellPath, ...localSpecifiers].join(","))
       );
-      if (injections.length > 0) {
+      if (cell.body.factory) {
+        specifiers.map(specifier => {
+          main.variable(observer(specifier.alias)).define(
+            specifier.alias,
+            [],
+            () =>
+              async function(injections = {}) {
+                const m = runtime.module();
+                for (let key in injections) {
+                  m.define(key, injections[key]);
+                }
+                const child = other.derive(Object.keys(injections), m);
+                m.import(specifier.name, child);
+                return await m.value(specifier.name);
+              }
+          );
+        });
+      } else if (injections.length > 0) {
         const child = other.derive(injections, main);
         specifiers.map(specifier => {
           main

@@ -27,6 +27,7 @@ export type DefineFunctionType = (
 
 export type ObservableImportDeclaration = {
   type: "ImportDeclaration";
+  factory: boolean;
   specifiers: {
     type: "ImportSpecifier";
     view: boolean;
