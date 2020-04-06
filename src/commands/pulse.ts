@@ -66,9 +66,9 @@ export class PulseTask extends Task {
       taskDeps,
       cellCode: decoratorArgs.cellSignature.cellContents,
       target: this.target,
-      mtime: this.stat?.mtime?.getTime(),
+      mtime: 0, // this.stat?.mtime?.getTime(),
       taskType,
-      bytes: this.stat?.size || 0,
+      bytes: 0, //this.stat?.size || 0,
       status,
     };
   }
@@ -134,12 +134,6 @@ export async function getPulse(
         const taskDepsNotFresh = cellDependencies
           .filter(d => d instanceof PulseTask)
           .filter(pt => pt.pulse.status !== "up");
-        if (taskDepsNotFresh.length > 0)
-          console.log(
-            "123456",
-            decoratorArgs.cellName,
-            taskDepsNotFresh.map(t => [t.pulse.status, t.pulse.name])
-          );
         return taskDepsNotFresh.length > 0;
       },
       value: async (
@@ -156,8 +150,7 @@ export async function getPulse(
         );
         return pt;
       },
-    },
-    PulseTask
+    }
   );
   const { cellHashMap, define } = await compiler.file(oakfilePath, d, null);
 

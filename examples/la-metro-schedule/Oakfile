@@ -1,0 +1,8 @@
+schedule = yield * (await new Scheduler("*/5 * * * * *"));
+
+vehicles_live = new Task({
+  target: "vehicles.json",
+  run: vehicles_live =>
+    shell`wget -O ${vehicles_live} "https://api.metro.net/agencies/lametro/vehicles/"`,
+  schedule
+});

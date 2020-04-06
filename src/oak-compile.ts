@@ -29,7 +29,10 @@ export const createRegularCellDefintion = (
   const bodyText = source.substring(cell.body.start, cell.body.end);
   let code;
   if (cell.body.type !== "BlockStatement") {
-    if (cell.async)
+    if (cell.generator && cell.async)
+      code = `return (async function*(){ return (${bodyText});})()`;
+    else if (cell.generator) `return (function*(){ return (${bodyText});})()`;
+    else if (cell.async)
       code = `return (async function(){ return (${bodyText});})()`;
     else code = `return (function(){ return (${bodyText});})()`;
   } else code = bodyText;

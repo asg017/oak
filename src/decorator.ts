@@ -36,8 +36,7 @@ export default function decorator(
   customFreshHook?: {
     check: (...args: TaskHookArguments) => boolean;
     value: (...args: TaskHookArguments) => any;
-  },
-  TaskClass: any = Task
+  }
 ) {
   return function(
     cellFunction: (...any) => any,
@@ -50,7 +49,7 @@ export default function decorator(
   ): (...any) => any {
     return async function(...dependencies) {
       let currCell = await cellFunction(...dependencies);
-      if (!(currCell instanceof TaskClass)) {
+      if (!(currCell instanceof Task)) {
         return currCell;
       }
       const lastTaskExection = await oakDB.getLastRelatedTaskExection(
@@ -61,7 +60,7 @@ export default function decorator(
 
       // dont try and get Task for cell dependencies like `Task` or `shell`
       const taskDependencies = dependencies.filter(
-        dependency => dependency instanceof TaskClass
+        dependency => dependency instanceof Task
       );
 
       const dependenciesSignatures: string[] = await Promise.all([
@@ -85,7 +84,6 @@ export default function decorator(
         }),
       ]);
       const dependenciesSignature = hashString(dependenciesSignatures.join(""));
-
       const currentTargetSignature = await getSignature(currCell.target);
 
       const decoratorArgs = {
@@ -118,7 +116,7 @@ export default function decorator(
         );
       }
       // no output target
-      if (currCell.stat === null) {
+      if (currentTargetSignature === null) {
         return await hooks.onTaskTargetMissing(
           currCell,
           decoratorArgs,

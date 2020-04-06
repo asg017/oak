@@ -1,0 +1,27 @@
+scheduleA = yield * (await new Scheduler("*/15 * * * * *"));
+scheduleB = yield * (await new Scheduler("*/25 * * * * *"));
+
+a = new Task({
+  target: "a.txt",
+  run: a => shell`echo "running a at $(date)..."; \
+      echo "a" > ${a}; \
+      date >> ${a}; \
+      echo "finishing running a."; `,
+  schedule: scheduleA
+});
+
+b = new Task({
+  target: "b.txt",
+  run: b => shell`echo "running b at $(date)..."; \
+      echo "b" > ${b}; \
+      date >> ${b}; \
+      echo "finishing running b."; `,
+  schedule: scheduleB
+});
+
+c = new Task({
+  target: "c.txt",
+  run: c => shell`echo "running c at $(date)..."; \
+      cat ${a} ${b} > ${c}; \
+      echo "finishing running c.";`
+});

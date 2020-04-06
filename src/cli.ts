@@ -206,6 +206,7 @@ class PulseAction extends CommandLineAction {
 class RunAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
   private _targets: CommandLineStringListParameter;
+  private _schedule: CommandLineFlagParameter;
 
   public constructor() {
     super({
@@ -218,6 +219,7 @@ class RunAction extends CommandLineAction {
     await oak_run({
       filename: this._filename.value,
       targets: this._targets.values,
+      schedule: this._schedule.value,
     });
     return;
   }
@@ -235,6 +237,10 @@ class RunAction extends CommandLineAction {
       parameterLongName: "--targets",
       parameterShortName: "-t",
       description: "List of target names to resolve.",
+    });
+    this._schedule = this.defineFlagParameter({
+      parameterLongName: "--schedule",
+      description: "Run Oakfile on defined schedules.",
     });
   }
 }

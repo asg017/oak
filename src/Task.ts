@@ -1,7 +1,7 @@
-import { Stats, existsSync, mkdirSync } from "fs";
+import { existsSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
-import { getStat } from "./utils";
 import { Execution } from "./Execution";
+import { Scheduler } from "./Library/Scheduler";
 
 type WatchArg = string | string[];
 
@@ -9,22 +9,27 @@ type TaskParams = {
   target: string;
   run: (any) => any;
   watch?: WatchArg;
+  schedule?: Scheduler;
   createFileBeforeRun?: boolean;
   createDirectoryBeforeRun?: boolean;
 };
 export default class Task {
   target: string;
   targetOriginal: string;
-  stat: Stats | null;
   run: (any) => any;
   watch: string[];
   createFileBeforeRun: boolean;
   createDirectoryBeforeRun: boolean;
+  schedule: Scheduler;
+  dependencySchedule: Scheduler;
+  baseTargetDir: string;
+
   constructor(params: TaskParams) {
     let {
       target,
       run,
       watch = [],
+      schedule = null,
       createFileBeforeRun = false,
       createDirectoryBeforeRun = false,
     } = params;
@@ -32,18 +37,16 @@ export default class Task {
 
     this.targetOriginal = target;
     this.target = target;
-    this.stat = null;
     this.run = run;
     this.watch = watch;
     this.createFileBeforeRun = createFileBeforeRun;
     this.createDirectoryBeforeRun = createDirectoryBeforeRun;
-  }
-  absPath(basePath: string) {
-    return join(basePath, this.target);
+    this.schedule = schedule;
+    this.dependencySchedule = schedule;
   }
   async updateBasePath(newBasePath: string) {
-    this.target = this.absPath(newBasePath);
-    this.stat = await getStat(this.target);
+    this.baseTargetDir = newBasePath;
+    this.target = join(this.baseTargetDir, this.targetOriginal);
   }
   runTask(): Execution {
     if (!existsSync(dirname(this.target))) {

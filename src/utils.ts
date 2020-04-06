@@ -95,11 +95,6 @@ export function parsedCellHashMap(
   oakfilePath: string,
   parseResults: ParseOakfileResults
 ): Map<string, CellSignature> {
-  const initMap: Map<
-    string,
-    { cellHash: string; cellRefs: string[] }
-  > = new Map();
-
   const map: Map<string, CellSignature> = new Map();
   const topoCellNames: Node[] = topoSort(parseResults);
   for (let {
