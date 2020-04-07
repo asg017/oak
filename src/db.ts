@@ -178,6 +178,37 @@ export class OakDB {
     await db.close();
   }
 
+  async registerScheduler(
+    cellName: string,
+    schedulerInstanceId: number
+  ): Promise<void> {
+    const db = await this.getDb();
+    await db.run(SQL`INSERT INTO Schedulers (
+      schedulerInstanceId,
+      cellName
+    )
+    VALUES (
+      ${schedulerInstanceId},
+      ${cellName}
+      
+    )`);
+    await db.close();
+  }
+  async addSchedulerTick(
+    schedulerInstanceId: number,
+    emitTime: number
+  ): Promise<void> {
+    const db = await this.getDb();
+    await db.run(SQL`INSERT INTO ScheduleTicks (
+      scheduler,
+      emitTime
+    )
+    VALUES (
+      ${schedulerInstanceId},
+      ${emitTime}
+    )`);
+    await db.close();
+  }
   async registerOakfile(
     oakfileHash: string,
     mtime: number,
@@ -225,16 +256,22 @@ export class OakDB {
   }
   async addTaskExecution(
     runHash: string,
+    scheduled: boolean,
     cellName: string,
     anecestorHash: string,
     dependenciesSignature: string,
     freshStatus: string,
     timeStart: number,
-    runLog: string
+    runLog: string,
+    target: string,
+    schedulerInstanceId?: number
   ) {
     const db = await this.getDb();
     const { lastID } = await db.run(SQL`INSERT INTO TaskExecutions (
       run,
+      target,
+      scheduled,
+      schedulerInstanceId,
       cellName,
       cellAncestorHash,
       dependenciesSignature,
@@ -244,6 +281,9 @@ export class OakDB {
     ) 
     VALUES (
       ${runHash},
+      ${target},
+      ${scheduled},
+      ${schedulerInstanceId},
       ${cellName},
       ${anecestorHash},
       ${dependenciesSignature},
@@ -272,12 +312,27 @@ export class OakDB {
   async addRun(
     oakfileHash: string,
     runHash: string,
+    scheduled: boolean,
     mtime: number,
     args: string
   ) {
     const db = await this.getDb();
     await db.run(
-      SQL`INSERT INTO Runs VALUES (${runHash}, ${oakfileHash}, ${mtime}, ${args})`
+      SQL`INSERT INTO Runs 
+      (
+        hash,
+        oakfile,
+        scheduled,
+        time, 
+        arguments
+      )
+       VALUES (
+        ${runHash}, 
+        ${oakfileHash},
+        ${scheduled}, 
+        ${mtime}, 
+        ${args}
+      )`
     );
     await db.close();
   }
@@ -313,6 +368,12 @@ async function initDb(db: Database) {
           UNIQUE(hash)
       ); `
   );
+  await db.run(
+    `CREATE TABLE Schedulers(
+      schedulerInstanceId INTEGER PRIMARY KEY,
+      cellName TEXT
+    ); `
+  );
   await Promise.all([
     db.run(
       `CREATE TABLE Cells(
@@ -329,6 +390,7 @@ async function initDb(db: Database) {
       `CREATE TABLE Runs(
             hash TEXT PRIMARY KEY,
             oakfile TEXT,
+            scheduled BOOLEAN,
             time INTEGER,
             arguments TEXT,
             FOREIGN KEY (oakfile) REFERENCES Oakfiles(hash)
@@ -351,6 +413,9 @@ async function initDb(db: Database) {
     db.run(
       `CREATE TABLE TaskExecutions(
             run TEXT,
+            target TEXT,
+            scheduled BOOLEAN,
+            schedulerInstanceId INTEGER,
             cellName TEXT,
             cellAncestorHash TEXT,
             dependenciesSignature TEXT,
@@ -362,7 +427,8 @@ async function initDb(db: Database) {
             runProcessEnd INTEGER,
             runProcessExitCode INTEGER,
             runProcessPID TEXT,
-            FOREIGN KEY (run) REFERENCES Runs(hash)
+            FOREIGN KEY (run) REFERENCES Runs(hash),
+            FOREIGN KEY (schedulerInstanceId) REFERENCES Schedulers(schedulerInstanceId)
         ); `
     ),
     db.run(
@@ -375,6 +441,13 @@ async function initDb(db: Database) {
             meta TEXT,
             FOREIGN KEY (run) REFERENCES Runs(hash)
         ); `
+    ),
+    db.run(
+      `CREATE TABLE ScheduleTicks(
+          scheduler INTEGER,
+          emitTime INTEGER,  
+          FOREIGN KEY (scheduler) REFERENCES Scheduler(rowid)
+      ); `
     ),
   ]);
   return db;

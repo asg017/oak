@@ -25,3 +25,10 @@ c = new Task({
       cat ${a} ${b} > ${c}; \
       echo "finishing running c.";`
 });
+
+outside = new Task({
+  target: "outside.txt",
+  run: outside => shell`echo "running outside at $(date)..."; \
+      echo "outside" > ${outside}; \
+      echo "finishing running outside.";`
+});

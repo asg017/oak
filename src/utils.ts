@@ -207,6 +207,7 @@ function fileSignature(s: Stats): string {
 }
 
 export async function getSignature(path: string): Promise<string> {
+  if (!path) return null;
   const s: Stats | null = await stat(path).catch(e => {
     if (e.code === "ENOENT") return null;
     throw e;

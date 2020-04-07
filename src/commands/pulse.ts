@@ -10,13 +10,18 @@ import decorator, {
 } from "../decorator";
 import { getAndMaybeIntializeOakDB, OakDB } from "../db";
 import Task from "../Task";
-import { ObservableCell } from "../oak-compile-types";
 
 const logger = pino({
   prettyPrint: true,
 });
 
-type PulseTaskStatus = "dne" | "up" | "out-dep" | "out-def" | "out-upstream";
+type PulseTaskStatus =
+  | "dne"
+  | "up"
+  | "out-dep"
+  | "out-def"
+  | "out-upstream"
+  | "out-target";
 
 export class PulseTask extends Task {
   pulse?: {
@@ -116,6 +121,15 @@ export async function getPulse(
         taskContext
       ) => {
         pt.addPulse(decoratorArgs, cellDependencies, taskContext, "out-dep");
+        return pt;
+      },
+      onTaskTargetChanged: (
+        pt: PulseTask,
+        decoratorArgs,
+        cellDependencies,
+        taskContext
+      ) => {
+        pt.addPulse(decoratorArgs, cellDependencies, taskContext, "out-target");
         return pt;
       },
       onTaskTargetMissing: async (

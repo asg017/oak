@@ -29,6 +29,7 @@ export async function oak_path(args: {
       onTaskUpToDate: t => t,
       onTaskCellDefinitionChanged: t => t,
       onTaskDependencyChanged: t => t,
+      onTaskTargetChanged: t => t,
       onTaskTargetMissing: t => t,
     },
     oakDB
