@@ -18,6 +18,7 @@ import { OakDB, getAndMaybeIntializeOakDB } from "../db";
 import Task from "../Task";
 import { createWriteStream, createFileSync, readFileSync } from "fs-extra";
 import decorator from "../decorator";
+import { ScheduleTick, Scheduler } from "../Library/Scheduler";
 
 async function runTask(
   oakfileHash: string,
@@ -31,7 +32,8 @@ async function runTask(
   ancestorHash: string,
   dependenciesSignature: string,
   freshStatus: string,
-  cellArgs: any[]
+  cellArgs: any[],
+  hooks?: OakRunHooks
 ): Promise<number> {
   let logFile = join(logDirectory, `${cellName}.log`);
   if (scheduled) {
@@ -85,6 +87,7 @@ async function runTask(
     cell.target,
     cell.dependencySchedule?.id
   );
+  hooks?.onTaskExectionStart(cellName, cell.target);
   const runProcessStart = new Date().getTime();
   const {
     process: childProcess,
@@ -136,16 +139,28 @@ async function runTask(
     runExitCode,
     runProcessPID.toString()
   );
+  hooks?.onTaskExectionEnd(cellName);
   return runExitCode;
 }
 
+type OakRunHooks = {
+  onTaskExectionStart(cellName: string, cellTarget: string);
+  onTaskExectionEnd(cellName: string);
+  onTaskNotFresh(cellName: string, reason: string);
+  onTaskFresh(cellName: string, cellTarget: string);
+  onCellObserved(cellName: string);
+  onCellPending(cellName: string);
+  onCellFulfilled(cellName: string);
+  onCellRejected(cellName: string);
+  onScheduler?(scheduler: Scheduler);
+  onScheduleTick(tick: ScheduleTick, scheduler: Scheduler);
+};
 export async function oak_run(args: {
   filename: string;
   targets: readonly string[];
   schedule?: boolean;
+  hooks?: OakRunHooks;
 }): Promise<void> {
-  const logger = pino({ name: "oak run", prettyPrint: true });
-
   const targetSet = new Set(args.targets);
   const oakfilePath = fileArgument(args.filename);
   const oakfileStat = await getStat(oakfilePath);
@@ -156,6 +171,7 @@ export async function oak_run(args: {
   const library = args.schedule ? new RunScheduleLibrary() : new RunLibrary();
   const runtime = new Runtime(library);
   const compiler = new OakCompiler();
+
   const oakfileHash = hashFile(oakfilePath);
   const runHash = hashString(`${startTime.getTime()}`);
   const logDirectory = join(
@@ -165,10 +181,20 @@ export async function oak_run(args: {
     `${oakfileHash}-${startTime.getTime()}`
   );
   mkdirsSync(logDirectory);
+  const oakLogPath = join(
+    dirname(oakfilePath),
+    ".oak",
+    "oak-logs",
+    `run-${runHash}.log`
+  );
+  mkdirsSync(dirname(oakLogPath));
+
+  const logger = pino({ name: "oak run" }, createWriteStream(oakLogPath));
 
   const d = decorator(
     {
-      onTaskUpToDate: (t, decoratorArgs) => {
+      onTaskUpToDate: (t: Task, decoratorArgs) => {
+        args?.hooks?.onTaskFresh(decoratorArgs.cellName, t.target);
         logger.info(
           "oak-run decorator",
           `${formatPath(t.target)} - not out of date `
@@ -181,6 +207,7 @@ export async function oak_run(args: {
         cellArgs,
         taskContext
       ) => {
+        args?.hooks?.onTaskNotFresh(decoratorArgs.cellName, "out-def");
         logger.info(
           "oak-run decorator",
           `${formatPath(
@@ -200,7 +227,8 @@ export async function oak_run(args: {
           decoratorArgs.cellSignature.ancestorHash,
           taskContext.dependenciesSignature,
           "out-def",
-          cellArgs
+          cellArgs,
+          args?.hooks
         );
         return t;
       },
@@ -210,6 +238,7 @@ export async function oak_run(args: {
         cellArgs,
         taskContext
       ) => {
+        args?.hooks?.onTaskNotFresh(decoratorArgs.cellName, "out-dep");
         logger.info(
           "oak-run decorator",
           `${formatPath(
@@ -228,11 +257,13 @@ export async function oak_run(args: {
           decoratorArgs.cellSignature.ancestorHash,
           taskContext.dependenciesSignature,
           "out-dep",
-          cellArgs
+          cellArgs,
+          args?.hooks
         );
         return t;
       },
       onTaskTargetChanged: async (t, decoratorArgs, cellArgs, taskContext) => {
+        args?.hooks?.onTaskNotFresh(decoratorArgs.cellName, "out-target");
         logger.info(
           "oak-run decorator",
           `${formatPath(
@@ -251,11 +282,13 @@ export async function oak_run(args: {
           decoratorArgs.cellSignature.ancestorHash,
           taskContext.dependenciesSignature,
           "out-target",
-          cellArgs
+          cellArgs,
+          args?.hooks
         );
         return t;
       },
       onTaskTargetMissing: async (t, decoratorArgs, cellArgs, taskContext) => {
+        args?.hooks?.onTaskNotFresh(decoratorArgs.cellName, "dne");
         logger.info(
           "oak-run decorator",
           `${formatPath(t.target)} - Doesn't exist - running recipe...`
@@ -272,9 +305,16 @@ export async function oak_run(args: {
           decoratorArgs.cellSignature.ancestorHash,
           taskContext.dependenciesSignature,
           "dne",
-          cellArgs
+          cellArgs,
+          args?.hooks
         );
         return t;
+      },
+      onScheduleTick: (tick: ScheduleTick, scheduler: Scheduler) => {
+        args?.hooks?.onScheduleTick(tick, scheduler);
+      },
+      onScheduler: (scheduler: Scheduler) => {
+        args?.hooks?.onScheduler(scheduler);
       },
     },
     oakDB,
@@ -285,6 +325,7 @@ export async function oak_run(args: {
             return Boolean(task.schedule);
           },
           value: async (t, decoratorArgs, cellArgs, taskContext) => {
+            args?.hooks?.onTaskNotFresh(decoratorArgs.cellName, "schedule");
             logger.info(
               "oak-run decorator",
               `${formatPath(t.target)} - Scheduled, running task...`
@@ -301,7 +342,8 @@ export async function oak_run(args: {
               decoratorArgs.cellSignature.ancestorHash,
               taskContext.dependenciesSignature,
               "schedule",
-              cellArgs
+              cellArgs,
+              args?.hooks
             );
             return t;
           },
@@ -349,6 +391,7 @@ export async function oak_run(args: {
   const ee = new EventEmitter();
 
   ee.on("pending", name => {
+    args?.hooks?.onCellPending(name);
     logger.debug("pending", name);
     events.push({
       type: "pending",
@@ -358,6 +401,7 @@ export async function oak_run(args: {
     });
   });
   ee.on("fulfilled", name => {
+    args?.hooks?.onCellFulfilled(name);
     logger.debug("fulfilled", name);
     events.push({
       type: "fulfilled",
@@ -367,6 +411,7 @@ export async function oak_run(args: {
     });
   });
   ee.on("rejected", (name, error) => {
+    args?.hooks?.onCellRejected(name);
     logger.error("rejected", name);
     events.push({
       type: "rejected",
@@ -379,6 +424,7 @@ export async function oak_run(args: {
 
   const cells: Set<string> = new Set();
   const m1 = runtime.module(define, name => {
+    if (name) args?.hooks?.onCellObserved(name);
     if (name && (targetSet.size === 0 || targetSet.has(name))) {
       cells.add(name);
       return {
@@ -400,5 +446,13 @@ export async function oak_run(args: {
     runtime.dispose();
     process.chdir(origDir);
     await oakDB.addEvents(runHash, events);
+  } else {
+    return await new Promise((resolve, reject) => {
+      process.on("SIGINT", function() {
+        runtime.dispose();
+        process.chdir(origDir);
+        resolve();
+      });
+    });
   }
 }

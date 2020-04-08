@@ -1,5 +1,5 @@
-scheduleA = yield * (await new Scheduler("*/15 * * * * *"));
-scheduleB = yield * (await new Scheduler("*/25 * * * * *"));
+scheduleA = yield * (await new Scheduler("*/15 * * * * *", invalidation));
+scheduleB = yield * (await new Scheduler("*/25 * * * * *", invalidation));
 
 a = new Task({
   target: "a.txt",

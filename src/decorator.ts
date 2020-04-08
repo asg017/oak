@@ -33,6 +33,8 @@ export default function decorator(
     onTaskDependencyChanged: TaskHook;
     onTaskTargetChanged: TaskHook;
     onTaskTargetMissing: TaskHook;
+    onScheduleTick?: (tick: ScheduleTick, scheduler: Scheduler) => void;
+    onScheduler?: (scheduler: Scheduler) => void;
   },
   oakDB: OakDB,
   customFreshHook?: {
@@ -65,8 +67,10 @@ export default function decorator(
           const { done, value } = await currCell.next();
           if (value instanceof Scheduler) {
             value.cellName = cellName;
+            hooks?.onScheduler(value);
             await oakDB.registerScheduler(cellName, value.id);
-            value.clock.on("tick", (tick: ScheduleTick) => {
+            value.clock.on("tick", (tick: ScheduleTick, sched: Scheduler) => {
+              hooks?.onScheduleTick(tick, sched);
               oakDB.addSchedulerTick(value.id, tick.emitTime.getTime());
             });
           }

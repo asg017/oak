@@ -16,7 +16,6 @@ function transform(strings: string[], ...values: any[]): Execution {
       s += `${values[i]}${strings[i + 1]}`;
     }
   }
-
   const process = spawn(s, { shell: true });
   return { process, outStream: null, config: { stdout: true, stderr: false } };
 }

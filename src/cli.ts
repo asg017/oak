@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { oak_run } from "./commands/run";
+import oak_runx from "./commands/runx";
 import { oak_pulse } from "./commands/pulse";
 import { oak_init } from "./commands/init";
 import oak_dash from "./commands/dash";
@@ -223,6 +224,47 @@ class RunAction extends CommandLineAction {
     });
     return;
   }
+  protected onDefineParameters(): void {
+    this._filename = this.defineStringParameter({
+      argumentName: "FILENAME",
+      parameterLongName: "--file",
+      parameterShortName: "-f",
+      description: "Path to Oakfile.",
+      defaultValue: "./Oakfile",
+    });
+    this._targets = this.defineStringListParameter({
+      argumentName: "TARGETS",
+      parameterLongName: "--targets",
+      parameterShortName: "-t",
+      description: "List of target names to resolve.",
+    });
+    this._schedule = this.defineFlagParameter({
+      parameterLongName: "--schedule",
+      description: "Run Oakfile on defined schedules.",
+    });
+  }
+}
+
+class RunXAction extends CommandLineAction {
+  private _filename: CommandLineStringParameter;
+  private _targets: CommandLineStringListParameter;
+  private _schedule: CommandLineFlagParameter;
+
+  public constructor() {
+    super({
+      actionName: "runx",
+      summary: "Runx an Oakfile.",
+      documentation: "TODO",
+    });
+  }
+  protected async onExecute(): Promise<void> {
+    await oak_runx({
+      filename: this._filename.value,
+      targets: this._targets.values,
+      schedule: this._schedule.value,
+    });
+    return;
+  }
 
   protected onDefineParameters(): void {
     this._filename = this.defineStringParameter({
@@ -272,6 +314,7 @@ class OakCommandLine extends CommandLineParser {
     this.addAction(new PathAction());
     this.addAction(new PulseAction());
     this.addAction(new RunAction());
+    this.addAction(new RunXAction());
     this.addAction(new InitAction());
     this.addAction(new OakVersionAction());
   }

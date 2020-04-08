@@ -37,16 +37,24 @@ export class Scheduler {
   id: number;
   cellName: string;
   init: boolean;
+  schedule: string;
+  done: EventEmitter;
 
-  constructor(args: ScheduleParams | string) {
+  constructor(args: ScheduleParams | string, invalidation: Promise<void>) {
     let params: ScheduleParams;
     if (typeof args === "string") params = { schedule: args };
     else params = args;
 
+    this.done = new EventEmitter();
+    invalidation.then(() => {
+      this.done.emit("done");
+      this.job.cancel();
+    });
+    this.schedule = params.schedule;
     this.tickCount = 0;
     this.clock = new EventEmitter();
     this.job = scheduleLib.scheduleJob(params.schedule, emitTime => {
-      this.clock.emit("tick", new ScheduleTick(this.id, emitTime));
+      this.clock.emit("tick", new ScheduleTick(this.id, emitTime), this);
     });
     this.id = Math.round(Math.random() * 10000000000);
 
@@ -58,13 +66,20 @@ export class Scheduler {
 
   async nextTick(): Promise<ScheduleTick> {
     return new Promise((resolve, reject) => {
-      // im sorry, i never fully understood this
-      const clock = this.clock;
-      function onTick(tick: ScheduleTick) {
-        clock.off("tick", onTick);
+      const onTick = (tick: ScheduleTick) => {
+        this.clock.off("tick", onTick);
         resolve(tick);
-      }
+      };
       this.clock.on("tick", onTick);
+
+      // if the iterator is stopped prematurely,
+      // then cancel the next tick.
+      const onDone = () => {
+        this.clock.off("tick", onTick);
+        resolve(null);
+        this.done.off("done", onDone);
+      };
+      this.done.on("done", onDone);
     });
   }
 
@@ -77,8 +92,12 @@ export class Scheduler {
       return { done: false, value: this };
     }
     const tick = await this.nextTick();
+    if (tick === null) return { done: true, value: this };
     this.lastTick = tick;
     this.tickCount++;
     return { done: false, value: this };
+  }
+  return() {
+    return this;
   }
 }
