@@ -263,6 +263,15 @@ function runDashboard(runEvents: EventEmitter) {
   const runEventsSocket = io.of("/runevents");
   runEventsSocket.on("connection", socket => {});
 
+  const schedulePulseSocket = io.of("/schedulepulse");
+  schedulePulseSocket.on("connection", socket => {});
+
+  const pulse = {
+    cells: new Map(),
+    tasks: new Map(),
+    schedules: new Map(),
+  };
+
   runEvents.on("s", scheduler => runEventsSocket.emit("s", scheduler));
   runEvents.on("st", (tick, scheduler) =>
     runEventsSocket.emit("st", tick, scheduler)
