@@ -1,6 +1,6 @@
 import test from "tape";
 import { removeSync } from "fs-extra";
-import { oak_run } from "../../src/commands/run";
+import { oak_run } from "../../src/core/run";
 import { getPulse } from "../../src/commands/pulse";
 import { envFile, open, touch } from "../utils";
 

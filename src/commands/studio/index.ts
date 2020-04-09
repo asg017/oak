@@ -47,7 +47,10 @@ async function watchOakfileEvents(
   };
 }
 
-export default function oak_dash(args: { filename: string; port: string }) {
+export default function studioCommand(args: {
+  filename: string;
+  port: string;
+}) {
   const oakfilePath = fileArgument(args.filename);
   const oakDB = new OakDB(oakfilePath);
 
@@ -79,11 +82,9 @@ export default function oak_dash(args: { filename: string; port: string }) {
     res.json({ runs });
   });
 
-  app.use(express.static(join(__dirname, "dash-frontend", "dist")));
+  app.use(express.static(join(__dirname, "frontend", "dist")));
   app.use("/", (req, res) => {
-    res
-      .status(200)
-      .sendFile(join(__dirname, "dash-frontend", "dist", "index.html"));
+    res.status(200).sendFile(join(__dirname, "frontend", "dist", "index.html"));
   });
   io.on("connection", async socket => {
     const cleanUpWatcher = await watchOakfileEvents(

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-import { oak_run } from "./commands/run";
-import oak_runx from "./commands/runx";
+import runCommand from "./commands/run";
+import scheduleCommand from "./commands/schedule";
 import { oak_pulse } from "./commands/pulse";
 import { oak_init } from "./commands/init";
-import oak_dash from "./commands/dash";
+import studioCommand from "./commands/studio";
 import oak_version from "./commands/version";
 import oak_clean from "./commands/clean";
 import { oak_logs } from "./commands/logs";
@@ -59,18 +59,18 @@ class CleanAction extends CommandLineAction {
     });
   }
 }
-class DashAction extends CommandLineAction {
+class StudioAction extends CommandLineAction {
   private _port: CommandLineStringParameter;
   private _filename: CommandLineStringParameter;
   public constructor() {
     super({
-      actionName: "dash",
-      summary: "Start a dashboard server to interact with an Oakfile.",
+      actionName: "studio",
+      summary: "Start Oak Studio to interact with an Oakfile.",
       documentation: "TODO",
     });
   }
   protected onExecute(): Promise<void> {
-    oak_dash({ filename: this._filename.value, port: this._port.value });
+    studioCommand({ filename: this._filename.value, port: this._port.value });
     return Promise.resolve();
   }
 
@@ -207,7 +207,6 @@ class PulseAction extends CommandLineAction {
 class RunAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
   private _targets: CommandLineStringListParameter;
-  private _schedule: CommandLineFlagParameter;
 
   public constructor() {
     super({
@@ -217,13 +216,13 @@ class RunAction extends CommandLineAction {
     });
   }
   protected async onExecute(): Promise<void> {
-    await oak_run({
+    await runCommand({
       filename: this._filename.value,
       targets: this._targets.values,
-      schedule: this._schedule.value,
     });
     return;
   }
+
   protected onDefineParameters(): void {
     this._filename = this.defineStringParameter({
       argumentName: "FILENAME",
@@ -237,37 +236,31 @@ class RunAction extends CommandLineAction {
       parameterLongName: "--targets",
       parameterShortName: "-t",
       description: "List of target names to resolve.",
-    });
-    this._schedule = this.defineFlagParameter({
-      parameterLongName: "--schedule",
-      description: "Run Oakfile on defined schedules.",
     });
   }
 }
 
-class RunXAction extends CommandLineAction {
+class ScheduleAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
+  private _port: CommandLineStringParameter;
   private _targets: CommandLineStringListParameter;
-  private _schedule: CommandLineFlagParameter;
   private _dash: CommandLineFlagParameter;
 
   public constructor() {
     super({
-      actionName: "runx",
-      summary: "Runx an Oakfile.",
+      actionName: "schedule",
+      summary: "Run an Oakfile on it's schedule.",
       documentation: "TODO",
     });
   }
   protected async onExecute(): Promise<void> {
-    await oak_runx({
+    await scheduleCommand({
       filename: this._filename.value,
       targets: this._targets.values,
-      schedule: this._schedule.value,
       dash: this._dash.value,
+      port: this._port.value,
     });
-    return;
   }
-
   protected onDefineParameters(): void {
     this._filename = this.defineStringParameter({
       argumentName: "FILENAME",
@@ -282,13 +275,16 @@ class RunXAction extends CommandLineAction {
       parameterShortName: "-t",
       description: "List of target names to resolve.",
     });
-    this._schedule = this.defineFlagParameter({
-      parameterLongName: "--schedule",
-      description: "Run Oakfile on defined schedules.",
-    });
     this._dash = this.defineFlagParameter({
       parameterLongName: "--dash",
-      description: "Run a dashboard alongside a scheduled oak run..",
+      description: "Run a dashboard alongside the scheduled oak run.",
+    });
+    this._port = this.defineStringParameter({
+      argumentName: "PORT",
+      parameterLongName: "--port",
+      parameterShortName: "-p",
+      description: "Port to start the server.",
+      defaultValue: "8888",
     });
   }
 }
@@ -315,12 +311,12 @@ class OakCommandLine extends CommandLineParser {
     });
 
     this.addAction(new CleanAction());
-    this.addAction(new DashAction());
+    this.addAction(new StudioAction());
     this.addAction(new LogsAction());
     this.addAction(new PathAction());
     this.addAction(new PulseAction());
     this.addAction(new RunAction());
-    this.addAction(new RunXAction());
+    this.addAction(new ScheduleAction());
     this.addAction(new InitAction());
     this.addAction(new OakVersionAction());
   }

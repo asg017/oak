@@ -1,5 +1,5 @@
 import test from "tape";
-import { oak_run } from "../../src/commands/run";
+import { oak_run } from "../../src/core/run";
 import { envFile, open, touch } from "../utils";
 import { removeSync } from "fs-extra";
 import { join } from "path";

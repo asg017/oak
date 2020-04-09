@@ -165,6 +165,25 @@ type OakRunHooks = {
   onScheduler?(scheduler: Scheduler);
   onScheduleTick(tick: ScheduleTick, scheduler: Scheduler);
 };
+
+export function defaultHookEmitter(ee: EventEmitter) {
+  return {
+    onTaskExectionStart: (cellName: string, cellTarget) =>
+      ee.emit("te-start", cellName, cellTarget),
+    onTaskExectionEnd: (cellName: string) => ee.emit("te-end", cellName),
+    onTaskNotFresh: (cellName: string, reason: string) =>
+      ee.emit("t-nf", cellName, reason),
+    onTaskFresh: (cellName: string, cellTarget: string) =>
+      ee.emit("t-f", cellName, cellTarget),
+    onCellObserved: (cellName: string) => ee.emit("co", cellName),
+    onCellPending: (cellName: string) => ee.emit("cp", cellName),
+    onCellFulfilled: (cellName: string) => ee.emit("cf", cellName),
+    onCellRejected: (cellName: string) => ee.emit("cr", cellName),
+    onScheduleTick: (tick, scheduler) => ee.emit("st", tick, scheduler),
+    onScheduler: scheduler => ee.emit("s", scheduler),
+  };
+}
+
 export async function oak_run(args: {
   filename: string;
   targets: readonly string[];
