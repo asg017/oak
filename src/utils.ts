@@ -16,6 +16,8 @@ type DirStat = {
 };
 
 export type CellSignature = {
+  type: "normal" | "import";
+  cellName: string;
   cellHash: string;
   cellRefs: string[];
   ancestorHash: string;
@@ -116,7 +118,14 @@ export function parsedCellHashMap(
           return map.get(ref).ancestorHash;
         })}`
       );
-      map.set(cellName, { cellHash, cellRefs, ancestorHash, cellContents });
+      map.set(cellName, {
+        type,
+        cellName,
+        cellHash,
+        cellRefs,
+        ancestorHash,
+        cellContents,
+      });
     }
     if (type === "import") {
       const cellHash = hashString(cellContents);
@@ -130,7 +139,14 @@ export function parsedCellHashMap(
           return map.get(ref).ancestorHash;
         })}${otherOakfileHash}`
       );
-      map.set(cellName, { cellHash, cellRefs, ancestorHash, cellContents });
+      map.set(cellName, {
+        type,
+        cellName,
+        cellHash,
+        cellRefs,
+        ancestorHash,
+        cellContents,
+      });
     }
   }
   return map;

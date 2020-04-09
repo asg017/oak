@@ -22,7 +22,7 @@ async function watchOakfileEvents(
   let targets = [];
   const oakdatadir = join(dirname(oakfilePath), "oak_data");
   const watcher = chokidar
-    .watch("file or dir")
+    .watch("file or dir", { ignoreInitial: true })
     .on("all", async (eventName, path, stats) => {
       if (path.includes(oakdatadir) && eventName === "add") {
         callback("target");
@@ -33,7 +33,7 @@ async function watchOakfileEvents(
         // so, unwatch the old targets, find the new ones, and watch them.
         watcher.unwatch(targets);
         const pulse = await getPulse(oakfilePath);
-        targets = pulse.tasks.map(task => task.target);
+        targets = pulse.tasks.map(({ task }) => task.target);
         watcher.add(targets);
         callback("oakfile");
         return;

@@ -17,30 +17,54 @@ function createDag(tasks, controls) {
   const nodeMap = new Map();
 
   // create nodes
-  tasks.map((cell, i) => {
-    nodeMap.set(cell.pulse.name, n);
-    graph.setNode(n++, {
-      label: cell.pulse.name,
-      taskIndex: i,
-      ...cell,
+  for (const { task, name, signature } of tasks) {
+    const node = {
+      label: name,
+      name,
+      taskIndex: n,
+      signature,
+      task,
       width: 275,
       height: 75,
+    };
+    nodeMap.set(name, node);
+    graph.setNode(n++, node);
+    task.pulse.taskDeps.map(dep => {
+      if (dep.importId) {
+        const node = {
+          label: `(imported cell) ${dep.name}`,
+          name: `${dep.importId}/${dep.name}`,
+          taskIndex: n,
+          task: null,
+          signature: null,
+          width: 275,
+          height: 75,
+        };
+        nodeMap.set(`${dep.importId}/${dep.name}`, node);
+        graph.setNode(n++, node);
+      }
     });
-  });
-
+  }
+  console.log(tasks, nodeMap);
   // create edges
-  tasks.map(cell => {
-    (cell.pulse.taskDeps || []).map(dep => {
-      if (!nodeMap.has(cell.pulse.name) || !nodeMap.has(dep))
-        throw Error(`${cell.pulse.name} or ${dep} not in nodeMap.`);
-      graph.setEdge(nodeMap.get(dep), nodeMap.get(cell.pulse.name), {
-        fromStatus: graph.node(nodeMap.get(dep)).pulse.status,
-        toStatus: graph.node(nodeMap.get(cell.pulse.name)).pulse.status,
-        fromWidth: graph.node(nodeMap.get(dep)).width,
-        fromHeight: graph.node(nodeMap.get(dep)).height,
+  for (const { task, name } of tasks) {
+    (task.pulse.taskDeps || []).map(dep => {
+      const depKey = dep.importId ? `${dep.importId}/${dep.name}` : dep.name;
+
+      if (!nodeMap.has(name) || !nodeMap.has(depKey))
+        throw Error(`${name} or ${depKey} not in nodeMap.`);
+
+      const from = graph.node(nodeMap.get(depKey).taskIndex);
+      const to = graph.node(nodeMap.get(name).taskIndex);
+
+      graph.setEdge(from.taskIndex, to.taskIndex, {
+        fromStatus: from.task?.pulse?.status || "import",
+        toStatus: to.task.pulse.status,
+        fromWidth: to.width,
+        fromHeight: to.height,
       });
     });
-  });
+  }
 
   dagre.layout(graph);
   return { dag: graph, nodeMap };

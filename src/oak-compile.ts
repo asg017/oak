@@ -93,15 +93,12 @@ async function createOakDefinition(
   await Promise.all(importCellsPromises);
 
   let baseModuleDir: string;
+  let importId: string;
 
   if (injectingSource) {
     const hash = getBaseFileHashes(injectingSource.sourcePath, path);
-    baseModuleDir = join(
-      dirname(path),
-      "oak_data",
-      ".oak-imports",
-      hash(injectingSource.cells)
-    );
+    importId = hash(injectingSource.cells);
+    baseModuleDir = join(dirname(path), "oak_data", ".oak-imports", importId);
   } else {
     baseModuleDir = join(dirname(path), "oak_data");
   }
@@ -115,6 +112,16 @@ async function createOakDefinition(
       cell => cell.body.type !== "ImportDeclaration"
     );
     importCells.map(cell => {
+      /*
+       * import {a as x, b as y} with {c as t, d as u} from "Asdf"
+       *
+       * a, b : cell.body.specifiers, spec => spec.imported.name
+       * x, y : cell.body.specifiers, spec => spec.local.name
+       *
+       * c, d : cell.body.injections, inj => inj.imported.name
+       * t, u : cell.body.injections, inj => inj.local.name
+       * "Asdf" : cell.body.source.value
+       */
       const specifiers: { name: string; alias: string }[] = [];
       if (cell.body.specifiers)
         for (const specifier of cell.body.specifiers) {
@@ -171,7 +178,9 @@ async function createOakDefinition(
                 cellName,
                 cellReferences,
                 cellHashMap.get(cellName),
-                baseModuleDir
+                baseModuleDir,
+                path,
+                importId
               )
             : cellFunction
         );

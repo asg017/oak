@@ -5,14 +5,29 @@ import { Execution } from "./Execution";
 
 type WatchArg = string | string[];
 
+type TaskParams = {
+  target: string;
+  run: (any) => any;
+  watch?: WatchArg;
+  createFileBeforeRun?: boolean;
+  createDirectoryBeforeRun?: boolean;
+};
 export default class Task {
   target: string;
   targetOriginal: string;
   stat: Stats | null;
   run: (any) => any;
   watch: string[];
-  constructor(params: { target: string; run: (any) => any; watch?: WatchArg }) {
-    let { target, run, watch = [] } = params;
+  createFileBeforeRun: boolean;
+  createDirectoryBeforeRun: boolean;
+  constructor(params: TaskParams) {
+    let {
+      target,
+      run,
+      watch = [],
+      createFileBeforeRun = false,
+      createDirectoryBeforeRun = false,
+    } = params;
     watch = Array.isArray(watch) ? watch : [watch];
 
     this.targetOriginal = target;
@@ -20,6 +35,8 @@ export default class Task {
     this.stat = null;
     this.run = run;
     this.watch = watch;
+    this.createFileBeforeRun = createFileBeforeRun;
+    this.createDirectoryBeforeRun = createDirectoryBeforeRun;
   }
   absPath(basePath: string) {
     return join(basePath, this.target);

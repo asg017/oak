@@ -6,7 +6,7 @@ import { colorVariable } from "../utils/colors";
 
 function TaskGraphNodeContainer(props) {
   const { node, hover, selected } = props;
-  const { pulse } = node;
+  const { task } = node;
   return (
     <rect
       className={`taskgraphnode-container ${
@@ -18,7 +18,7 @@ function TaskGraphNodeContainer(props) {
       ry={7.5}
       width={node.width}
       height={node.height}
-      stroke={colorVariable.get(pulse.status)}
+      stroke={colorVariable.get(task?.pulse?.status)}
       strokeWidth={3}
     ></rect>
   );
@@ -26,11 +26,12 @@ function TaskGraphNodeContainer(props) {
 
 function TaskGraphNodeStatusBar(props) {
   const { node } = props;
-  const { pulse } = node;
+  const { task } = node;
+  if (!task) return null;
   return (
     <g>
       <path
-        className={`taskgraphnode-status-bar taskgraphnode-status-bar-${pulse.status}`}
+        className={`taskgraphnode-status-bar taskgraphnode-status-bar-${task.pulse.status}`}
         d={`M0 7.5C0 3.35786 3.35786 0 7.5 0H9V${node.height}H7.5C3.35786 ${
           node.height
         } 0 ${node.height - 3.35} 0 ${node.height - 7.5}V7.5Z`}
@@ -51,13 +52,16 @@ function getIcon(type) {
 
 function TaskGraphNodeType(props) {
   const { node } = props;
-  const { pulse } = node;
+  const { task } = node;
+  if (!task) return null;
   return (
     <g className="taskgraphnode-type" transform={`translate(16, 8)`}>
       <image
         width={18}
         height={18}
-        xlinkHref={`https://simpleicons.org/icons/${getIcon(pulse.type)}.svg`}
+        xlinkHref={`https://simpleicons.org/icons/${getIcon(
+          task.pulse.type
+        )}.svg`}
       ></image>
     </g>
   );
@@ -65,7 +69,11 @@ function TaskGraphNodeType(props) {
 
 function TaskGraphNodeStatusLabel(props) {
   const { node } = props;
-  const { pulse } = node;
+  const { task } = node;
+
+  if (!task || !task.pulse) return null;
+
+  const { pulse } = task;
   let status;
   switch (pulse.status) {
     case "up":
@@ -99,13 +107,14 @@ function TaskGraphNodeStatusLabel(props) {
 
 function TaskGraphNodeTargetSize(props) {
   const { node } = props;
-  const { pulse } = node;
+  const { task } = node;
+  if (!task) return null;
   return (
     <g
       className="taskgraphnode-target-size"
       transform={`translate(${node.width - 16}, ${node.height - 10})`}
     >
-      <text>{bytesToSize(pulse.bytes)}</text>
+      <text>{bytesToSize(task.pulse.bytes)}</text>
     </g>
   );
 }

@@ -1,0 +1,38 @@
+fopUrl = "https://www.youtube.com/watch?v=QE_vO6Ti9l4"
+
+import {barcode_png as fop} with {fopUrl as ytUrl} from "./generator/Oakfile"
+
+sbspUrl = "https://www.youtube.com/watch?v=-FRXiHx-IDA"
+
+import {barcode_png as sbsp} with {sbspUrl as ytUrl} from "./generator/Oakfile"
+
+
+pf_mp4 = new Task({
+    target: "pf.mp4",
+    run: pf_mp4 => command("youtube-dl", ["https://www.youtube.com/watch?v=IQL3B4o5rLk", "--output", pf_mp4])
+});
+
+import {barcode_png as pf} with {pf_mp4 as video_mp4} from "./generator/Oakfile"
+
+
+
+/*
+lol = new Task({
+    target: "a.png",
+    run: lol => shell`cp ${barcode_png} ${lol}`
+})
+*/
+
+/*
+
+import * {barcode_png as barcode} from "./generator/Oakfile"
+
+fop = barcode({
+    ytUrl: "https:/...."
+})
+
+sbsp = barcode({
+    ytUrl: "https:/...."
+})
+
+*/

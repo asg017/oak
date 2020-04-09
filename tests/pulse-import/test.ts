@@ -18,9 +18,9 @@ test.onFinish(() => {
 
 cleanUp();
 
-function getPulseTree(result: { tasks: PulseTask[] }) {
+function getPulseTree(result: { tasks: { task: PulseTask; name: string }[] }) {
   const map = new Map();
-  for (const task of result.tasks) map.set(task.pulse.name, task);
+  for (const task of result.tasks) map.set(task.task.pulse.name, task);
   return map;
 }
 /*
