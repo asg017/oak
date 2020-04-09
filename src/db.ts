@@ -196,15 +196,18 @@ export class OakDB {
   }
   async addSchedulerTick(
     schedulerInstanceId: number,
+    tickId: number,
     emitTime: number
   ): Promise<void> {
     const db = await this.getDb();
     await db.run(SQL`INSERT INTO ScheduleTicks (
       scheduler,
+      tickId,
       emitTime
     )
     VALUES (
       ${schedulerInstanceId},
+      ${tickId},
       ${emitTime}
     )`);
     await db.close();
@@ -264,7 +267,9 @@ export class OakDB {
     timeStart: number,
     runLog: string,
     target: string,
-    schedulerInstanceId?: number
+    schedulerInstanceId?: number,
+    tickId?: number,
+    tickEmitTime?: number
   ) {
     const db = await this.getDb();
     const { lastID } = await db.run(SQL`INSERT INTO TaskExecutions (
@@ -272,6 +277,8 @@ export class OakDB {
       target,
       scheduled,
       schedulerInstanceId,
+      tickId,
+      tickTime,
       cellName,
       cellAncestorHash,
       dependenciesSignature,
@@ -284,6 +291,8 @@ export class OakDB {
       ${target},
       ${scheduled},
       ${schedulerInstanceId},
+      ${tickId},
+      ${tickEmitTime},
       ${cellName},
       ${anecestorHash},
       ${dependenciesSignature},
@@ -416,6 +425,8 @@ async function initDb(db: Database) {
             target TEXT,
             scheduled BOOLEAN,
             schedulerInstanceId INTEGER,
+            tickId INTEGER,
+            tickTime INTEGER,
             cellName TEXT,
             cellAncestorHash TEXT,
             dependenciesSignature TEXT,
@@ -445,6 +456,7 @@ async function initDb(db: Database) {
     db.run(
       `CREATE TABLE ScheduleTicks(
           scheduler INTEGER,
+          tickId INTEGER,
           emitTime INTEGER,  
           FOREIGN KEY (scheduler) REFERENCES Scheduler(rowid)
       ); `

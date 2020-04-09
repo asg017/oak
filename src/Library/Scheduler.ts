@@ -8,9 +8,11 @@ type ScheduleParams = {
 };
 
 export class ScheduleTick {
+  id: number;
   schedule: number;
   emitTime: Date;
   constructor(schedulerId: number, emitTime: Date) {
+    this.id = Math.round(Math.random() * 10000000000);
     this.schedule = schedulerId;
     this.emitTime = emitTime;
   }

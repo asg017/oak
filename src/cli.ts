@@ -249,6 +249,7 @@ class RunXAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
   private _targets: CommandLineStringListParameter;
   private _schedule: CommandLineFlagParameter;
+  private _dash: CommandLineFlagParameter;
 
   public constructor() {
     super({
@@ -262,6 +263,7 @@ class RunXAction extends CommandLineAction {
       filename: this._filename.value,
       targets: this._targets.values,
       schedule: this._schedule.value,
+      dash: this._dash.value,
     });
     return;
   }
@@ -283,6 +285,10 @@ class RunXAction extends CommandLineAction {
     this._schedule = this.defineFlagParameter({
       parameterLongName: "--schedule",
       description: "Run Oakfile on defined schedules.",
+    });
+    this._dash = this.defineFlagParameter({
+      parameterLongName: "--dash",
+      description: "Run a dashboard alongside a scheduled oak run..",
     });
   }
 }

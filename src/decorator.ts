@@ -71,7 +71,11 @@ export default function decorator(
             await oakDB.registerScheduler(cellName, value.id);
             value.clock.on("tick", (tick: ScheduleTick, sched: Scheduler) => {
               hooks?.onScheduleTick(tick, sched);
-              oakDB.addSchedulerTick(value.id, tick.emitTime.getTime());
+              oakDB.addSchedulerTick(
+                value.id,
+                tick.id,
+                tick.emitTime.getTime()
+              );
             });
           }
         }

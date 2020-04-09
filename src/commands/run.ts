@@ -40,24 +40,32 @@ async function runTask(
     // if the task was scheduled, or if any of it's upstream
     // tasks dependencies were scheduled, then we need to save the
     // target to a different folder.
-    for (const dep of cellArgs) {
-      if (dep instanceof Task) {
-        if (dep.dependencySchedule)
-          cell.dependencySchedule = dep.dependencySchedule;
-        break;
-      }
-    }
+    // it should be the most schedule with the most recent lastTick
+    const cellsWithSchedule = cellArgs
+      .filter(dep => dep instanceof Task && dep.dependencySchedule)
+      .sort(
+        (a, b) =>
+          b.dependencySchedule.lastTick.emitTime.getTime() -
+          a.dependencySchedule.lastTick.emitTime.getTime()
+      );
+    if (cellsWithSchedule.length)
+      cell.dependencySchedule = cellsWithSchedule[0].dependencySchedule;
+
     if (cell.dependencySchedule) {
       cell.updateBasePath(
         join(
           cell.baseTargetDir,
           ".oak_schedule",
+          cell.dependencySchedule.id.toString(),
+          cell.dependencySchedule.lastTick.id.toString(),
           cell.dependencySchedule.lastTick.emitTime.getTime().toString()
         )
       );
       logFile = join(
         logDirectory,
         "scheduled",
+        cell.dependencySchedule.id.toString(),
+        cell.dependencySchedule.lastTick.id.toString(),
         cell.dependencySchedule.lastTick.emitTime.getTime().toString(),
         `${cellName}.log`
       );
@@ -85,7 +93,9 @@ async function runTask(
     new Date().getTime(),
     logFile,
     cell.target,
-    cell.dependencySchedule?.id
+    cell?.dependencySchedule?.id,
+    cell?.dependencySchedule?.lastTick?.id,
+    cell?.dependencySchedule?.lastTick?.emitTime?.getTime()
   );
   hooks?.onTaskExectionStart(cellName, cell.target);
   const runProcessStart = new Date().getTime();
@@ -449,6 +459,7 @@ export async function oak_run(args: {
   } else {
     return await new Promise((resolve, reject) => {
       process.on("SIGINT", function() {
+        console.log("SIGINT INSIDE run");
         runtime.dispose();
         process.chdir(origDir);
         resolve();

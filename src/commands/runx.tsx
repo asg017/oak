@@ -7,6 +7,10 @@ import { OrderedMap } from "immutable";
 import cronstrue from "cronstrue";
 import scheduleLib from "node-schedule";
 import { durationFuture } from "../utils";
+import express from "express";
+import { Server } from "http";
+import socketio from "socket.io";
+import { join } from "path";
 
 type AppCell = {
   status: "p" | "f" | "r" | "o";
@@ -234,12 +238,67 @@ function AppCellLine(props: { cell: AppCell; name: string }) {
   );
 }
 
+function runInkApp(runEvents: EventEmitter) {
+  const { unmount } = render(<App runEvents={runEvents} />, {
+    experimental: true,
+  });
+  process.on("SIGINT", () => {
+    unmount();
+  });
+}
+
+function runDashboard(runEvents: EventEmitter) {
+  const app = express();
+  const server = new Server(app);
+  const io = socketio(server);
+  app.use(express.static(join(__dirname, "schedule-frontend", "dist")));
+  app.use("/", (req, res) => {
+    res
+      .status(200)
+      .sendFile(join(__dirname, "schedule-frontend", "dist", "index.html"));
+  });
+  server.listen("8000");
+
+  const status = {};
+  const runEventsSocket = io.of("/runevents");
+  runEventsSocket.on("connection", socket => {});
+
+  runEvents.on("s", scheduler => runEventsSocket.emit("s", scheduler));
+  runEvents.on("st", (tick, scheduler) =>
+    runEventsSocket.emit("st", tick, scheduler)
+  );
+  runEvents.on("co", cellName => runEventsSocket.emit("co", cellName));
+  runEvents.on("cp", cellName => runEventsSocket.emit("cp", cellName));
+  runEvents.on("cf", cellName => runEventsSocket.emit("cf", cellName));
+  runEvents.on("cr", cellName => runEventsSocket.emit("cr", cellName));
+  runEvents.on("te-start", (cellName, cellTarget) =>
+    runEventsSocket.emit(cellName, cellTarget)
+  );
+  runEvents.on("te-end", cellName => runEventsSocket.emit("te-end", cellName));
+  runEvents.on("t-f", (cellName, cellTarget) =>
+    runEventsSocket.emit("t-f", cellName, cellTarget)
+  );
+  process.on("SIGINT", () => {
+    server.close();
+    console.log("runx dash sigint");
+    process.exit(0);
+  });
+}
+
 export default async function oak_runx(args: {
   filename: string;
   targets: readonly string[];
   schedule: boolean;
+  dash?: boolean;
 }) {
   const runEvents = new EventEmitter();
+
+  if (args.schedule && args.dash) {
+    runDashboard(runEvents);
+  } else {
+    runInkApp(runEvents);
+  }
+
   const hooks = {
     onTaskExectionStart: (cellName: string, cellTarget) =>
       runEvents.emit("te-start", cellName, cellTarget),
@@ -255,12 +314,6 @@ export default async function oak_runx(args: {
     onScheduleTick: (tick, scheduler) => runEvents.emit("st", tick, scheduler),
     onScheduler: scheduler => runEvents.emit("s", scheduler),
   };
-  const { unmount } = render(<App runEvents={runEvents} />, {
-    experimental: true,
-  });
-  process.on("SIGINT", () => {
-    unmount();
-  });
   await oak_run({
     filename: args.filename,
     targets: args.targets,
