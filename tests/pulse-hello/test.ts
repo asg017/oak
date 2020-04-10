@@ -1,7 +1,7 @@
 import test from "tape";
 import { removeSync } from "fs-extra";
 import { oak_run } from "../../src/core/run";
-import { getPulse } from "../../src/commands/pulse";
+import { getPulse } from "../../src/core/pulse";
 import { envFile, open, touch } from "../utils";
 
 const env = envFile(__dirname);

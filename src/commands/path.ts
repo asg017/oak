@@ -1,20 +1,13 @@
 import { Runtime } from "@observablehq/runtime";
 import { OakCompiler } from "../oak-compile";
-import pino from "pino";
 import { fileArgument } from "../cli-utils";
 import { OakDB, getAndMaybeIntializeOakDB } from "../db";
-import { hashFile } from "../utils";
-import { createReadStream } from "fs-extra";
 import { Library } from "../Library";
 import Task from "../Task";
 import decorator from "../decorator";
 import { EOL } from "os";
 
-const logger = pino({
-  prettyPrint: true,
-});
-
-export async function oak_path(args: {
+export async function pathCommand(args: {
   filename: string;
   targets: readonly string[];
 }): Promise<void> {
