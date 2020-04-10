@@ -7,14 +7,8 @@ type DBOakfile = {
   hash: string;
   mtime: number;
 };
-type DBCell = {
-  OakfileId: string;
-  hash: string;
-  name: string;
-  references: string;
-};
 
-export async function getAndMaybeIntializeOakDB(oakfilePath: string) {
+export function getAndMaybeIntializeOakDB(oakfilePath: string) {
   const oakMetedataDir = join(dirname(oakfilePath), ".oak");
   mkdirsSync(oakMetedataDir);
   const dbPath = join(oakMetedataDir, "oak.db");

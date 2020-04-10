@@ -9,7 +9,7 @@ import { getStat } from "../../utils";
 import { Server } from "http";
 import socketio from "socket.io";
 import chokidar from "chokidar";
-import { OakDB } from "../../db";
+import { getAndMaybeIntializeOakDB } from "../../db";
 
 type OakfileEvent = "oakfile" | "target";
 
@@ -52,7 +52,7 @@ export default function studioCommand(args: {
   port: string;
 }) {
   const oakfilePath = fileArgument(args.filename);
-  const oakDB = new OakDB(oakfilePath);
+  const oakDB = getAndMaybeIntializeOakDB(oakfilePath);
 
   const app = express();
   const server = new Server(app);

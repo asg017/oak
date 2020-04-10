@@ -27,8 +27,9 @@
     "oak"
   ],
   "scripts": {
-    "build": "tsc && npm run build-site ",
-    "build-site": "cp -r ./src/commands/dash/frontend/dist ./built/commands/dash/frontend/",
+    "build": "tsc && npm run build-studio && npm run build-schedule-dash",
+    "build-studio": "cp -r ./src/commands/studio/frontend/dist ./built/commands/studio/frontend/",
+    "build-schedule-dash": "cp -r ./src/commands/schedule/dashboard/dist ./built/commands/schedule/dashboard/",
     "prepare": "rm -rf built && npm run build",
     "preversion": "npm test",
     "version": "rm -rf built && npm run build",
