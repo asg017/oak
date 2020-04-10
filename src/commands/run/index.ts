@@ -9,7 +9,11 @@ export async function runCommand(args: {
 }) {
   const runEvents = new EventEmitter();
 
-  runInkApp(runEvents);
+  const { unmount } = runInkApp(runEvents);
+
+  process.on("SIGINT", () => {
+    unmount();
+  });
 
   const hooks = defaultHookEmitter(runEvents);
   await oak_run({
@@ -18,4 +22,5 @@ export async function runCommand(args: {
     schedule: false,
     hooks,
   });
+  unmount();
 }

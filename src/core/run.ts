@@ -454,21 +454,30 @@ export async function oak_run(args: {
   });
 
   const cells: Set<string> = new Set();
+  const Inspector = (name: string) => ({
+    pending() {
+      ee.emit("pending", name);
+    },
+    fulfilled(value) {
+      ee.emit("fulfilled", name, value);
+    },
+    rejected(error) {
+      ee.emit("rejected", name, error);
+    },
+  });
   const m1 = runtime.module(define, name => {
+    // call the hook on all cells
     if (name) args?.hooks?.onCellObserved(name);
-    if (name && (targetSet.size === 0 || targetSet.has(name))) {
+
+    // it no targets, then we want to observe everything with a name.
+    if (targetSet.size === 0 && name) {
       cells.add(name);
-      return {
-        pending() {
-          ee.emit("pending", name);
-        },
-        fulfilled(value) {
-          ee.emit("fulfilled", name, value);
-        },
-        rejected(error) {
-          ee.emit("rejected", name, error);
-        },
-      };
+      return Inspector(name);
+    }
+    // if targets, then only if name is inside
+    if (targetSet.has(name)) {
+      cells.add(name);
+      return Inspector(name);
     }
   });
   await runtime._compute();
@@ -480,7 +489,6 @@ export async function oak_run(args: {
   } else {
     return await new Promise((resolve, reject) => {
       process.on("SIGINT", function() {
-        console.log("SIGINT INSIDE run");
         runtime.dispose();
         process.chdir(origDir);
         resolve();

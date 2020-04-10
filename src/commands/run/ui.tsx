@@ -235,10 +235,7 @@ class App extends Component {
 }
 
 export function runInkApp(runEvents: EventEmitter) {
-  const { unmount } = render(<App runEvents={runEvents} />, {
+  return render(<App runEvents={runEvents} />, {
     experimental: true,
-  });
-  process.on("SIGINT", () => {
-    unmount();
   });
 }

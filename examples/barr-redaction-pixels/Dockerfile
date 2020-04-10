@@ -9,6 +9,3 @@ RUN apk add --update \
     poppler-utils \
     curl
 WORKDIR /app
-
-COPY . /app
-

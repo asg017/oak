@@ -1,23 +1,26 @@
+dockerfile = new Task({
+  run: () => shell`docker build --tag bar-pixels-test .`,
+  watch: ["Dockerfile"]
+});
+
 report_pdf = new Task({
-  target: 'report.pdf',
-  run: report_pdf => command('curl', [
-    '-o', report_pdf,
-    'https://assets.documentcloud.org/documents/5955118/The-Mueller-Report.pdf'
-  ])
-})
+  target: "report.pdf",
+  run: report_pdf =>
+    command("curl", [
+      "-o",
+      report_pdf,
+      "https://assets.documentcloud.org/documents/5955118/The-Mueller-Report.pdf"
+    ])
+});
 
 pages_dir = new Task({
-  target: 'pages',
-  run: pages_dir => command('pdftoppm', [
-    '-png',
-    '-f', 1,
-    report_pdf,
-    pages_dir
-  ])
-})
+  target: "pages",
+  run: pages_dir =>
+    command("pdftoppm", ["-png", "-f", 1, report_pdf, pages_dir]),
+  deps: dockerfile
+});
 
 histogram_dir = new Task({
-  target: 'histograms',
-  run: hisogram_dir => shell({path: '/bin/bash'})
-  ``
-  
+  target: "histograms",
+  run: hisogram_dir => shell``
+});

@@ -1,3 +1,3 @@
 # Barr Redaction Pixels
 
-Inspiration: [TODO]()
+Inspiration: [nprapps/barr-redaction-pixels](https://github.com/nprapps/barr-redaction-pixels)
