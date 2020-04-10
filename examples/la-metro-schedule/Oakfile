@@ -1,0 +1,49 @@
+schedule = yield * (await new Scheduler("*/30 * * * * *"));
+
+notifSchedule = yield * (await new Scheduler("*/3 * * * *"));
+
+vehicles_live = new Task({
+  target: "vehicles.json",
+  run: vehicles_live =>
+    shell`wget -O ${vehicles_live} "https://api.metro.net/agencies/lametro/vehicles/"`,
+  schedule
+});
+
+db = new Task({
+  target: "la_metro.db",
+  run: db => shell`sqlite3 ${db} "CREATE TABLE vehicle_readings( \
+    recordTime INTEGER, \
+    vehicle TEXT, \
+    route TEXT, \
+    predictable BOOLEAN, \
+    run TEXT, \
+    latitude REAL, \
+    longitude REAL, \
+    heading INTEGER, \
+    secs_since_report INTEGER \
+  )";`,
+  freshIgnoreTarget: true
+});
+
+test = new Task({
+  run: () =>
+    shell`python3 -c "import os; print(os.getcwd())"; python3 upload_db.py ${vehicles_live} ${db}`,
+  watch: ["upload_db.py"]
+});
+
+notif = new Task({
+  run: () => shell`python3 notify.py ${db} ${env("SLACK_PIPELINE_WEBHOOK")}`,
+  watch: ["notify.py"],
+  schedule: notifSchedule
+});
+
+/*
+new Task({
+  run: () => shell`cp ${vehicles_live} ${vehicles_backup_dir}`
+});
+
+vehicles_backup_dir = new Task({
+  target: "vehicles_live_backup",
+  run: vehicles_backup_dir => shell`mkdir -p ${vehicles_backup_dir}`
+});
+*/

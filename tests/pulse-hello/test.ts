@@ -1,6 +1,6 @@
 import test from "tape";
 import { removeSync } from "fs-extra";
-import { oak_run } from "../../src/commands/run";
+import { oak_run } from "../../src/core/run";
 import { getPulse } from "../../src/commands/pulse";
 import { envFile, open, touch } from "../utils";
 
@@ -30,7 +30,6 @@ test("oak-pulse hello", async t => {
   let a = result.tasks.find(task => task.task.pulse.name === "a");
   let b = result.tasks.find(task => task.task.pulse.name === "b");
   let c = result.tasks.find(task => task.task.pulse.name === "c");
-  console.log(result);
   t.true(result.tasks.length === 3);
   t.true(a);
   t.true(b);
@@ -51,7 +50,7 @@ test("oak-pulse hello", async t => {
   t.true(a !== null);
   t.true(c !== null);
   // a should be out of date bc oak didnt change the file.
-  t.equal(a.task.pulse.status, "out-dep");
+  t.equal(a.task.pulse.status, "out-target");
   t.equal(c.task.pulse.status, "out-upstream");
 
   t.end();

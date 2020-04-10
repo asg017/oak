@@ -1,7 +1,7 @@
 import { OakCompiler } from "../oak-compile";
 import pino from "pino";
 import { fileArgument } from "../cli-utils";
-import { OakDB } from "../db";
+import { getAndMaybeIntializeOakDB } from "../db";
 import { hashFile } from "../utils";
 import { createReadStream } from "fs-extra";
 
@@ -18,7 +18,7 @@ export async function oak_logs(args: {
   const oakfilePath = fileArgument(args.filename);
   const oakfileHash = hashFile(oakfilePath);
 
-  const oakDB = new OakDB(oakfilePath);
+  const oakDB = getAndMaybeIntializeOakDB(oakfilePath);
 
   const compiler = new OakCompiler();
   const { cellHashMap } = await compiler.file(oakfilePath, null, null);

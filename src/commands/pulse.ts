@@ -10,13 +10,18 @@ import decorator, {
 } from "../decorator";
 import { getAndMaybeIntializeOakDB, OakDB } from "../db";
 import Task from "../Task";
-import { ObservableCell } from "../oak-compile-types";
 
 const logger = pino({
   prettyPrint: true,
 });
 
-type PulseTaskStatus = "dne" | "up" | "out-dep" | "out-def" | "out-upstream";
+type PulseTaskStatus =
+  | "dne"
+  | "up"
+  | "out-dep"
+  | "out-def"
+  | "out-upstream"
+  | "out-target";
 
 export class PulseTask extends Task {
   pulse?: {
@@ -66,9 +71,9 @@ export class PulseTask extends Task {
       taskDeps,
       cellCode: decoratorArgs.cellSignature.cellContents,
       target: this.target,
-      mtime: this.stat?.mtime?.getTime(),
+      mtime: 0, // this.stat?.mtime?.getTime(),
       taskType,
-      bytes: this.stat?.size || 0,
+      bytes: 0, //this.stat?.size || 0,
       status,
     };
   }
@@ -118,6 +123,15 @@ export async function getPulse(
         pt.addPulse(decoratorArgs, cellDependencies, taskContext, "out-dep");
         return pt;
       },
+      onTaskTargetChanged: (
+        pt: PulseTask,
+        decoratorArgs,
+        cellDependencies,
+        taskContext
+      ) => {
+        pt.addPulse(decoratorArgs, cellDependencies, taskContext, "out-target");
+        return pt;
+      },
       onTaskTargetMissing: async (
         pt,
         decoratorArgs,
@@ -134,12 +148,6 @@ export async function getPulse(
         const taskDepsNotFresh = cellDependencies
           .filter(d => d instanceof PulseTask)
           .filter(pt => pt.pulse.status !== "up");
-        if (taskDepsNotFresh.length > 0)
-          console.log(
-            "123456",
-            decoratorArgs.cellName,
-            taskDepsNotFresh.map(t => [t.pulse.status, t.pulse.name])
-          );
         return taskDepsNotFresh.length > 0;
       },
       value: async (
@@ -156,8 +164,7 @@ export async function getPulse(
         );
         return pt;
       },
-    },
-    PulseTask
+    }
   );
   const { cellHashMap, define } = await compiler.file(oakfilePath, d, null);
 

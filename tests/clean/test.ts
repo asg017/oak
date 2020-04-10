@@ -1,6 +1,6 @@
 import test from "tape";
 import { removeSync } from "fs-extra";
-import { oak_run } from "../../src/commands/run";
+import { oak_run } from "../../src/core/run";
 import oak_clean from "../../src/commands/clean";
 import { envFile, getTree } from "../utils";
 

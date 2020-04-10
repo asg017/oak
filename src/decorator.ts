@@ -2,6 +2,7 @@ import { CellSignature, getSignature, hashString } from "./utils";
 import { OakDB } from "./db";
 import Task from "./Task";
 import { dirname, join } from "path";
+import { Scheduler, ScheduleTick } from "./Library/Scheduler";
 
 export type TaskHookDecoratorArguments = {
   cellFunction: (...any) => any;
@@ -30,14 +31,17 @@ export default function decorator(
     onTaskUpToDate: TaskHook;
     onTaskCellDefinitionChanged: TaskHook;
     onTaskDependencyChanged: TaskHook;
+    onTaskTargetChanged: TaskHook;
     onTaskTargetMissing: TaskHook;
+    onScheduleTick?: (tick: ScheduleTick, scheduler: Scheduler) => void;
+    onScheduler?: (scheduler: Scheduler) => void;
   },
   oakDB: OakDB,
   customFreshHook?: {
     check: (...args: TaskHookArguments) => boolean;
     value: (...args: TaskHookArguments) => any;
   },
-  TaskClass: any = Task
+  isSchedule: boolean = false
 ) {
   return function(
     cellFunction: (...any) => any,
@@ -50,7 +54,31 @@ export default function decorator(
   ): (...any) => any {
     return async function(...dependencies) {
       let currCell = await cellFunction(...dependencies);
-      if (!(currCell instanceof TaskClass)) {
+      if (!(currCell instanceof Task)) {
+        if (
+          isSchedule &&
+          typeof currCell === "object" &&
+          Symbol.asyncIterator in currCell
+        ) {
+          // lets just assume that if its a asyncIterator,
+          // then its probably a Scheduler object.
+          // cant do "currcell instanceof Scheduler" because
+          // async generators are funky
+          const { done, value } = await currCell.next();
+          if (value instanceof Scheduler) {
+            value.cellName = cellName;
+            hooks?.onScheduler(value);
+            await oakDB.registerScheduler(cellName, value.id);
+            value.clock.on("tick", (tick: ScheduleTick, sched: Scheduler) => {
+              hooks?.onScheduleTick(tick, sched);
+              oakDB.addSchedulerTick(
+                value.id,
+                tick.id,
+                tick.emitTime.getTime()
+              );
+            });
+          }
+        }
         return currCell;
       }
       const lastTaskExection = await oakDB.getLastRelatedTaskExection(
@@ -61,7 +89,7 @@ export default function decorator(
 
       // dont try and get Task for cell dependencies like `Task` or `shell`
       const taskDependencies = dependencies.filter(
-        dependency => dependency instanceof TaskClass
+        dependency => dependency instanceof Task
       );
 
       const dependenciesSignatures: string[] = await Promise.all([
@@ -85,7 +113,6 @@ export default function decorator(
         }),
       ]);
       const dependenciesSignature = hashString(dependenciesSignatures.join(""));
-
       const currentTargetSignature = await getSignature(currCell.target);
 
       const decoratorArgs = {
@@ -118,7 +145,7 @@ export default function decorator(
         );
       }
       // no output target
-      if (currCell.stat === null) {
+      if (currentTargetSignature === null) {
         return await hooks.onTaskTargetMissing(
           currCell,
           decoratorArgs,
@@ -138,11 +165,21 @@ export default function decorator(
       }
 
       // out of date dependency
+      if (lastTaskExection.dependenciesSignature !== dependenciesSignature) {
+        return await hooks.onTaskDependencyChanged(
+          currCell,
+          decoratorArgs,
+          dependencies,
+          taskContext
+        );
+      }
+
+      // target has changed. Ignorable
       if (
-        lastTaskExection.dependenciesSignature !== dependenciesSignature ||
+        !currCell.freshIgnoreTarget &&
         lastTaskExection.targetSignature !== currentTargetSignature
       ) {
-        return await hooks.onTaskDependencyChanged(
+        return await hooks.onTaskTargetChanged(
           currCell,
           decoratorArgs,
           dependencies,

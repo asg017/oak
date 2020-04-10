@@ -1,6 +1,6 @@
 import test from "tape";
 import { removeSync } from "fs-extra";
-import { oak_run } from "../../src/commands/run";
+import { oak_run } from "../../src/core/run";
 import { getPulse, PulseTask } from "../../src/commands/pulse";
 import { envFile, open } from "../utils";
 
@@ -35,7 +35,6 @@ b  --- myB  x
 test.skip("pulse-import", async t => {
   let result = await getPulse(env("Oakfile"));
   const ptree = getPulseTree(result);
-  console.log(ptree);
   t.true(result.tasks.length === 3);
   t.equals(ptree.get("x").pulse.status, "dne");
   t.equals(ptree.get("y").pulse.status, "out-upstream");

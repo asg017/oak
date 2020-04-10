@@ -1,5 +1,5 @@
 import test from "tape";
-import { oak_run } from "../../src/commands/run";
+import { oak_run } from "../../src/core/run";
 import { envFile, getTree } from "../utils";
 import { removeSync } from "fs-extra";
 import { getBaseFileHashes } from "../../src/utils";
@@ -38,7 +38,6 @@ test("run-inject", async t => {
     targets: []
   });
   const t1 = await getTree(outs, env);
-  console.log(t1.keys());
   t.equal(t1.get("sub/oak_data/a").content, "NY a");
   t.equal(t1.get("sub/oak_data/b").content, "NY b");
   t.equal(t1.get("sub/oak_data/c").content, "NY aNY b");

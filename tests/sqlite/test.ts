@@ -1,7 +1,7 @@
 import test from "tape";
 import { removeSync, writeFileSync } from "fs-extra";
 import { envFile, open } from "../utils";
-import { oak_run } from "../../src/commands/run";
+import { oak_run } from "../../src/core/run";
 
 const env = envFile(__dirname);
 
