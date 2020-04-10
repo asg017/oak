@@ -142,7 +142,7 @@ async function runTask(
   );
   const finalTargetSignature = await getSignature(cell.target);
   await oakDB.updateTaskExection(
-    taskExecutionRowID,
+    Number(taskExecutionRowID),
     finalTargetSignature,
     runProcessStart,
     runProcessEnd,
@@ -402,7 +402,7 @@ export async function oak_run(args: {
     type: string;
     name: string;
     time: number;
-    meta?: string;
+    meta: string;
   }[] = [];
   const origDir = process.cwd();
   process.chdir(dirname(oakfilePath));
@@ -427,6 +427,7 @@ export async function oak_run(args: {
       ancestorHash: cellHashMap.get(name)?.ancestorHash || "",
       name,
       time: new Date().getTime(),
+      meta: null,
     });
   });
   ee.on("fulfilled", name => {
@@ -437,6 +438,7 @@ export async function oak_run(args: {
       ancestorHash: cellHashMap.get(name)?.ancestorHash || "",
       name,
       time: new Date().getTime(),
+      meta: null,
     });
   });
   ee.on("rejected", (name, error) => {
