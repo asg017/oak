@@ -79,7 +79,7 @@ function AppCellLineIcon(props) {
     case "f":
       return <Text>{"✔️"}</Text>;
     case "r":
-      return <Text>{"❌"}</Text>;
+      return <Text>{"✖"}</Text>;
   }
 }
 

@@ -2,7 +2,7 @@ import { oak_run, defaultHookEmitter } from "../../core/run";
 import { EventEmitter } from "events";
 import { runInkApp } from "./ui";
 
-export default async function runCommand(args: {
+export async function runCommand(args: {
   filename: string;
   targets: readonly string[];
   dash?: boolean;

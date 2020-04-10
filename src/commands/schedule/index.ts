@@ -52,7 +52,7 @@ function runDashboard(port: string, runEvents: EventEmitter) {
   });
 }
 
-export default async function scheduleCommand(args: {
+export async function scheduleCommand(args: {
   filename: string;
   targets: readonly string[];
   dash: boolean;

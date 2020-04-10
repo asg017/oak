@@ -1,17 +1,14 @@
 #!/usr/bin/env node
 
-import runCommand from "./commands/run";
-import scheduleCommand from "./commands/schedule";
-import { oak_pulse } from "./commands/pulse";
-import { oak_init } from "./commands/init";
-import studioCommand from "./commands/studio";
-import oak_version from "./commands/version";
-import oak_clean from "./commands/clean";
-import { oak_logs } from "./commands/logs";
-import { oak_path } from "./commands/path";
+import { logsCommand } from "./commands/logs";
+import { pathCommand } from "./commands/path";
+import { pulseCommand } from "./commands/pulse";
+import { runCommand } from "./commands/run";
+import { scheduleCommand } from "./commands/schedule";
+import { studioCommand } from "./commands/studio";
+import { versionCommand } from "./commands/version";
 
 import {
-  CommandLineChoiceParameter,
   CommandLineStringParameter,
   CommandLineStringListParameter,
   CommandLineAction,
@@ -19,46 +16,6 @@ import {
   CommandLineFlagParameter,
 } from "@rushstack/ts-command-line";
 
-class CleanAction extends CommandLineAction {
-  private _filename: CommandLineStringParameter;
-  private _targets: CommandLineStringListParameter;
-  private _force: CommandLineFlagParameter;
-
-  public constructor() {
-    super({
-      actionName: "clean",
-      summary: "Remove task target files.",
-      documentation: "TODO",
-    });
-  }
-  protected onExecute(): Promise<void> {
-    return oak_clean({
-      targets: this._targets.values,
-      filename: this._filename.value,
-      force: this._force.value,
-    });
-  }
-
-  protected onDefineParameters(): void {
-    this._filename = this.defineStringParameter({
-      argumentName: "FILENAME",
-      parameterLongName: "--file",
-      parameterShortName: "-f",
-      description: "Path to Oakfile.",
-      defaultValue: "./Oakfile",
-    });
-    this._force = this.defineFlagParameter({
-      parameterLongName: "--force",
-      description: "Force deletion of files with no prompt.",
-    });
-    this._targets = this.defineStringListParameter({
-      argumentName: "TARGETS",
-      parameterLongName: "--targets",
-      parameterShortName: "-t",
-      description: "List of target names to resolve.",
-    });
-  }
-}
 class StudioAction extends CommandLineAction {
   private _port: CommandLineStringParameter;
   private _filename: CommandLineStringParameter;
@@ -92,20 +49,6 @@ class StudioAction extends CommandLineAction {
   }
 }
 
-class InitAction extends CommandLineAction {
-  public constructor() {
-    super({
-      actionName: "init",
-      summary: "Initialize an Oakfile in the current directory..",
-      documentation: "TODO",
-    });
-  }
-  protected async onExecute(): Promise<void> {
-    await oak_init();
-  }
-  protected onDefineParameters(): void {}
-}
-
 class LogsAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
   private _targets: CommandLineStringListParameter;
@@ -117,7 +60,7 @@ class LogsAction extends CommandLineAction {
     });
   }
   protected async onExecute(): Promise<void> {
-    await oak_logs({
+    await logsCommand({
       filename: this._filename.value,
       targets: this._targets.values,
     });
@@ -153,7 +96,7 @@ class PathAction extends CommandLineAction {
     });
   }
   protected async onExecute(): Promise<void> {
-    await oak_path({
+    await pathCommand({
       filename: this._filename.value,
       targets: this._targets.values,
     });
@@ -189,7 +132,7 @@ class PulseAction extends CommandLineAction {
     });
   }
   protected async onExecute(): Promise<void> {
-    await oak_pulse({
+    await pulseCommand({
       filename: this._filename.value,
     });
   }
@@ -289,7 +232,7 @@ class ScheduleAction extends CommandLineAction {
   }
 }
 
-class OakVersionAction extends CommandLineAction {
+class VersionAction extends CommandLineAction {
   public constructor() {
     super({
       actionName: "version",
@@ -299,8 +242,7 @@ class OakVersionAction extends CommandLineAction {
   }
   protected onDefineParameters(): void {}
   protected async onExecute(): Promise<void> {
-    await oak_version();
-    return;
+    versionCommand();
   }
 }
 class OakCommandLine extends CommandLineParser {
@@ -310,15 +252,13 @@ class OakCommandLine extends CommandLineParser {
       toolDescription: "CLI for oak.",
     });
 
-    this.addAction(new CleanAction());
     this.addAction(new StudioAction());
     this.addAction(new LogsAction());
     this.addAction(new PathAction());
     this.addAction(new PulseAction());
     this.addAction(new RunAction());
     this.addAction(new ScheduleAction());
-    this.addAction(new InitAction());
-    this.addAction(new OakVersionAction());
+    this.addAction(new VersionAction());
   }
 
   protected onDefineParameters(): void {}

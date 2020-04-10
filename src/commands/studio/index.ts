@@ -1,7 +1,7 @@
 import express from "express";
 import { createReadStream } from "fs";
 import { dirname, join } from "path";
-import { getPulse } from "../../commands/pulse";
+import { getPulse } from "../../core/pulse";
 import { fileArgument } from "../../cli-utils";
 import cors from "cors";
 import { networkInterfaces } from "os";
@@ -47,10 +47,7 @@ async function watchOakfileEvents(
   };
 }
 
-export default function studioCommand(args: {
-  filename: string;
-  port: string;
-}) {
+export function studioCommand(args: { filename: string; port: string }) {
   const oakfilePath = fileArgument(args.filename);
   const oakDB = getAndMaybeIntializeOakDB(oakfilePath);
 

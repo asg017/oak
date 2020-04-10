@@ -9,7 +9,7 @@ const logger = pino({
   prettyPrint: true,
 });
 
-export async function oak_logs(args: {
+export async function logsCommand(args: {
   filename: string;
   targets: readonly string[];
 }): Promise<void> {
