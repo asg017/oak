@@ -61,7 +61,7 @@ export default async function scheduleCommand(args: {
   const runEvents = new EventEmitter();
 
   if (args.dash) {
-    runDashboard(port, runEvents);
+    runDashboard(args.port, runEvents);
   } else {
     runInkApp(runEvents);
   }
