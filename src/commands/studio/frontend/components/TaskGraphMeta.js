@@ -113,7 +113,6 @@ function TaskGraphMetaDependenciesList(props) {
 }
 function TaskGraphMetaDependencies(props) {
   const { dag, nodeMap, pulse } = props;
-  console.log(pulse, nodeMap);
   const dependencies = pulse.taskDeps.map(dep => {
     return dag.node(
       nodeMap.get(dep.importId ? `${dep.importId}/${dep.name}` : dep.name)

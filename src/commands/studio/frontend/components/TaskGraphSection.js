@@ -45,7 +45,6 @@ function createDag(tasks, controls) {
       }
     });
   }
-  console.log(tasks, nodeMap);
   // create edges
   for (const { task, name } of tasks) {
     (task.pulse.taskDeps || []).map(dep => {
@@ -75,6 +74,7 @@ export default class TaskGraphSection extends Component {
   componentDidMount() {
     const socket = io.connect("/");
     socket.on("oakfile", data => {
+      console.log("on oakfile", data);
       const { pulse } = data;
       const { dag, nodeMap } = createDag(pulse.tasks, this.state.controls);
       this.setState({

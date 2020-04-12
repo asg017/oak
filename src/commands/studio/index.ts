@@ -11,40 +11,108 @@ import socketio from "socket.io";
 import chokidar from "chokidar";
 import { getAndMaybeIntializeOakDB } from "../../db";
 
-type OakfileEvent = "oakfile" | "target";
+type OakfileEvent = "oakfile" | "oakdb" | "target";
 
 // Watch for all changes that could happen to the Oakfile, or the
 // targets that the Oakfile cares about.
 async function watchOakfileEvents(
   oakfilePath: string,
-  callback: (type: string) => void
+  callback: (type: OakfileEvent) => void
 ): Promise<() => Promise<void>> {
-  let targets = [];
+  const oakdbPath = join(dirname(oakfilePath), ".oak", "oak.db");
   const oakdatadir = join(dirname(oakfilePath), "oak_data");
+  let unwatchDynamic;
+  async function watchDynamic(watcher) {
+    let targets: string[] = [];
+    let taskWatches: string[] = [];
+
+    const pulse = await getPulse(oakfilePath);
+    targets = pulse.tasks.map(({ task }) => task.target).filter(s => s);
+    taskWatches = pulse.tasks
+      .map(({ task }) =>
+        task.watch.map(w => join(dirname(task.pulse.oakfilePath), w))
+      )
+      .filter(w => w.length)
+      .reduce((a, v) => {
+        for (let w of v) a.push(w);
+        return a;
+      }, []);
+
+    console.log(targets, taskWatches);
+    watcher.add(targets);
+    watcher.add(taskWatches);
+    return function unwatchDynamic() {
+      watcher.unwatch(targets);
+      watcher.unwatch(taskWatches);
+    };
+  }
   const watcher = chokidar
     .watch("file or dir", { ignoreInitial: true })
     .on("all", async (eventName, path, stats) => {
-      if (path.includes(oakdatadir) && eventName === "add") {
+      if (path.includes(oakdatadir)) {
         callback("target");
         return;
       }
+
       if (path === oakfilePath) {
         // since the oakfile changed, the targets may be different now.
         // so, unwatch the old targets, find the new ones, and watch them.
-        watcher.unwatch(targets);
-        const pulse = await getPulse(oakfilePath);
-        targets = pulse.tasks.map(({ task }) => task.target);
-        watcher.add(targets);
+        unwatchDynamic && unwatchDynamic();
+        unwatchDynamic = await watchDynamic(watcher);
+
         callback("oakfile");
-        return;
       }
-      callback("target");
+      callback("oakdb");
     });
   watcher.add(oakfilePath);
   watcher.add(oakdatadir);
+  unwatchDynamic = await watchDynamic(watcher);
+
+  //watcher.add(oakdbPath);
   return function cleanUpWatcher() {
     return watcher.close();
   };
+}
+
+function throttle(func, wait, options?) {
+  var timeout, context, args, result;
+  var previous = 0;
+  if (!options) options = {};
+
+  var later = function() {
+    previous = options.leading === false ? 0 : Date.now();
+    timeout = null;
+    result = func.apply(context, args);
+    if (!timeout) context = args = null;
+  };
+
+  var throttled = function() {
+    var _now = Date.now();
+    if (!previous && options.leading === false) previous = _now;
+    var remaining = wait - (_now - previous);
+    context = this;
+    args = arguments;
+    if (remaining <= 0 || remaining > wait) {
+      if (timeout) {
+        clearTimeout(timeout);
+        timeout = null;
+      }
+      previous = _now;
+      result = func.apply(context, args);
+      if (!timeout) context = args = null;
+    } else if (!timeout && options.trailing !== false) {
+      timeout = setTimeout(later, remaining);
+    }
+    return result;
+  };
+
+  /*throttled.cancel = function() {
+    clearTimeout(timeout);
+    previous = 0;
+    timeout = context = args = null;
+  };*/
+
+  return throttled;
 }
 
 export function studioCommand(args: { filename: string; port: string }) {
@@ -84,13 +152,12 @@ export function studioCommand(args: { filename: string; port: string }) {
     res.status(200).sendFile(join(__dirname, "frontend", "dist", "index.html"));
   });
   io.on("connection", async socket => {
-    const cleanUpWatcher = await watchOakfileEvents(
-      oakfilePath,
-      async (changeType: OakfileEvent) => {
-        const pulse = await getPulse(oakfilePath);
-        socket.emit("oakfile", { changeType, pulse });
-      }
-    );
+    const onEvent = throttle(async (changeType: OakfileEvent) => {
+      console.log("onEvent", changeType);
+      const pulse = await getPulse(oakfilePath);
+      socket.emit("oakfile", { changeType, pulse });
+    }, 250);
+    const cleanUpWatcher = await watchOakfileEvents(oakfilePath, onEvent);
     socket.on("disconnect", () => {
       cleanUpWatcher();
     });

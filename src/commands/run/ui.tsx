@@ -74,8 +74,9 @@ function AppCellLineIcon(props) {
   if (cell.fresh) return <Text>{"\u{2192}"}</Text>;
   switch (cell.status) {
     case "p":
-    case "o":
       return <Spinner type="dots" />;
+    case "o":
+      return <Text>{"\u{2022}"}</Text>;
     case "f":
       return <Text>{"✔️"}</Text>;
     case "r":
@@ -106,8 +107,10 @@ function AppCellLine(props: { cell: AppCell; name: string }) {
       ? "yellowBright"
       : cell.task && cell.executing
       ? "magenta"
-      : cell.status === "p" || cell.status === "o"
+      : cell.status === "p"
       ? "blueBright"
+      : cell.status === "o"
+      ? "gray"
       : cell.status === "f"
       ? "greenBright"
       : "redBright"]: true,
@@ -211,21 +214,40 @@ class App extends Component {
       const { cells } = this.state;
       const newCell: AppCell = Object.assign(cells.get(cellName), {
         task: true,
+        executing: false,
         fresh: true,
         target: cellTarget,
       });
       this.setState({ cells: cells.set(cellName, newCell) });
     });
   }
+  componentWillUnmount() {
+    this.props.runEvents
+      .removeAllListeners("s")
+      .removeAllListeners("co")
+      .removeAllListeners("cp")
+      .removeAllListeners("cf")
+      .removeAllListeners("cr")
+      .removeAllListeners("te-start")
+      .removeAllListeners("te-end")
+      .removeAllListeners("t-f");
+  }
   render() {
     return (
       <Box flexDirection="column">
-        <Box>
-          <Text>Schedulers</Text>
-        </Box>
+        {this.state.schedulers.size && (
+          <Box>
+            <Text>Schedulers</Text>
+          </Box>
+        )}
         {Array.from(this.state.schedulers).map(([id, scheduler]) => (
           <AppSchedulerLine key={id} scheduler={scheduler} />
         ))}
+        {this.state.cells.size && (
+          <Box>
+            <Text>Cells</Text>
+          </Box>
+        )}
         {Array.from(this.state.cells).map(([name, cell]) => (
           <AppCellLine name={name} cell={cell} key={name} />
         ))}

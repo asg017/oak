@@ -41539,7 +41539,6 @@ function TaskGraphMetaDependencies(props) {
   var dag = props.dag,
       nodeMap = props.nodeMap,
       pulse = props.pulse;
-  console.log(pulse, nodeMap);
   var dependencies = pulse.taskDeps.map(function (dep) {
     return dag.node(nodeMap.get(dep.importId ? "".concat(dep.importId, "/").concat(dep.name) : dep.name).taskIndex);
   });
@@ -62318,7 +62317,8 @@ function createDag(tasks, controls) {
           graph.setNode(n++, _node);
         }
       });
-    }
+    } // create edges
+
   } catch (err) {
     _didIteratorError = true;
     _iteratorError = err;
@@ -62333,8 +62333,6 @@ function createDag(tasks, controls) {
       }
     }
   }
-
-  console.log(tasks, nodeMap); // create edges
 
   var _iteratorNormalCompletion2 = true;
   var _didIteratorError2 = false;
@@ -62420,6 +62418,7 @@ var TaskGraphSection = /*#__PURE__*/function (_Component) {
       var socket = _socket.default.connect("/");
 
       socket.on("oakfile", function (data) {
+        console.log("on oakfile", data);
         var pulse = data.pulse;
 
         var _createDag = createDag(pulse.tasks, _this2.state.controls),
@@ -63453,7 +63452,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "3000" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "8888" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

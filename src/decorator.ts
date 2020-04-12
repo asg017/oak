@@ -144,8 +144,8 @@ export default function decorator(
           taskContext
         );
       }
-      // no output target
-      if (currentTargetSignature === null) {
+      // no output target. Don't do if the task has no target.
+      if (currCell.target && currentTargetSignature === null) {
         return await hooks.onTaskTargetMissing(
           currCell,
           decoratorArgs,
