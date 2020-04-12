@@ -15,12 +15,16 @@ report_pdf = new Task({
 
 pages_dir = new Task({
   target: "pages",
-  run: pages_dir =>
-    command("pdftoppm", ["-png", "-f", 1, report_pdf, pages_dir]),
+  run: pages_dir => shell`docker run --rm \
+    -v ${report_pdf}:/oak_data/report.pdf \
+    -v ${pages_dir}:/oak_data/pages \
+    bar-pixels-test \
+    pdftoppm -png -f 1 /oak_data/report.pdf /oak_data/pages`,
+  createDirectoryBeforeRun: true,
   deps: dockerfile
 });
 
 histogram_dir = new Task({
   target: "histograms",
-  run: hisogram_dir => shell``
+  run: histogram_dir => shell``
 });
