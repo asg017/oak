@@ -3,3 +3,10 @@ raw_accidents = new Task({
   run: raw_accidents =>
     shell`wget -O ${raw_accidents} --no-verbose "https://data.lacity.org/api/views/d5tf-ez2w/rows.csv?accessType=DOWNLOAD"`
 });
+
+accidents = new Task({
+  target: "accidents.csv",
+  run: accidents =>
+    shell`pipenv run papermill clean_accidents.ipynb /dev/null -p raw_accidents_path ${raw_accidents} -p accidents_path ${accidents}`,
+  watch: ["clean_accidents.ipynb"]
+});
