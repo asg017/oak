@@ -10,7 +10,7 @@ A framework for reproducible, reusable data workflows.
 
 `oak` is a CLI tool for small, static, data analysis projects.
 
-`oak` works well with projects that have a chain (or tree) of scripts that process files. For example, you may have a series of python/R/shell scripts that take in files as an input, processes them in some way, then outputs new files. This is an ETL (Extract, Transform, Load) workflow - and `oak` makes it easier to define, develop, and re-use these workflows.
+`oak` works well with projects that have a series of scripts that process files. For example, you may have several python/R/shell scripts that individually take in files as an input, processes them in some way, then outputs new files. This is an ETL (Extract, Transform, Load) workflow - and `oak` makes it easier to define, develop, and re-use these workflows.
 
 ## Benefits of `oak`
 
@@ -25,18 +25,18 @@ With many data projects, it can be unclear on how to start - which script do you
 While `oak` is written in TypeScript, you can use the tool to kickoff any process in any language - for example, this is a sample `Oakfile` that uses python, R, and nodeJS:
 
 ```javascript
-scraped_data = task({
+scraped_data = new Task({
   target: "scraped_data.csv",
   run: scraped_data => shell`python scrape.py > ${scraped_data}`
 });
 
-analyzed_data = task({
+analyzed_data = new Task({
   target: "analysis.csv",
   run: analyzed_data =>
     shell`Rscript analysis.R --input=${scraped_data} > ${analyzed_data}`
 });
 
-graphic = recipe({
+graphic = new Task({
   target: "graphic.jpg",
   graphic => 
     shell`node generate-graphic.js --input=${analyzed_data} > ${graphic}`
@@ -71,7 +71,21 @@ _Note_ - this feature is still being worked on, and this specific example is kin
 - In a high performance, production setting - `oak` is meant to be called by developers manually, not be some production server many times per minute
 - For scheduling or monitoring workflows - see [Airflow](https://airflow.apache.org/index.html)
 
-## Why not `make`?
+## Why not make/Airflow/Dagster/some other ETL Framework?
+
+To see comparisons with other tools, check out the documentation!
+
+To summarize, here are the pros/cons when comparing Oak to similar tools:
+
+**Pros**:
+- Oak doesn't lock you into to a specific programming language or tool
+- Oak's syntax and runtime may be easier to understand and reason about 
+- The UI/UX of using Oak may be nicer to more complex tools
+
+**Cons**:
+- Oak works great with files - but if you're dealing with more abstract concepts like remote databases (or your data is larger than your filesystem), then Oak may not be the right fit
+- Oak isn't as battle-tested as other frameworks
+- Oakfiles themselves use Javascript syntax, which may be foreign to many data-people
 
 `make` is another CLI tool that comes pre-installed in many linux/mac environments and works similar to `oak` - you write a `Makefile` that creates a DAG of file dependencies, which, when ran, only builds targets that are out of date.
 
