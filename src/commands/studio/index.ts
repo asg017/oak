@@ -139,8 +139,8 @@ export function studioCommand(args: { filename: string; port: string }) {
     res.json({ logs });
   });
   app.get("/api/log", express.json(), cors(), async (req, res) => {
-    const log = await oakDB.getLogById(req.query.rowid);
-    createReadStream(log.path).pipe(res);
+    // const log = await oakDB.getLogById(req.query.rowid);
+    // createReadStream(log.path).pipe(res);
   });
   app.get("/api/runs", express.json(), cors(), async (req, res) => {
     const runs = await oakDB.getRuns();
