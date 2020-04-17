@@ -13,7 +13,14 @@ import { dirname, join } from "path";
 import { EventEmitter } from "events";
 import pino from "pino";
 import { fileArgument } from "../cli-utils";
-import { mkdirsSync, ensureFile, ensureDir, createReadStream } from "fs-extra";
+import {
+  mkdirsSync,
+  ensureFile,
+  ensureDir,
+  createReadStream,
+  ensureFileSync,
+  ensureDirSync,
+} from "fs-extra";
 import { OakDB, getAndMaybeIntializeOakDB } from "../db";
 import Task from "../Task";
 import { createWriteStream, createFileSync, readFileSync } from "fs-extra";
@@ -36,6 +43,27 @@ async function runTask(
   hooks?: OakRunHooks
 ): Promise<number> {
   let logFile = join(logDirectory, `${cellName}.log`);
+
+  // If any of  the task's upstream tasks dependencies were from stdin,
+  // then we need to save the target to a different folder.
+
+  // picking the first one should be safe, since only 1 Task should be stdin
+  const upstreamStdinTasks = cellArgs.find(
+    dep => dep instanceof Task && (dep.stdin || dep.upstreamStdin)
+  );
+  if (upstreamStdinTasks) {
+    cell.upstreamStdin = true;
+    cell.upstreamStdinId = upstreamStdinTasks.upstreamStdinId;
+    cell.updateBasePath(
+      join(cell.baseTargetDir, ".oak_stdin", cell.upstreamStdinId)
+    );
+    // no need to update logFile here, it can log like normal.
+  }
+
+  // i believe we'd never run into the problem where a task
+  // has an upstream stdin task AND was schedule, since --stdin
+  // is only for `oak run`, not `oak schedule`
+
   if (scheduled) {
     // if the task was scheduled, or if any of it's upstream
     // tasks dependencies were scheduled, then we need to save the
@@ -187,6 +215,7 @@ export function defaultHookEmitter(ee: EventEmitter) {
 export async function oak_run(args: {
   filename: string;
   targets: readonly string[];
+  stdin?: string;
   stdout?: string;
   schedule?: boolean;
   hooks?: OakRunHooks;
@@ -468,6 +497,24 @@ export async function oak_run(args: {
       ee.emit("rejected", name, error);
     },
   });
+
+  let stdinTarget;
+  if (args.stdin) {
+    stdinTarget = join(
+      dirname(oakfilePath),
+      "oak_data",
+      ".oak_stdin",
+      runHash,
+      "stdin"
+    );
+    ensureDirSync(dirname(stdinTarget));
+    process.stdin.pipe(createWriteStream(stdinTarget));
+    await new Promise((resolve, reject) => {
+      process.stdin.on("end", resolve);
+      process.stdin.on("error", resolve);
+    });
+  }
+
   const m1 = runtime.module(define, name => {
     // call the hook on all cells
     if (name) args?.hooks?.onCellObserved(name);
@@ -483,6 +530,13 @@ export async function oak_run(args: {
       return Inspector(name);
     }
   });
+  if (args.stdin) {
+    const stdinTask = new Task({ target: "stdin", run: () => {} });
+    stdinTask.updateBasePath(dirname(stdinTarget));
+    stdinTask.upstreamStdin = true;
+    stdinTask.upstreamStdinId = runHash;
+    m1.redefine(args.stdin, stdinTask);
+  }
   await runtime._compute();
   if (!args.schedule) {
     await Promise.all(Array.from(cells).map(cell => m1.value(cell)));

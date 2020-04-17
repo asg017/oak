@@ -25,7 +25,7 @@ export class OakDB {
     this.db = db;
   }
 
-  async addEvents(
+  addEvents(
     runHash: string,
     events: {
       type: string;
@@ -57,7 +57,7 @@ export class OakDB {
     insertMany(events.map(event => Object.assign(event, { run: runHash })));
   }
 
-  async getLog(cellName: string) {
+  getLog(cellName: string) {
     const q = `SELECT *
     FROM Logs
     WHERE Logs.cellName = ?
@@ -67,7 +67,7 @@ export class OakDB {
     return result;
   }
 
-  async getLogById(rowid: number) {
+  getLogById(rowid: number) {
     const q = `SELECT path
     FROM Logs
     WHERE Logs.rowid = ?`;
@@ -75,7 +75,7 @@ export class OakDB {
     return result;
   }
 
-  async getRunById(hash: string) {
+  getRunById(hash: string) {
     const q = `SELECT 
     hash
   FROM Runs
@@ -84,7 +84,7 @@ export class OakDB {
     return result;
   }
 
-  async getLogs() {
+  getLogs() {
     const q = `SELECT 
     rowid,
     oakfile,
@@ -100,7 +100,7 @@ export class OakDB {
     return result;
   }
 
-  async getRuns() {
+  getRuns() {
     const q = `SELECT
     Runs.hash,
     Runs.oakfile,
@@ -118,9 +118,7 @@ export class OakDB {
     return result;
   }
 
-  async findMostRecentCellHash(
-    ancestorHash: string
-  ): Promise<{ mtime: number }> {
+  findMostRecentCellHash(ancestorHash: string): Promise<{ mtime: number }> {
     const q = `SELECT Cells.hash, Oakfiles.mtime
     FROM Cells
     INNER JOIN Oakfiles ON Cells.oakfile = Oakfiles.hash
@@ -131,7 +129,7 @@ export class OakDB {
     return result;
   }
 
-  async addLog(
+  addLog(
     oakfileHash: string,
     runHash: string,
     cellName: string,
@@ -153,10 +151,7 @@ export class OakDB {
     return result;
   }
 
-  async registerScheduler(
-    cellName: string,
-    schedulerInstanceId: number
-  ): Promise<void> {
+  registerScheduler(cellName: string, schedulerInstanceId: number) {
     const q = `INSERT INTO Schedulers (
       schedulerInstanceId,
       cellName
@@ -164,11 +159,11 @@ export class OakDB {
     VALUES (?, ?)`;
     this.db.prepare(q).run(schedulerInstanceId, cellName);
   }
-  async addSchedulerTick(
+  addSchedulerTick(
     schedulerInstanceId: number,
     tickId: number,
     emitTime: number
-  ): Promise<void> {
+  ) {
     const q = `INSERT INTO ScheduleTicks (
       scheduler,
       tickId,
@@ -177,21 +172,21 @@ export class OakDB {
     VALUES (?, ?, ?)`;
     this.db.prepare(q).run(schedulerInstanceId, tickId, emitTime);
   }
-  async registerOakfile(
+  registerOakfile(
     oakfileHash: string,
     mtime: number,
     cellHashMap: Map<string, CellSignature>
-  ): Promise<void> {
-    const oakRow = await this.getOakfile(oakfileHash);
+  ) {
+    const oakRow = this.getOakfile(oakfileHash);
     // this could be problematic. imagine addOakfile works, but addCells fails.
     // then addCells would never be retried since this if statement only checks for the oakfile.
     if (!oakRow) {
-      await this.addOakfile(oakfileHash, mtime);
-      await this.addCells(oakfileHash, cellHashMap);
+      this.addOakfile(oakfileHash, mtime);
+      this.addCells(oakfileHash, cellHashMap);
     }
   }
 
-  async getLastRelatedTaskExection(ancestorHash: string) {
+  getLastRelatedTaskExection(ancestorHash: string) {
     const q = `SELECT *
     FROM TaskExecutions 
     WHERE TaskExecutions.cellAncestorHash = ?
@@ -202,7 +197,7 @@ export class OakDB {
     return row;
   }
 
-  async updateTaskExection(
+  updateTaskExection(
     rowid: number,
     targetSignature: string,
     runProcessStart: number,
@@ -232,7 +227,7 @@ export class OakDB {
 
     return lastID;
   }
-  async addTaskExecution(
+  addTaskExecution(
     runHash: string,
     scheduled: boolean,
     cellName: string,
@@ -280,19 +275,18 @@ export class OakDB {
     const lastID = result.lastInsertRowid;
     return lastID;
   }
-  async getOakfile(oakfileHash: string): Promise<DBOakfile> {
+  getOakfile(oakfileHash: string): Promise<DBOakfile> {
     const q = `SELECT hash, mtime FROM Oakfiles WHERE hash = ?`;
     const row = this.db.prepare(q).get(oakfileHash);
-
     return row;
   }
 
-  async addOakfile(oakfileHash: string, mtime: number) {
+  addOakfile(oakfileHash: string, mtime: number) {
     const q = `INSERT INTO Oakfiles VALUES (?, ?)`;
     this.db.prepare(q).run(oakfileHash, mtime);
   }
 
-  async addRun(
+  addRun(
     oakfileHash: string,
     runHash: string,
     scheduled: boolean,
@@ -313,7 +307,7 @@ export class OakDB {
       .run(runHash, oakfileHash, scheduled ? 1 : 0, mtime, args);
   }
 
-  async addCells(oakfileHash: string, cellHashMap: Map<string, CellSignature>) {
+  addCells(oakfileHash: string, cellHashMap: Map<string, CellSignature>) {
     const q = `INSERT INTO Cells (
       oakfile,
       hash,

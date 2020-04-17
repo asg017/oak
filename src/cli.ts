@@ -150,6 +150,7 @@ class PulseAction extends CommandLineAction {
 class RunAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
   private _stdout: CommandLineStringParameter;
+  private _stdin: CommandLineStringParameter;
   private _targets: CommandLineStringListParameter;
 
   public constructor() {
@@ -164,6 +165,7 @@ class RunAction extends CommandLineAction {
       filename: this._filename.value,
       targets: this._targets.values,
       stdout: this._stdout.value,
+      stdin: this._stdin.value,
     });
     return;
   }
@@ -181,7 +183,14 @@ class RunAction extends CommandLineAction {
       parameterLongName: "--stdout",
       description:
         "The name of a Task cell that should be printed to stdout once complete.",
-      defaultValue: "./Oakfile",
+      defaultValue: null,
+    });
+    this._stdin = this.defineStringParameter({
+      argumentName: "TASKNAME",
+      parameterLongName: "--stdin",
+      description:
+        "The name of a Task cell whose target should be overwritten by the contents of stdin.",
+      defaultValue: null,
     });
     this._targets = this.defineStringListParameter({
       argumentName: "TARGETS",

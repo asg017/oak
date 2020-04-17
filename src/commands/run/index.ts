@@ -6,6 +6,7 @@ export async function runCommand(args: {
   filename: string;
   targets: readonly string[];
   stdout: string;
+  stdin: string;
   dash?: boolean;
 }) {
   if (args.stdout && args.dash) {
@@ -26,6 +27,7 @@ export async function runCommand(args: {
     filename: args.filename,
     targets: args.targets,
     stdout: args.stdout,
+    stdin: args.stdin,
     schedule: false,
     hooks,
   });
