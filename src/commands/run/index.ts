@@ -5,22 +5,29 @@ import { runInkApp } from "./ui";
 export async function runCommand(args: {
   filename: string;
   targets: readonly string[];
+  stdout: string;
   dash?: boolean;
 }) {
+  if (args.stdout && args.dash) {
+    throw Error('"stdout" and "dash" cannot both be specified.');
+  }
   const runEvents = new EventEmitter();
-
-  const { unmount } = runInkApp(runEvents);
-
-  process.on("SIGINT", () => {
-    unmount();
-  });
-
   const hooks = defaultHookEmitter(runEvents);
+  let unmountApp;
+
+  if (!args.stdout) {
+    ({ unmount: unmountApp } = runInkApp(runEvents));
+
+    process.on("SIGINT", () => {
+      unmountApp();
+    });
+  }
   await oak_run({
     filename: args.filename,
     targets: args.targets,
+    stdout: args.stdout,
     schedule: false,
     hooks,
   });
-  unmount();
+  if (unmountApp) unmountApp();
 }

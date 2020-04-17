@@ -149,6 +149,7 @@ class PulseAction extends CommandLineAction {
 
 class RunAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
+  private _stdout: CommandLineStringParameter;
   private _targets: CommandLineStringListParameter;
 
   public constructor() {
@@ -162,6 +163,7 @@ class RunAction extends CommandLineAction {
     await runCommand({
       filename: this._filename.value,
       targets: this._targets.values,
+      stdout: this._stdout.value,
     });
     return;
   }
@@ -172,6 +174,13 @@ class RunAction extends CommandLineAction {
       parameterLongName: "--file",
       parameterShortName: "-f",
       description: "Path to Oakfile.",
+      defaultValue: "./Oakfile",
+    });
+    this._stdout = this.defineStringParameter({
+      argumentName: "TASKNAME",
+      parameterLongName: "--stdout",
+      description:
+        "The name of a Task cell that should be printed to stdout once complete.",
       defaultValue: "./Oakfile",
     });
     this._targets = this.defineStringListParameter({

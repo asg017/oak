@@ -13,7 +13,7 @@ import { dirname, join } from "path";
 import { EventEmitter } from "events";
 import pino from "pino";
 import { fileArgument } from "../cli-utils";
-import { mkdirsSync, ensureFile, ensureDir } from "fs-extra";
+import { mkdirsSync, ensureFile, ensureDir, createReadStream } from "fs-extra";
 import { OakDB, getAndMaybeIntializeOakDB } from "../db";
 import Task from "../Task";
 import { createWriteStream, createFileSync, readFileSync } from "fs-extra";
@@ -187,9 +187,16 @@ export function defaultHookEmitter(ee: EventEmitter) {
 export async function oak_run(args: {
   filename: string;
   targets: readonly string[];
+  stdout?: string;
   schedule?: boolean;
   hooks?: OakRunHooks;
 }): Promise<void> {
+  if (args.targets.length > 0 && args.stdout) {
+    throw Error('Only "targets" or "stdout" can be provided, not both.');
+  }
+  // if we are doing stdout, then only build up to that.
+  args.targets = [args.stdout];
+
   const targetSet = new Set(args.targets);
   const oakfilePath = fileArgument(args.filename);
   const oakfileStat = await getStat(oakfilePath);
@@ -382,14 +389,10 @@ export async function oak_run(args: {
   );
 
   const { define, cellHashMap } = await compiler.file(oakfilePath, d, null);
-  // on succesful compile, add to oak db
 
-  await oakDB.registerOakfile(
-    oakfileHash,
-    oakfileStat.mtime.getTime(),
-    cellHashMap
-  );
-  await oakDB.addRun(
+  // on succesful compile, add to oak db
+  oakDB.registerOakfile(oakfileHash, oakfileStat.mtime.getTime(), cellHashMap);
+  oakDB.addRun(
     oakfileHash,
     runHash,
     Boolean(args.schedule),
@@ -483,9 +486,29 @@ export async function oak_run(args: {
   await runtime._compute();
   if (!args.schedule) {
     await Promise.all(Array.from(cells).map(cell => m1.value(cell)));
+    // if stdout was specified, query for it, get file location.
+    if (args.stdout) {
+      const task = await m1.value(args.stdout).catch(() => null);
+      if (!task) {
+        console.error(
+          `stdout argument "${args.stdout}" doesn't appear to be a cell in the Oakfile.`
+        );
+      } else if (!(task instanceof Task)) {
+        console.error(
+          `stdout argument "${args.stdout}" doesn't appear to be a Task cell in the Oakfile.`
+        );
+      } else {
+        const readStream = createReadStream(task.target);
+        readStream.pipe(process.stdout);
+        await new Promise((resolve, reject) => {
+          readStream.on("end", resolve);
+          readStream.on("error", reject);
+        });
+      }
+    }
     runtime.dispose();
     process.chdir(origDir);
-    await oakDB.addEvents(runHash, events);
+    oakDB.addEvents(runHash, events);
   } else {
     return await new Promise((resolve, reject) => {
       process.on("SIGINT", function() {
