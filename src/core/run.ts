@@ -9,7 +9,7 @@ import {
   getStat,
   getSignature,
 } from "../utils";
-import { dirname, join } from "path";
+import { dirname, join, isAbsolute, basename } from "path";
 import { EventEmitter } from "events";
 import pino from "pino";
 import { fileArgument } from "../cli-utils";
@@ -26,6 +26,7 @@ import Task from "../Task";
 import { createWriteStream, createFileSync, readFileSync } from "fs-extra";
 import decorator from "../decorator";
 import { ScheduleTick, Scheduler } from "../Library/Scheduler";
+import untildify from "untildify";
 
 async function runTask(
   oakfileHash: string,
@@ -48,14 +49,30 @@ async function runTask(
   // then we need to save the target to a different folder.
 
   // picking the first one should be safe, since only 1 Task should be stdin
-  const upstreamStdinTasks = cellArgs.find(
+  const upstreamStdinTask = cellArgs.find(
     dep => dep instanceof Task && (dep.stdin || dep.upstreamStdin)
   );
-  if (upstreamStdinTasks) {
+  if (upstreamStdinTask) {
     cell.upstreamStdin = true;
-    cell.upstreamStdinId = upstreamStdinTasks.upstreamStdinId;
+    cell.upstreamStdinId = upstreamStdinTask.upstreamStdinId;
     cell.updateBasePath(
       join(cell.baseTargetDir, ".oak_stdin", cell.upstreamStdinId)
+    );
+    // no need to update logFile here, it can log like normal.
+  }
+
+  // If any of  the task's upstream tasks dependencies were overriddeb,
+  // then we need to save the target to a different folder.
+
+  // picking the first one should be safe, since only 1 Task should be stdin
+  const upstreamOverriddenTask = cellArgs.find(
+    dep => dep instanceof Task && dep.upstreamOverridden
+  );
+  if (upstreamOverriddenTask) {
+    cell.upstreamOverridden = true;
+    cell.upstreamOverriddenId = upstreamOverriddenTask.upstreamOverriddenId;
+    cell.updateBasePath(
+      join(cell.baseTargetDir, ".oak_override", cell.upstreamOverriddenId)
     );
     // no need to update logFile here, it can log like normal.
   }
@@ -217,14 +234,20 @@ export async function oak_run(args: {
   targets: readonly string[];
   stdin?: string;
   stdout?: string;
+  overrides?: readonly string[];
   schedule?: boolean;
   hooks?: OakRunHooks;
 }): Promise<void> {
   if (args.targets.length > 0 && args.stdout) {
     throw Error('Only "targets" or "stdout" can be provided, not both.');
   }
+  if (args.stdin && args.overrides.length > 0) {
+    throw Error('Only "stdin" or "override" can be provided, not both.');
+  }
   // if we are doing stdout, then only build up to that.
-  args.targets = [args.stdout];
+  if (args.stdout) {
+    args.targets = [args.stdout];
+  }
 
   const targetSet = new Set(args.targets);
   const oakfilePath = fileArgument(args.filename);
@@ -436,9 +459,6 @@ export async function oak_run(args: {
     time: number;
     meta: string;
   }[] = [];
-  const origDir = process.cwd();
-  process.chdir(dirname(oakfilePath));
-
   logger.info(
     "oak-run",
     `Oak: ${formatPath(oakfilePath)}${
@@ -505,7 +525,7 @@ export async function oak_run(args: {
       "oak_data",
       ".oak_stdin",
       runHash,
-      "stdin"
+      ".oak_stdin"
     );
     ensureDirSync(dirname(stdinTarget));
     process.stdin.pipe(createWriteStream(stdinTarget));
@@ -514,6 +534,8 @@ export async function oak_run(args: {
       process.stdin.on("error", resolve);
     });
   }
+  const origDir = process.cwd();
+  process.chdir(dirname(oakfilePath));
 
   const m1 = runtime.module(define, name => {
     // call the hook on all cells
@@ -531,11 +553,35 @@ export async function oak_run(args: {
     }
   });
   if (args.stdin) {
-    const stdinTask = new Task({ target: "stdin", run: () => {} });
+    const stdinTask = new Task({ target: ".oak_stdin", run: () => {} });
     stdinTask.updateBasePath(dirname(stdinTarget));
+    stdinTask.stdin = true;
     stdinTask.upstreamStdin = true;
     stdinTask.upstreamStdinId = runHash;
     m1.redefine(args.stdin, stdinTask);
+  }
+  if (args.overrides) {
+    for (const override of args.overrides) {
+      const colon = override.indexOf(":");
+      if (colon < 0) {
+        throw Error(`"override" usage: "cellName:/path/to/file"`);
+      }
+      const cellName = override.substring(0, colon);
+      let path = override.substring(colon + 1);
+      path = untildify(path);
+      if (!isAbsolute(path)) {
+        path = join(origDir, path);
+      }
+
+      const overrideTask = new Task({
+        target: basename(path),
+        run: () => {},
+      });
+      overrideTask.updateBasePath(dirname(path));
+      overrideTask.upstreamOverridden = true;
+      overrideTask.upstreamOverriddenId = runHash;
+      m1.redefine(cellName, overrideTask);
+    }
   }
   await runtime._compute();
   if (!args.schedule) {
