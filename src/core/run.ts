@@ -18,7 +18,6 @@ import {
   ensureFile,
   ensureDir,
   createReadStream,
-  ensureFileSync,
   ensureDirSync,
 } from "fs-extra";
 import { OakDB, getAndMaybeIntializeOakDB } from "../db";
@@ -32,6 +31,7 @@ async function runTask(
   oakfileHash: string,
   runHash: string,
   scheduled: boolean,
+  redefined: boolean,
   cellName: string,
   oakDB: OakDB,
   logger: pino.Logger,
@@ -115,6 +115,12 @@ async function runTask(
         `${cellName}.log`
       );
     }
+  }
+  if (redefined) {
+    // if any cell was redefined from the command line,
+    // then we need to save the target to a different folder.
+    cell.updateBasePath(join(cell.baseTargetDir, ".oak_redefined", runHash));
+    logFile = join(logDirectory, "redefined", runHash, `${cellName}.log`);
   }
   logger.info(`${cellName} Running task for ${cell.target}. `);
   logger.info(`\tLogfile: ${logFile}`);
@@ -235,15 +241,19 @@ export async function oak_run(args: {
   stdin?: string;
   stdout?: string;
   overrides?: readonly string[];
+  redefines?: readonly string[];
   schedule?: boolean;
   hooks?: OakRunHooks;
 }): Promise<void> {
-  if (args.targets.length > 0 && args.stdout) {
+  if (args.targets.length > 0 && args.stdout)
     throw Error('Only "targets" or "stdout" can be provided, not both.');
-  }
-  if (args.stdin && args.overrides.length > 0) {
+  if (args.stdin && args.overrides?.length > 0)
     throw Error('Only "stdin" or "override" can be provided, not both.');
-  }
+  if (args.stdin && args.redefines?.length > 0)
+    throw Error('Only "stdin" or "redefine" can be provided, not both.');
+  if (args.overrides?.length > 0 && args.redefines?.length > 0)
+    throw Error('Only "override" or "redefine" can be provided, not both.');
+
   // if we are doing stdout, then only build up to that.
   if (args.stdout) {
     args.targets = [args.stdout];
@@ -307,6 +317,7 @@ export async function oak_run(args: {
           oakfileHash,
           runHash,
           args.schedule,
+          false,
           decoratorArgs.cellName,
           oakDB,
           logger,
@@ -337,6 +348,7 @@ export async function oak_run(args: {
           oakfileHash,
           runHash,
           args.schedule,
+          false,
           decoratorArgs.cellName,
           oakDB,
           logger,
@@ -356,12 +368,13 @@ export async function oak_run(args: {
           "oak-run decorator",
           `${formatPath(
             t.target
-          )} - out of date because the targen has changed since last run.`
+          )} - out of date because the target has changed since last run.`
         );
         await runTask(
           oakfileHash,
           runHash,
           args.schedule,
+          false,
           decoratorArgs.cellName,
           oakDB,
           logger,
@@ -385,6 +398,7 @@ export async function oak_run(args: {
           oakfileHash,
           runHash,
           args.schedule,
+          false,
           decoratorArgs.cellName,
           oakDB,
           logger,
@@ -406,7 +420,35 @@ export async function oak_run(args: {
       },
     },
     oakDB,
-    args.schedule
+    args.redefines?.length > 0
+      ? {
+          check: () => true,
+          value: async (t, decoratorArgs, cellArgs, taskContext) => {
+            args?.hooks?.onTaskNotFresh(decoratorArgs.cellName, "redefine");
+            logger.info(
+              "oak-run decorator",
+              `${formatPath(t.target)} - Defineded, running task...`
+            );
+            await runTask(
+              oakfileHash,
+              runHash,
+              args.schedule,
+              true,
+              decoratorArgs.cellName,
+              oakDB,
+              logger,
+              t,
+              logDirectory,
+              decoratorArgs.cellSignature.ancestorHash,
+              taskContext.dependenciesSignature,
+              "schedule",
+              cellArgs,
+              args?.hooks
+            );
+            return t;
+          },
+        }
+      : args.schedule
       ? {
           // if the Task has a schedule, then it is never fresh
           check: (task: Task) => {
@@ -422,6 +464,7 @@ export async function oak_run(args: {
               oakfileHash,
               runHash,
               args.schedule,
+              false,
               decoratorArgs.cellName,
               oakDB,
               logger,
@@ -441,6 +484,7 @@ export async function oak_run(args: {
   );
 
   const { define, cellHashMap } = await compiler.file(oakfilePath, d, null);
+  const redefineCells = args.redefines?.map(rawCell => compiler.cell(rawCell));
 
   // on succesful compile, add to oak db
   oakDB.registerOakfile(oakfileHash, oakfileStat.mtime.getTime(), cellHashMap);
@@ -537,7 +581,7 @@ export async function oak_run(args: {
   const origDir = process.cwd();
   process.chdir(dirname(oakfilePath));
 
-  const m1 = runtime.module(define, name => {
+  const observer = name => {
     // call the hook on all cells
     if (name) args?.hooks?.onCellObserved(name);
 
@@ -551,7 +595,14 @@ export async function oak_run(args: {
       cells.add(name);
       return Inspector(name);
     }
-  });
+  };
+  const m1 = runtime.module(define, observer);
+
+  if (args.redefines?.length > 0) {
+    for (let { redefine } of redefineCells) {
+      redefine(m1, observer);
+    }
+  }
   if (args.stdin) {
     const stdinTask = new Task({ target: ".oak_stdin", run: () => {} });
     stdinTask.updateBasePath(dirname(stdinTarget));
@@ -560,7 +611,7 @@ export async function oak_run(args: {
     stdinTask.upstreamStdinId = runHash;
     m1.redefine(args.stdin, stdinTask);
   }
-  if (args.overrides) {
+  if (args.overrides?.length > 0) {
     for (const override of args.overrides) {
       const colon = override.indexOf(":");
       if (colon < 0) {

@@ -1,5 +1,7 @@
 fips = "48";
 year = "2014";
+projection =
+  "d3.geoConicEqualArea().parallels([34, 40.5]).rotate([120, 0]).fitSize([960, 960], d)";
 
 raw_state_zip = new Task({
   target: "raw_state.zip",
@@ -18,9 +20,6 @@ state_json = new Task({
   run: state_json =>
     shell`shp2json ${raw_state_dir}/cb_${year}_${fips}_tract_500k.shp -o ${state_json}`
 });
-
-projection =
-  "d3.geoConicEqualArea().parallels([34, 40.5]).rotate([120, 0]).fitSize([960, 960], d)";
 
 state_albers = new Task({
   target: "state-albers.json",
