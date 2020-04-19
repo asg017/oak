@@ -7,6 +7,7 @@ import {
   parsedCellHashMap,
   CellSignature,
 } from "./utils";
+import { parseCell } from "@observablehq/parser";
 import { dirname, join } from "path";
 import {
   InjectingSource,
@@ -14,19 +15,28 @@ import {
   Decorator,
 } from "./oak-compile-types";
 
+type DepMap = Map<string, (runtime: any, observer: any) => void>;
+
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 const GeneratorFunction = Object.getPrototypeOf(function*() {}).constructor;
 const AsyncGeneratorFunction = Object.getPrototypeOf(async function*() {})
   .constructor;
 
-export const createRegularCellDefintion = (
+export const createRegularCellDefinition = (
+  main: any,
+  observer: (name: string) => void,
   cell: ObservableCell,
-  source: string
-): { cellFunction: any; cellName: string; cellReferences: string[] } => {
-  let name = null;
-  if (cell.id && cell.id.id && cell.id.id.name) name = cell.id.id.name;
-  else if (cell.id && cell.id.name) name = cell.id.name;
-  const bodyText = source.substring(cell.body.start, cell.body.end);
+  define: boolean,
+  decorate?: (
+    f: (...any) => any,
+    cellName: string,
+    references: string[]
+  ) => (...any) => any
+) => {
+  let cellName = null;
+  if (cell.id && cell.id.id && cell.id.id.name) cellName = cell.id.id.name;
+  else if (cell.id && cell.id.name) cellName = cell.id.name;
+  const bodyText = cell.input.substring(cell.body.start, cell.body.end);
   let code;
   if (cell.body.type !== "BlockStatement") {
     if (cell.generator && cell.async)
@@ -48,13 +58,99 @@ export const createRegularCellDefintion = (
   else if (cell.async) f = new AsyncFunction(...references, code);
   else if (cell.generator) f = new GeneratorFunction(...references, code);
   else f = new Function(...references, code);
-  return {
-    cellName: name,
-    cellFunction: f,
-    cellReferences: references,
-  };
+  f = decorate ? decorate(f, cellName, references) : f;
+  if (define) main.variable(observer(cellName)).define(cellName, references, f);
+  else main.redefine(cellName, references, f);
 };
 
+/*
+ * import {a as x, b as y} with {c as t, d as u} from "Asdf"
+ *
+ * a, b : cell.body.specifiers, spec => spec.imported.name
+ * x, y : cell.body.specifiers, spec => spec.local.name
+ *
+ * c, d : cell.body.injections, inj => inj.imported.name
+ * t, u : cell.body.injections, inj => inj.local.name
+ * "Asdf" : cell.body.source.value
+ */
+
+function createImportCellDefinition(
+  runtime: any,
+  main: any,
+  observer: (name: string) => void,
+  path: string,
+  depMap: DepMap,
+  cell: ObservableCell
+) {
+  const specifiers: { name: string; alias: string }[] = [];
+  if (cell.body.specifiers)
+    for (const specifier of cell.body.specifiers) {
+      specifiers.push({
+        name: specifier.imported.name,
+        alias: specifier.local.name,
+      });
+    }
+  const injections: { name: string; alias: string }[] = [];
+  if (cell.body.injections !== undefined)
+    for (const injection of cell.body.injections) {
+      injections.push({
+        name: injection.imported.name,
+        alias: injection.local.name,
+      });
+    }
+  const importCellPath = join(dirname(path), cell.body.source.value);
+  const localSpecifiers = cell.body.specifiers.map(
+    specifier => specifier.local.name
+  );
+  const other = runtime.module(
+    depMap.get([importCellPath, ...localSpecifiers].join(","))
+  );
+  if (injections.length > 0) {
+    const child = other.derive(injections, main);
+    specifiers.map(specifier => {
+      main
+        .variable(observer(specifier.alias))
+        .import(specifier.name, specifier.alias, child);
+    });
+  } else {
+    specifiers.map(specifier => {
+      main
+        .variable(observer(specifier.alias))
+        .import(specifier.name, specifier.alias, other);
+    });
+  }
+}
+function createCellDefinition(
+  path: string,
+  cell: ObservableCell,
+  oakfileContents: string,
+  runtime: any,
+  main: any,
+  observer: (name: string) => void,
+  depMap: any,
+  define: boolean,
+  decorator: Decorator,
+  cellHashMap: Map<string, CellSignature>,
+  baseModuleDir,
+  importId: string
+) {
+  if (cell.body.type === "ImportDeclaration") {
+    createImportCellDefinition(runtime, main, observer, path, depMap, cell);
+  } else {
+    const decorate = (f, cellName, references) => {
+      return decorator(
+        f,
+        cellName,
+        references,
+        cellHashMap.get(cellName),
+        baseModuleDir,
+        path,
+        importId
+      );
+    };
+    createRegularCellDefinition(main, observer, cell, define, decorate);
+  }
+}
 async function createOakDefinition(
   path: string, // absolute path to the oakfile
   parseResults: ParseOakfileResults,
@@ -63,7 +159,7 @@ async function createOakDefinition(
   injectingSource?: InjectingSource
 ) {
   const { contents: oakfileContents, module } = parseResults;
-  const depMap: Map<string, (runtime: any, observer: any) => void> = new Map();
+  const depMap: DepMap = new Map();
 
   const importCells = module.cells.filter(
     cell => cell.body.type === "ImportDeclaration"
@@ -108,93 +204,48 @@ async function createOakDefinition(
 
   return async function define(runtime, observer) {
     const main = runtime.module();
-    const importCells = module.cells.filter(
-      cell => cell.body.type === "ImportDeclaration"
-    );
-    const regularCells = module.cells.filter(
-      cell => cell.body.type !== "ImportDeclaration"
-    );
-    importCells.map(cell => {
-      /*
-       * import {a as x, b as y} with {c as t, d as u} from "Asdf"
-       *
-       * a, b : cell.body.specifiers, spec => spec.imported.name
-       * x, y : cell.body.specifiers, spec => spec.local.name
-       *
-       * c, d : cell.body.injections, inj => inj.imported.name
-       * t, u : cell.body.injections, inj => inj.local.name
-       * "Asdf" : cell.body.source.value
-       */
-      const specifiers: { name: string; alias: string }[] = [];
-      if (cell.body.specifiers)
-        for (const specifier of cell.body.specifiers) {
-          specifiers.push({
-            name: specifier.imported.name,
-            alias: specifier.local.name,
-          });
-        }
-      const injections: { name: string; alias: string }[] = [];
-      if (cell.body.injections !== undefined)
-        for (const injection of cell.body.injections) {
-          injections.push({
-            name: injection.imported.name,
-            alias: injection.local.name,
-          });
-        }
-      const importCellPath = join(dirname(path), cell.body.source.value);
-      const localSpecifiers = cell.body.specifiers.map(
-        specifier => specifier.local.name
+    for (const cell of module.cells) {
+      createCellDefinition(
+        path,
+        cell,
+        oakfileContents,
+        runtime,
+        main,
+        observer,
+        depMap,
+        true,
+        decorator,
+        cellHashMap,
+        baseModuleDir,
+        importId
       );
-      const other = runtime.module(
-        depMap.get([importCellPath, ...localSpecifiers].join(","))
-      );
-      if (injections.length > 0) {
-        const child = other.derive(injections, main);
-        specifiers.map(specifier => {
-          main
-            .variable(observer(specifier.alias))
-            .import(specifier.name, specifier.alias, child);
-        });
-      } else {
-        specifiers.map(specifier => {
-          main
-            .variable(observer(specifier.alias))
-            .import(specifier.name, specifier.alias, other);
-        });
-      }
-    });
-
-    regularCells.map(cell => {
-      const {
-        cellName,
-        cellFunction,
-        cellReferences,
-      } = createRegularCellDefintion(cell, oakfileContents);
-      main
-        .variable(observer(cellName))
-        .define(
-          cellName,
-          cellReferences,
-          decorator
-            ? decorator(
-                cellFunction,
-                cellName,
-                cellReferences,
-                cellHashMap.get(cellName),
-                baseModuleDir,
-                path,
-                importId
-              )
-            : cellFunction
-        );
-    });
+    }
     return main;
   };
 }
 
 type Define = (runtime: any, observer: any) => any;
+type DefineCell = (module: any, observer: any) => any;
 export class OakCompiler {
   constructor() {}
+  cell(
+    cellText: string
+  ): { define: DefineCell; redefine: DefineCell; cell: ObservableCell } {
+    const cell = parseCell(cellText);
+    cell.input = cellText;
+    if (cell.body.type === "ImportDeclaration") {
+      throw Error("Cannot compile individual import cells.");
+    }
+    return {
+      define(module, observer) {
+        createRegularCellDefinition(module, observer, cell, true);
+      },
+      redefine(module, observer) {
+        createRegularCellDefinition(module, observer, cell, false);
+      },
+      cell,
+    };
+  }
   async file(
     path: string,
     decorator?: Decorator,

@@ -25,6 +25,11 @@ export default class Task {
   dependencySchedule: Scheduler;
   baseTargetDir: string;
   freshIgnoreTarget: boolean;
+  stdin: boolean;
+  upstreamStdin: boolean;
+  upstreamStdinId: string;
+  upstreamOverridden: boolean;
+  upstreamOverriddenId: string;
 
   constructor(params: TaskParams) {
     let {
@@ -47,6 +52,11 @@ export default class Task {
     this.freshIgnoreTarget = freshIgnoreTarget;
     this.schedule = schedule;
     this.dependencySchedule = schedule;
+    this.stdin = false;
+    this.upstreamStdin = false;
+    this.upstreamStdinId = null;
+    this.upstreamOverridden = false;
+    this.upstreamOverridden = null;
   }
   async updateBasePath(newBasePath: string) {
     this.baseTargetDir = newBasePath;
