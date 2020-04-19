@@ -88,3 +88,4 @@ temp/
 built/
 oak_data/
 .oak/
+built_pkg/

@@ -9,6 +9,9 @@
   "files": [
     "built/**/*"
   ],
+  "pkg": {
+    "assets": ""
+  },
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -28,8 +31,9 @@
   ],
   "scripts": {
     "build": "tsc && npm run build-studio && npm run build-schedule-dash",
-    "build-studio": "cp -r ./src/commands/studio/frontend/dist ./built/commands/studio/frontend/",
-    "build-schedule-dash": "cp -r ./src/commands/schedule/dashboard/dist ./built/commands/schedule/dashboard/",
+    "build-studio": "mkdir -p ./built/commands/studio/frontend/dist/ && cp -r ./src/commands/studio/frontend/dist ./built/commands/studio/frontend/",
+    "build-schedule-dash": "mkdir -p ./built/commands/schedule/dashboard/dist/ && cp -r ./src/commands/schedule/dashboard/dist/ ./built/commands/schedule/dashboard/",
+    "build-pkg": "mkdir -p built_pkg && pkg . --out-path ./built_pkg",
     "prepare": "rm -rf built && npm run build",
     "preversion": "npm test",
     "version": "rm -rf built && npm run build",
@@ -78,6 +82,7 @@
     "@types/socket.io": "^2.1.4",
     "@types/tape": "^4.2.34",
     "mock-fs": "^4.10.1",
+    "pkg": "^4.4.7",
     "prettier": "^1.19.1",
     "surge": "^0.21.3",
     "tape": "^4.11.0",
