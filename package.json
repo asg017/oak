@@ -1,6 +1,6 @@
 {
   "name": "@alex.garcia/oak",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "description": "Easy, simple, data workflows",
   "main": "./built/cli.js",
   "bin": {
