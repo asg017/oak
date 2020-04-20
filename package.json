@@ -10,7 +10,10 @@
     "built/**/*"
   ],
   "pkg": {
-    "assets": ""
+    "assets": [
+      "built/commands/studio/frontend/dist",
+      "built/commands/schedule/dashboard/dist"
+    ]
   },
   "license": "MIT",
   "publishConfig": {
