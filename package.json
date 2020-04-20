@@ -13,7 +13,8 @@
     "assets": [
       "built/commands/studio/frontend/dist",
       "built/commands/schedule/dashboard/dist"
-    ]
+    ],
+    "targets": ["node10.17-linux-x64", "node10.17-macos-x64", "node10.17-win-x64"]
   },
   "license": "MIT",
   "publishConfig": {
