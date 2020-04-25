@@ -1,0 +1,32 @@
+a = new Task({
+  target: "a",
+  run: a => shell`for i in {1..10}; do echo "a hey $i"; done; \
+  echo "a" > ${a}`
+});
+
+b = new Task({
+  target: "b",
+  run: b => shell`for i in {1..10}; do sleep .02; echo "b hey $i"; done; \
+  echo "b" > ${b}`
+});
+
+c = new Task({
+  target: "c",
+  run: c => shell`for i in {1..10}; do sleep .00; echo "c hey $i"; done; \
+  exit 1; \
+  cat ${a} ${b} > ${c}`
+});
+
+d = new Task({
+  target: "d",
+  run: d => shell`for i in {1..10}; do sleep .02; echo "d hey $i"; done; \
+  exit 1; \
+  cat ${a} ${b} > ${d}`
+});
+
+e = new Task({
+  target: "e",
+  run: e => shell`for i in {1..10}; do sleep .01; echo "e hey $i"; done; \
+  exit 1; \
+  cat ${a} ${b} > ${e}`
+});

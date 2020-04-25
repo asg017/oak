@@ -1,5 +1,5 @@
 import React, { Component, useState, useEffect, useRef } from "react";
-import { render, Box, Color, Text } from "ink";
+import { render, Box, Color, Static, Text } from "ink";
 import Spinner from "ink-spinner";
 import { EventEmitter } from "events";
 import { OrderedMap } from "immutable";
@@ -9,6 +9,8 @@ import { durationFuture } from "../../utils";
 
 type AppCell = {
   status: "p" | "f" | "r" | "o";
+  statusTime: Date;
+  logLines: string[];
   task?: boolean;
   fresh?: boolean;
   executing?: boolean;
@@ -117,20 +119,36 @@ function AppCellLine(props: { cell: AppCell; name: string }) {
   };
 
   return (
-    <Box textWrap="truncate">
-      <Color {...color}>
-        <Text bold underline>
-          {name}
-        </Text>
-        {` `}
-        <AppCellLineIcon cell={cell} />
-      </Color>
-      {` `}
-      <AppCellLineText cell={cell} />
+    <Box flexDirection="column">
+      <Box flexDirection="column">
+        <Box textWrap="truncate">
+          <Color {...color}>
+            <AppCellLineIcon cell={cell} />
+            {` `}
+            <Text bold underline>
+              {name}
+            </Text>
+          </Color>
+          {` - `}
+          <AppCellLineText cell={cell} />
+        </Box>
+      </Box>
+      {cell.status === "p" && <Logs lines={cell.logLines.slice(-5)} />}
     </Box>
   );
 }
 
+function Logs({ lines }) {
+  return (
+    <Color gray>
+      <Box flexDirection="column" paddingLeft={2}>
+        {lines.map((line, i) => (
+          <Box key={i}>{line}</Box>
+        ))}
+      </Box>
+    </Color>
+  );
+}
 class App extends Component {
   props: { runEvents: EventEmitter };
   state: {
@@ -165,32 +183,36 @@ class App extends Component {
       const { cells } = this.state;
       const cell = cells.get(cellName);
       const newCell: AppCell = cell
-        ? Object.assign(cell, { status: "o" })
-        : { status: "o" };
+        ? Object.assign(cell, { status: "o", statusTime: new Date() })
+        : { status: "o", statusTime: new Date(), logLines: [] };
       this.setState({ cells: cells.set(cellName, newCell) });
     });
     this.props.runEvents.on("cp", cellName => {
       const { cells } = this.state;
       const cell = cells.get(cellName);
       const newCell: AppCell = cell
-        ? Object.assign(cell, { status: "p" })
-        : { status: "p" };
+        ? Object.assign(cell, { status: "p", statusTime: new Date() })
+        : { status: "p", logLines: [], statusTime: new Date() };
       this.setState({ cells: cells.set(cellName, newCell) });
     });
     this.props.runEvents.on("cf", cellName => {
       const { cells } = this.state;
       const cell = cells.get(cellName);
       const newCell: AppCell = cell
-        ? Object.assign(cell, { status: "f" })
-        : { status: "f" };
+        ? Object.assign(cell, { status: "f", statusTime: new Date() })
+        : { status: "f", logLines: [], statusTime: new Date() };
       this.setState({ cells: cells.set(cellName, newCell) });
     });
     this.props.runEvents.on("cr", cellName => {
       const { cells } = this.state;
       const cell = cells.get(cellName);
       const newCell: AppCell = cell
-        ? Object.assign(cell, { status: "r" })
-        : { status: "r" };
+        ? Object.assign(cell, {
+            status: "r",
+            executing: null,
+            statusTime: new Date(),
+          })
+        : { status: "r", logLines: [], statusTime: new Date() };
       this.setState({ cells: cells.set(cellName, newCell) });
     });
     this.props.runEvents.on("te-start", (cellName, cellTarget) => {
@@ -209,6 +231,18 @@ class App extends Component {
         executing: false,
       });
       this.setState({ cells: cells.set(cellName, newCell) });
+    });
+    this.props.runEvents.on("te-log", (cellName, logStream) => {
+      const { cells } = this.state;
+
+      logStream.on("data", line => {
+        const prevLines = this.state.cells.get(cellName).logLines;
+        const newLines = prevLines.concat([line]).slice(-100);
+        const newCell: AppCell = Object.assign(cells.get(cellName), {
+          logLines: newLines,
+        });
+        this.setState({ cells: cells.set(cellName, newCell) });
+      });
     });
     this.props.runEvents.on("t-f", (cellName, cellTarget) => {
       const { cells } = this.state;
@@ -233,9 +267,32 @@ class App extends Component {
       .removeAllListeners("t-f");
   }
   render() {
+    // without the reverse, Static doesnt work correctly.
+    // idk why.
+    const failedTasksWithLogs = Array.from(this.state.cells)
+      .filter(([name, cell]) => cell.status === "r" && cell.logLines.length > 0)
+      .sort((a, b) => a[1].statusTime.getTime() - b[1].statusTime.getTime());
+    /*{failedTasksWithLogs.length > 0 ? (
+            <Box key="---">
+              <Text bold underline>
+                Failed Task Logs
+              </Text>
+            </Box>
+          ) : null}
+          */
     return (
       <Box flexDirection="column">
-        {this.state.schedulers.size && (
+        <Static>
+          {failedTasksWithLogs.map(([name, cell]) => (
+            <Box key={name} flexDirection="column">
+              <Text bold underline>
+                {name}
+              </Text>
+              <Logs lines={cell.logLines} />
+            </Box>
+          ))}
+        </Static>
+        {this.state.schedulers.size > 0 && (
           <Box>
             <Text>Schedulers</Text>
           </Box>
@@ -245,7 +302,9 @@ class App extends Component {
         ))}
         {this.state.cells.size && (
           <Box>
-            <Text>Cells</Text>
+            <Text bold underline>
+              Cells
+            </Text>
           </Box>
         )}
         {Array.from(this.state.cells).map(([name, cell]) => (

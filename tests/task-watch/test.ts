@@ -16,7 +16,7 @@ const createBuildC = (contents: string) => {
 };
 
 test.onFinish(() => {
-  cleanUp();
+  //cleanUp();
 });
 
 cleanUp();

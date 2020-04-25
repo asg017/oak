@@ -22,10 +22,11 @@ import {
 } from "fs-extra";
 import { OakDB, getAndMaybeIntializeOakDB } from "../db";
 import Task from "../Task";
-import { createWriteStream, createFileSync, readFileSync } from "fs-extra";
+import { createWriteStream, createFileSync } from "fs-extra";
 import decorator from "../decorator";
 import { ScheduleTick, Scheduler } from "../Library/Scheduler";
 import untildify from "untildify";
+import split2 from "split2";
 
 async function runTask(
   oakfileHash: string,
@@ -122,6 +123,7 @@ async function runTask(
     cell.updateBasePath(join(cell.baseTargetDir, ".oak_redefined", runHash));
     logFile = join(logDirectory, "redefined", runHash, `${cellName}.log`);
   }
+
   logger.info(`${cellName} Running task for ${cell.target}. `);
   logger.info(`\tLogfile: ${logFile}`);
   await oakDB.addLog(
@@ -156,35 +158,33 @@ async function runTask(
     config: taskConfig,
   } = cell.runTask();
   createFileSync(logFile);
-  const runProcessPID = process.pid;
+  const runProcessPID = childProcess.pid;
   const logStream = createWriteStream(logFile);
+  let logLineStream;
+  if (hooks.onTaskExecutionLog) {
+    logLineStream = split2();
+    hooks.onTaskExecutionLog(cellName, logLineStream);
+  }
 
-  childProcess.stdout.on("data", chunk => {
-    if (logStream.writable) logStream.write(chunk);
-    if (taskOutStream && taskConfig.stdout) {
-      taskOutStream.write(chunk);
-    }
-  });
+  childProcess.stdout.pipe(logStream);
+  if (logLineStream) childProcess.stdout.pipe(logLineStream);
+  if (taskOutStream && taskConfig.stdout)
+    childProcess.stdout.pipe(taskOutStream);
 
-  childProcess.stderr.on("data", chunk => {
-    if (logStream.writable) logStream.write(chunk);
-    if (taskOutStream && taskConfig.stderr) {
-      logStream.write(chunk);
-    }
-  });
+  childProcess.stderr.pipe(logStream);
+  if (logLineStream) childProcess.stderr.pipe(logLineStream);
+  if (taskOutStream && taskConfig.stderr) childProcess.stderr.pipe(logStream);
 
   const { runExitCode, runProcessEnd } = await new Promise(
     (resolve, reject) => {
       childProcess.on("error", err => {
-        logger.error(`childProcess error event.`);
+        //logger.error(`childProcess error event.`);
         logStream.end();
         reject(err);
       });
       childProcess.on("exit", code => {
         logStream.end();
         if (code !== 0) {
-          // TODO lets log with chunks
-          console.log(readFileSync(logFile, { encoding: "utf8" }));
           return reject({ code });
         }
         resolve({ runExitCode: code, runProcessEnd: new Date().getTime() });
@@ -206,6 +206,7 @@ async function runTask(
 
 type OakRunHooks = {
   onTaskExectionStart(cellName: string, cellTarget: string);
+  onTaskExecutionLog?(cellName: string, lineStream: ReadableStream);
   onTaskExectionEnd(cellName: string);
   onTaskNotFresh(cellName: string, reason: string);
   onTaskFresh(cellName: string, cellTarget: string);
@@ -222,6 +223,8 @@ export function defaultHookEmitter(ee: EventEmitter) {
     onTaskExectionStart: (cellName: string, cellTarget) =>
       ee.emit("te-start", cellName, cellTarget),
     onTaskExectionEnd: (cellName: string) => ee.emit("te-end", cellName),
+    onTaskExecutionLog: (cellName: string, stream: ReadableStream) =>
+      ee.emit("te-log", cellName, stream),
     onTaskNotFresh: (cellName: string, reason: string) =>
       ee.emit("t-nf", cellName, reason),
     onTaskFresh: (cellName: string, cellTarget: string) =>
