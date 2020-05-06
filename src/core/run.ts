@@ -161,9 +161,9 @@ async function runTask(
   const runProcessPID = childProcess.pid;
   const logStream = createWriteStream(logFile);
   let logLineStream;
-  if (hooks.onTaskExecutionLog) {
+  if (hooks?.onTaskExecutionLog) {
     logLineStream = split2();
-    hooks.onTaskExecutionLog(cellName, logLineStream);
+    hooks?.onTaskExecutionLog(cellName, logLineStream);
   }
 
   childProcess.stdout.pipe(logStream);
