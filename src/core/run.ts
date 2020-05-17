@@ -27,6 +27,7 @@ import decorator from "../decorator";
 import { ScheduleTick, Scheduler } from "../Library/Scheduler";
 import untildify from "untildify";
 import split2 from "split2";
+import TaskGraphSection from "../commands/studio/frontend/components/TaskGraphSection";
 
 async function runTask(
   oakfileHash: string,
@@ -42,6 +43,7 @@ async function runTask(
   dependenciesSignature: string,
   freshStatus: string,
   cellArgs: any[],
+  customTaskOutputDirectory: boolean,
   hooks?: OakRunHooks
 ): Promise<number> {
   let logFile = join(logDirectory, `${cellName}.log`);
@@ -58,22 +60,6 @@ async function runTask(
     cell.upstreamStdinId = upstreamStdinTask.upstreamStdinId;
     cell.updateBasePath(
       join(cell.baseTargetDir, ".oak_stdin", cell.upstreamStdinId)
-    );
-    // no need to update logFile here, it can log like normal.
-  }
-
-  // If any of  the task's upstream tasks dependencies were overriddeb,
-  // then we need to save the target to a different folder.
-
-  // picking the first one should be safe, since only 1 Task should be stdin
-  const upstreamOverriddenTask = cellArgs.find(
-    dep => dep instanceof Task && dep.upstreamOverridden
-  );
-  if (upstreamOverriddenTask) {
-    cell.upstreamOverridden = true;
-    cell.upstreamOverriddenId = upstreamOverriddenTask.upstreamOverriddenId;
-    cell.updateBasePath(
-      join(cell.baseTargetDir, ".oak_override", cell.upstreamOverriddenId)
     );
     // no need to update logFile here, it can log like normal.
   }
@@ -117,11 +103,29 @@ async function runTask(
       );
     }
   }
-  if (redefined) {
-    // if any cell was redefined from the command line,
+
+  // if a custom --data-dir was passed in, assume they know whats up.
+  if (!customTaskOutputDirectory) {
+    // If any of  the task's upstream tasks dependencies were overridden,
     // then we need to save the target to a different folder.
-    cell.updateBasePath(join(cell.baseTargetDir, ".oak_redefined", runHash));
-    logFile = join(logDirectory, "redefined", runHash, `${cellName}.log`);
+    // picking the first one should be safe, since only 1 Task should be stdin
+    const upstreamOverriddenTask = cellArgs.find(
+      dep => dep instanceof Task && dep.upstreamOverridden
+    );
+    if (upstreamOverriddenTask) {
+      cell.upstreamOverridden = true;
+      cell.upstreamOverriddenId = upstreamOverriddenTask.upstreamOverriddenId;
+      cell.updateBasePath(
+        join(cell.baseTargetDir, ".oak_override", cell.upstreamOverriddenId)
+      );
+      // no need to update logFile here, it can log like normal.
+    }
+    if (redefined) {
+      // if any cell was redefined from the command line,
+      // then we need to save the target to a different folder.
+      cell.updateBasePath(join(cell.baseTargetDir, ".oak_redefined", runHash));
+      logFile = join(logDirectory, "redefined", runHash, `${cellName}.log`);
+    }
   }
 
   logger.info(`${cellName} Running task for ${cell.target}. `);
@@ -241,6 +245,7 @@ export function defaultHookEmitter(ee: EventEmitter) {
 export async function oak_run(args: {
   filename: string;
   targets: readonly string[];
+  taskDataDir?: string;
   stdin?: string;
   stdout?: string;
   overrides?: readonly string[];
@@ -254,8 +259,8 @@ export async function oak_run(args: {
     throw Error('Only "stdin" or "override" can be provided, not both.');
   if (args.stdin && args.redefines?.length > 0)
     throw Error('Only "stdin" or "redefine" can be provided, not both.');
-  if (args.overrides?.length > 0 && args.redefines?.length > 0)
-    throw Error('Only "override" or "redefine" can be provided, not both.');
+  //if (args.overrides?.length > 0 && args.redefines?.length > 0)
+  //  throw Error('Only "override" or "redefine" can be provided, not both.');
 
   // if we are doing stdout, then only build up to that.
   if (args.stdout) {
@@ -330,6 +335,7 @@ export async function oak_run(args: {
           taskContext.dependenciesSignature,
           "out-def",
           cellArgs,
+          Boolean(args.taskDataDir),
           args?.hooks
         );
         return t;
@@ -361,6 +367,7 @@ export async function oak_run(args: {
           taskContext.dependenciesSignature,
           "out-dep",
           cellArgs,
+          Boolean(args.taskDataDir),
           args?.hooks
         );
         return t;
@@ -387,6 +394,7 @@ export async function oak_run(args: {
           taskContext.dependenciesSignature,
           "out-target",
           cellArgs,
+          Boolean(args.taskDataDir),
           args?.hooks
         );
         return t;
@@ -411,6 +419,7 @@ export async function oak_run(args: {
           taskContext.dependenciesSignature,
           "dne",
           cellArgs,
+          Boolean(args.taskDataDir),
           args?.hooks
         );
         return t;
@@ -446,6 +455,7 @@ export async function oak_run(args: {
               taskContext.dependenciesSignature,
               "schedule",
               cellArgs,
+              Boolean(args.taskDataDir),
               args?.hooks
             );
             return t;
@@ -477,6 +487,7 @@ export async function oak_run(args: {
               taskContext.dependenciesSignature,
               "schedule",
               cellArgs,
+              Boolean(args.taskDataDir),
               args?.hooks
             );
             return t;
@@ -486,7 +497,12 @@ export async function oak_run(args: {
     args.schedule
   );
 
-  const { define, cellHashMap } = await compiler.file(oakfilePath, d, null);
+  const { define, cellHashMap } = await compiler.file(
+    oakfilePath,
+    args.taskDataDir,
+    d,
+    null
+  );
   const redefineCells = args.redefines?.map(rawCell => compiler.cell(rawCell));
 
   // on succesful compile, add to oak db

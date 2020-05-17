@@ -4,6 +4,7 @@ import { runInkApp } from "./ui";
 
 export async function runCommand(args: {
   filename: string;
+  taskDataDir: string;
   redefines: readonly string[];
   overrides: readonly string[];
   targets: readonly string[];
@@ -27,6 +28,7 @@ export async function runCommand(args: {
   }
   await oak_run({
     filename: args.filename,
+    taskDataDir: args.taskDataDir,
     redefines: args.redefines,
     overrides: args.overrides,
     targets: args.targets,

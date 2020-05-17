@@ -27,7 +27,7 @@ export async function pathCommand(args: {
     },
     oakDB
   );
-  const { define } = await compiler.file(oakfilePath, d, null);
+  const { define } = await compiler.file(oakfilePath, null, d, null);
 
   const runtime = new Runtime(new Library());
 
