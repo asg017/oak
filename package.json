@@ -14,7 +14,12 @@
       "built/commands/studio/frontend/dist",
       "built/commands/schedule/dashboard/dist"
     ],
-    "targets": ["node10.17-linux-x64", "node10.17-macos-x64", "node10.17-win-x64"]
+    "targets": [
+      "node10.17-linux-x64",
+      "node10.17-alpine-x64",
+      "node10.17-macos-x64",
+      "node10.17-win-x64"
+    ]
   },
   "license": "MIT",
   "publishConfig": {
@@ -53,7 +58,7 @@
     "@observablehq/runtime": "4.4.4",
     "@observablehq/stdlib": "^3.0.2",
     "@rushstack/ts-command-line": "^4.3.13",
-    "better-sqlite3": "^6.0.1",
+    "better-sqlite3": "^7.0.1",
     "chalk": "^2.4.2",
     "chokidar": "^3.3.1",
     "cors": "^2.8.5",
