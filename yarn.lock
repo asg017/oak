@@ -2782,6 +2782,11 @@ setprototypeof@1.1.1:
   resolved "https://registry.yarnpkg.com/setprototypeof/-/setprototypeof-1.1.1.tgz#7e95acb24aa92f5885e0abef5ba131330d4ae683"
   integrity sha512-JvdAWfbXeIGaZ9cILp38HntZSFSo3mWg6xGcJJsd+d4aRMOqauag1C63dJfDw7OaMYwEbHMOxEZ1lqVRYP2OAw==
 
+shl@0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/shl/-/shl-0.0.2.tgz#3194fe647ac47fdff34cc51c3281d6a481f484cf"
+  integrity sha512-p9lEEGCLXg3ejqELMY5C73v6msdZzNLwbIxTzrwoKz8/c/AaEqQuRPyPuDwInyl0+pMhw2q+YadmJKIsRrg4OQ==
+
 side-channel@^1.0.1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/side-channel/-/side-channel-1.0.2.tgz#df5d1abadb4e4bf4af1cd8852bf132d2f7876947"

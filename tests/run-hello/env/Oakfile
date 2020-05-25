@@ -1,12 +1,12 @@
 a = new Task({
   target: "a",
-  run: a => shell`echo -n "a" > ${a}`
+  run: a => shell`echo -n "a"`.redirect(a)
 });
 b = new Task({
   target: "b",
-  run: b => shell`echo -n "b" > ${b}`
+  run: b => shell`echo -n "b"`.redirect(b)
 });
 c = new Task({
   target: "c",
-  run: c => shell`cat ${a} ${b} > ${c}`
+  run: c => shell`cat ${a} ${b}`.redirect(c)
 });
