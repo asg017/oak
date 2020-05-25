@@ -20,7 +20,7 @@ pages_dir = new Task({
     -v ${pages_dir}:/oak_data/pages \
     bar-pixels-test \
     pdftoppm -png -f 1 /oak_data/report.pdf /oak_data/pages`,
-  createDirectoryBeforeRun: true,
+  ensureEmptyDir: true,
   deps: dockerfile
 });
 

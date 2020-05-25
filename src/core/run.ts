@@ -19,6 +19,7 @@ import {
   ensureDir,
   createReadStream,
   ensureDirSync,
+  remove,
 } from "fs-extra";
 import { OakDB, getAndMaybeIntializeOakDB } from "../db";
 import Task from "../Task";
@@ -134,8 +135,18 @@ async function runTask(
     logFile,
     new Date().getTime()
   );
-  if (cell.createFileBeforeRun) await ensureFile(cell.target);
-  if (cell.createDirectoryBeforeRun) await ensureDir(cell.target);
+
+  ensureDirSync(dirname(cell.target));
+
+  // by default, target gets deleted before run.
+  if (!cell.persistTarget) {
+    await remove(cell.target);
+  }
+  if (cell.ensureEmptyFile) {
+    await ensureFile(cell.target);
+  } else if (cell.ensureEmptyDirectory) {
+    await ensureDir(cell.target);
+  }
   const taskExecutionRowID = await oakDB.addTaskExecution(
     runHash,
     Boolean(cell.dependencySchedule),

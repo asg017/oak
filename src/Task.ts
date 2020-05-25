@@ -1,5 +1,4 @@
-import { existsSync, mkdirSync } from "fs";
-import { join, dirname } from "path";
+import { join } from "path";
 import { Execution } from "./Execution";
 import { Scheduler } from "./Library/Scheduler";
 
@@ -13,14 +12,15 @@ type TaskParams = {
   createFileBeforeRun?: boolean;
   createDirectoryBeforeRun?: boolean;
   freshIgnoreTarget?: boolean;
+  ensureEmptyFile?: boolean;
+  ensureEmptyDirectory?: boolean;
+  persistTarget?: boolean;
 };
 export default class Task {
   target: string;
   targetOriginal: string;
   run: (any) => any;
   watch: string[];
-  createFileBeforeRun: boolean;
-  createDirectoryBeforeRun: boolean;
   schedule: Scheduler;
   dependencySchedule: Scheduler;
   baseTargetDir: string;
@@ -30,6 +30,9 @@ export default class Task {
   upstreamStdinId: string;
   upstreamOverridden: boolean;
   upstreamOverriddenId: string;
+  ensureEmptyFile: boolean;
+  ensureEmptyDirectory: boolean;
+  persistTarget: boolean;
 
   constructor(params: TaskParams) {
     let {
@@ -37,19 +40,25 @@ export default class Task {
       run,
       watch = [],
       schedule = null,
-      createFileBeforeRun = false,
-      createDirectoryBeforeRun = false,
       freshIgnoreTarget = false,
+      ensureEmptyFile = false,
+      ensureEmptyDirectory = false,
+      persistTarget = false,
     } = params;
+    if (ensureEmptyFile && ensureEmptyDirectory)
+      throw Error(
+        "Task param Error: Only 'ensureEmptyFile' or 'ensureEmptyDirectory' can be true, not both."
+      );
     watch = Array.isArray(watch) ? watch : [watch];
 
     this.targetOriginal = target;
     this.target = target;
     this.run = run;
     this.watch = watch;
-    this.createFileBeforeRun = createFileBeforeRun;
-    this.createDirectoryBeforeRun = createDirectoryBeforeRun;
     this.freshIgnoreTarget = freshIgnoreTarget;
+    this.ensureEmptyFile = ensureEmptyFile;
+    this.ensureEmptyDirectory = ensureEmptyDirectory;
+    this.persistTarget = persistTarget;
     this.schedule = schedule;
     this.dependencySchedule = schedule;
     this.stdin = false;
@@ -64,9 +73,6 @@ export default class Task {
       this.target = join(this.baseTargetDir, this.targetOriginal);
   }
   runTask(): Execution {
-    if (this.target && !existsSync(dirname(this.target))) {
-      mkdirSync(dirname(this.target), { recursive: true });
-    }
     return this.run(this.target);
   }
 }
