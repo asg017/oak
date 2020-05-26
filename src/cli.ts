@@ -149,6 +149,7 @@ class PulseAction extends CommandLineAction {
 
 class RunAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
+  private _datadir: CommandLineStringParameter;
   private _overrides: CommandLineStringListParameter;
   private _redefines: CommandLineStringListParameter;
   private _stdout: CommandLineStringParameter;
@@ -165,6 +166,7 @@ class RunAction extends CommandLineAction {
   protected async onExecute(): Promise<void> {
     await runCommand({
       filename: this._filename.value,
+      taskDataDir: this._datadir.value,
       overrides: this._overrides.values,
       targets: this._targets.values,
       stdout: this._stdout.value,
@@ -181,6 +183,11 @@ class RunAction extends CommandLineAction {
       parameterShortName: "-f",
       description: "Path to Oakfile.",
       defaultValue: "./Oakfile",
+    });
+    this._datadir = this.defineStringParameter({
+      argumentName: "DIRECTORY",
+      parameterLongName: "--data-dir",
+      description: "Path directory to store generated task targets."
     });
     this._overrides = this.defineStringListParameter({
       argumentName: "OVERRIDESTRING",

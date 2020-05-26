@@ -163,7 +163,12 @@ export async function getPulse(
       },
     }
   );
-  const { cellHashMap, define } = await compiler.file(oakfilePath, d, null);
+  const { cellHashMap, define } = await compiler.file(
+    oakfilePath,
+    null,
+    d,
+    null
+  );
 
   const tasks: {
     task: PulseTask;

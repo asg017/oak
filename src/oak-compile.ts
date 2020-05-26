@@ -156,6 +156,7 @@ async function createOakDefinition(
   parseResults: ParseOakfileResults,
   cellHashMap: Map<string, CellSignature>,
   decorator: Decorator,
+  taskDataDirectory?: string, // absolute
   injectingSource?: InjectingSource
 ) {
   const { contents: oakfileContents, module } = parseResults;
@@ -183,6 +184,7 @@ async function createOakDefinition(
     const c = new OakCompiler();
     const { define: fromModule } = await c.file(
       outsideModulePath,
+      null,
       decorator,
       localInjectingSource
     );
@@ -197,9 +199,13 @@ async function createOakDefinition(
   if (injectingSource) {
     const hash = getBaseFileHashes(injectingSource.sourcePath, path);
     importId = hash(injectingSource.cells);
-    baseModuleDir = join(dirname(path), "oak_data", ".oak-imports", importId);
+    baseModuleDir = taskDataDirectory
+      ? taskDataDirectory
+      : join(dirname(path), "oak_data", ".oak-imports", importId);
   } else {
-    baseModuleDir = join(dirname(path), "oak_data");
+    baseModuleDir = taskDataDirectory
+      ? taskDataDirectory
+      : join(dirname(path), "oak_data");
   }
 
   return async function define(runtime, observer) {
@@ -248,6 +254,7 @@ export class OakCompiler {
   }
   async file(
     path: string,
+    taskDataDirectory?: string,
     decorator?: Decorator,
     injectingSource?: InjectingSource
   ): Promise<{
@@ -266,6 +273,7 @@ export class OakCompiler {
       parseResults,
       cellHashMap,
       decorator,
+      taskDataDirectory,
       injectingSource
     );
     return { define, cellHashMap, parseResults };
