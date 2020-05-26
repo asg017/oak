@@ -9,12 +9,9 @@ parser.add_argument('-i', '--input')
 parser.add_argument('-o', '--output')
 args = parser.parse_args()
 
-dir_path = path.dirname(path.realpath(__file__))
-INPUT_FILE = path.join(dir_path, args.input)
-OUTPUT_FILE = path.join(dir_path, args.output)
-
 # https://github.com/datadesk/california-k12-notebooks/blob/master/02_transform.ipynb
 
+print(args.input, args.output)
 
 def df_to_gdf(input_df, crs={'init': u'epsg:4326'}):
     """
@@ -25,6 +22,6 @@ def df_to_gdf(input_df, crs={'init': u'epsg:4326'}):
     return gpd.GeoDataFrame(df, crs=crs, geometry=geometry)
 
 
-input_df = gpd.pd.read_csv(INPUT_FILE)
+input_df = gpd.pd.read_csv(args.input)
 gdf = df_to_gdf(input_df)
-gdf.to_file(OUTPUT_FILE, driver='GeoJSON')
+gdf.to_file(args.output, driver='GeoJSON')
