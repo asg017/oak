@@ -86,13 +86,13 @@ function AppCellLineIcon(props) {
   }
 }
 
-function AppCellLineText(props) {
+function AppCellLineText(props: { cell: AppCell }) {
   const { cell } = props;
   let label;
-  if (cell.task && cell.fresh) label = "Task fresh, not ran.";
-  else if (cell.task && cell.status === "f") label = "Task complete!";
-  else if (cell.task && cell.executing) label = "Task running...";
-  else if (cell.task && !cell.executing) label = "Task run complete...";
+  if (cell.task && cell.fresh) label = " - Task fresh, not ran.";
+  else if (cell.task && cell.status === "f") label = " - Task complete!";
+  else if (cell.task && cell.executing) label = " - Task running...";
+  else if (cell.task && cell.status === "r") label = " - Task run unsuccessful";
   else label = "";
   return (
     <Text>
@@ -104,32 +104,29 @@ function AppCellLineText(props) {
 }
 function AppCellLine(props: { cell: AppCell; name: string }) {
   const { cell, name } = props;
-  const color = {
-    [cell.task && cell.fresh
+  const color =
+    cell.task && cell.fresh
       ? "yellowBright"
       : cell.task && cell.executing
       ? "magenta"
       : cell.status === "p"
       ? "blueBright"
-      : cell.status === "o"
-      ? "gray"
       : cell.status === "f"
       ? "greenBright"
-      : "redBright"]: true,
-  };
-
+      : cell.status === "r"
+      ? "redBright"
+      : "grey";
   return (
     <Box flexDirection="column">
       <Box flexDirection="column">
         <Box textWrap="truncate">
-          <Color {...color}>
+          <Color {...{ [color]: true }}>
             <AppCellLineIcon cell={cell} />
             {` `}
             <Text bold underline>
               {name}
             </Text>
           </Color>
-          {` - `}
           <AppCellLineText cell={cell} />
         </Box>
       </Box>
@@ -215,6 +212,8 @@ class App extends Component {
         : { status: "r", logLines: [], statusTime: new Date() };
       this.setState({ cells: cells.set(cellName, newCell) });
     });
+
+    // "task execution start"
     this.props.runEvents.on("te-start", (cellName, cellTarget) => {
       const { cells } = this.state;
       const newCell: AppCell = Object.assign(cells.get(cellName), {
@@ -224,6 +223,7 @@ class App extends Component {
       });
       this.setState({ cells: cells.set(cellName, newCell) });
     });
+    // "task execution end"
     this.props.runEvents.on("te-end", cellName => {
       const { cells } = this.state;
       const newCell: AppCell = Object.assign(cells.get(cellName), {
@@ -232,6 +232,8 @@ class App extends Component {
       });
       this.setState({ cells: cells.set(cellName, newCell) });
     });
+
+    // "task execution log"
     this.props.runEvents.on("te-log", (cellName, logStream) => {
       const { cells } = this.state;
 
@@ -244,6 +246,8 @@ class App extends Component {
         this.setState({ cells: cells.set(cellName, newCell) });
       });
     });
+
+    // "task is fresh"
     this.props.runEvents.on("t-f", (cellName, cellTarget) => {
       const { cells } = this.state;
       const newCell: AppCell = Object.assign(cells.get(cellName), {
@@ -269,29 +273,8 @@ class App extends Component {
   render() {
     // without the reverse, Static doesnt work correctly.
     // idk why.
-    const failedTasksWithLogs = Array.from(this.state.cells)
-      .filter(([name, cell]) => cell.status === "r" && cell.logLines.length > 0)
-      .sort((a, b) => a[1].statusTime.getTime() - b[1].statusTime.getTime());
-    /*{failedTasksWithLogs.length > 0 ? (
-            <Box key="---">
-              <Text bold underline>
-                Failed Task Logs
-              </Text>
-            </Box>
-          ) : null}
-          */
     return (
       <Box flexDirection="column">
-        <Static>
-          {failedTasksWithLogs.map(([name, cell]) => (
-            <Box key={name} flexDirection="column">
-              <Text bold underline>
-                {name}
-              </Text>
-              <Logs lines={cell.logLines} />
-            </Box>
-          ))}
-        </Static>
         {this.state.schedulers.size > 0 && (
           <Box>
             <Text>Schedulers</Text>
@@ -300,13 +283,13 @@ class App extends Component {
         {Array.from(this.state.schedulers).map(([id, scheduler]) => (
           <AppSchedulerLine key={id} scheduler={scheduler} />
         ))}
-        {this.state.cells.size && (
+        {this.state.cells.size ? (
           <Box>
             <Text bold underline>
               Cells
             </Text>
           </Box>
-        )}
+        ) : null}
         {Array.from(this.state.cells).map(([name, cell]) => (
           <AppCellLine name={name} cell={cell} key={name} />
         ))}
