@@ -4,11 +4,20 @@ const constant = function(x: any) {
   };
 };
 
-import shell from "./shell";
+import { shell as shl } from "shl";
 import command from "./command";
 import Task from "../Task";
 import { Scheduler, SchedulerMock } from "./Scheduler";
 import env from "./env";
+
+function shell(...args) {
+  const shlPipeline = shl(...args);
+  return {
+    process: shlPipeline.process,
+    outStream: null,
+    config: { stdout: true, stderr: false },
+  };
+}
 
 export default function Library() {
   Object.defineProperties(this, {
