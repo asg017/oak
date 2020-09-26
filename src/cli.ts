@@ -2,9 +2,7 @@
 
 import { logsCommand } from "./commands/logs";
 import { pathCommand } from "./commands/path";
-import { pulseCommand } from "./commands/pulse";
 import { runCommand } from "./commands/run";
-import { studioCommand } from "./commands/studio";
 import { versionCommand } from "./commands/version";
 
 import {
@@ -14,39 +12,6 @@ import {
   CommandLineParser,
   CommandLineFlagParameter,
 } from "@rushstack/ts-command-line";
-
-class StudioAction extends CommandLineAction {
-  private _port: CommandLineStringParameter;
-  private _filename: CommandLineStringParameter;
-  public constructor() {
-    super({
-      actionName: "studio",
-      summary: "Start Oak Studio to interact with an Oakfile.",
-      documentation: "TODO",
-    });
-  }
-  protected onExecute(): Promise<void> {
-    studioCommand({ filename: this._filename.value, port: this._port.value });
-    return Promise.resolve();
-  }
-
-  protected onDefineParameters(): void {
-    this._filename = this.defineStringParameter({
-      argumentName: "FILENAME",
-      parameterLongName: "--file",
-      parameterShortName: "-f",
-      description: "Path to Oakfile.",
-      defaultValue: "./Oakfile",
-    });
-    this._port = this.defineStringParameter({
-      argumentName: "PORT",
-      parameterLongName: "--port",
-      parameterShortName: "-p",
-      description: "Port to start the server.",
-      defaultValue: "8888",
-    });
-  }
-}
 
 class LogsAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
@@ -116,32 +81,6 @@ class PathAction extends CommandLineAction {
       parameterShortName: "-t",
       description: "Task name associated with the log.",
       required: true,
-    });
-  }
-}
-
-class PulseAction extends CommandLineAction {
-  private _filename: CommandLineStringParameter;
-
-  public constructor() {
-    super({
-      actionName: "pulse",
-      summary: "Take a pulse of an oak project.",
-      documentation: "TODO",
-    });
-  }
-  protected async onExecute(): Promise<void> {
-    await pulseCommand({
-      filename: this._filename.value,
-    });
-  }
-  protected onDefineParameters(): void {
-    this._filename = this.defineStringParameter({
-      argumentName: "FILENAME",
-      parameterLongName: "--file",
-      parameterShortName: "-f",
-      description: "Path to Oakfile.",
-      defaultValue: "./Oakfile",
     });
   }
 }
@@ -234,10 +173,8 @@ class OakCommandLine extends CommandLineParser {
       toolDescription: "CLI for oak.",
     });
 
-    this.addAction(new StudioAction());
     this.addAction(new LogsAction());
     this.addAction(new PathAction());
-    this.addAction(new PulseAction());
     this.addAction(new RunAction());
     this.addAction(new VersionAction());
   }

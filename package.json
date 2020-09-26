@@ -10,10 +10,6 @@
     "built/**/*"
   ],
   "pkg": {
-    "assets": [
-      "built/commands/studio/frontend/dist",
-      "built/commands/schedule/dashboard/dist"
-    ],
     "targets": [
       "node10.17-linux-x64",
       "node10.17-alpine-x64",
@@ -39,9 +35,7 @@
     "oak"
   ],
   "scripts": {
-    "build": "tsc && npm run build-studio && npm run build-schedule-dash",
-    "build-studio": "mkdir -p ./built/commands/studio/frontend/dist/ && cp -r ./src/commands/studio/frontend/dist ./built/commands/studio/frontend/",
-    "build-schedule-dash": "mkdir -p ./built/commands/schedule/dashboard/dist/ && cp -r ./src/commands/schedule/dashboard/dist/ ./built/commands/schedule/dashboard/",
+    "build": "tsc",
     "pkg": "mkdir -p pkg && pkg . --out-path ./pkg",
     "prepare": "rm -rf built && npm run build",
     "preversion": "npm test",
