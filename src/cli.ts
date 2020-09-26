@@ -87,10 +87,7 @@ class PathAction extends CommandLineAction {
 
 class RunAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
-  private _overrides: CommandLineStringListParameter;
   private _redefines: CommandLineStringListParameter;
-  private _stdout: CommandLineStringParameter;
-  private _stdin: CommandLineStringParameter;
   private _targets: CommandLineStringListParameter;
 
   public constructor() {
@@ -103,10 +100,7 @@ class RunAction extends CommandLineAction {
   protected async onExecute(): Promise<void> {
     await runCommand({
       filename: this._filename.value,
-      overrides: this._overrides.values,
       targets: this._targets.values,
-      stdout: this._stdout.value,
-      stdin: this._stdin.value,
       redefines: this._redefines.values,
     });
     return;
@@ -120,28 +114,10 @@ class RunAction extends CommandLineAction {
       description: "Path to Oakfile.",
       defaultValue: "./Oakfile",
     });
-    this._overrides = this.defineStringListParameter({
-      argumentName: "OVERRIDESTRING",
-      parameterLongName: "--override",
-      description:
-        "List of override-formatted strings to override cells as Tasks.",
-    });
     this._redefines = this.defineStringListParameter({
       argumentName: "CELLDEFINITION",
       parameterLongName: "--redefine",
       description: "Code that redefines a cell in the Oakfile.",
-    });
-    this._stdout = this.defineStringParameter({
-      argumentName: "TASKNAME",
-      parameterLongName: "--stdout",
-      description:
-        "The name of a Task cell that should be printed to stdout once complete.",
-    });
-    this._stdin = this.defineStringParameter({
-      argumentName: "TASKNAME",
-      parameterLongName: "--stdin",
-      description:
-        "The name of a Task cell whose target should be overwritten by the contents of stdin.",
     });
     this._targets = this.defineStringListParameter({
       argumentName: "TARGETS",

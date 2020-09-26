@@ -21,11 +21,6 @@ export default class Task {
   watch: string[];
   baseTargetDir: string;
   freshIgnoreTarget: boolean;
-  stdin: boolean;
-  upstreamStdin: boolean;
-  upstreamStdinId: string;
-  upstreamOverridden: boolean;
-  upstreamOverriddenId: string;
   ensureEmptyFile: boolean;
   ensureEmptyDirectory: boolean;
   persistTarget: boolean;
@@ -54,11 +49,6 @@ export default class Task {
     this.ensureEmptyFile = ensureEmptyFile;
     this.ensureEmptyDirectory = ensureEmptyDirectory;
     this.persistTarget = persistTarget;
-    this.stdin = false;
-    this.upstreamStdin = false;
-    this.upstreamStdinId = null;
-    this.upstreamOverridden = false;
-    this.upstreamOverridden = null;
   }
   async updateBasePath(newBasePath: string) {
     this.baseTargetDir = newBasePath;
