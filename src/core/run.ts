@@ -178,9 +178,9 @@ async function runTask(
   }
 
   childProcess.stdout.pipe(logStream);
-  if (logLineStream) childProcess.stdout.pipe(logLineStream);
-  if (taskOutStream && taskConfig.stdout)
-    childProcess.stdout.pipe(taskOutStream);
+  //if (logLineStream) childProcess.stdout.pipe(logLineStream);
+  //if (taskOutStream && taskConfig.stdout)
+  //  childProcess.stdout.pipe(taskOutStream);
 
   childProcess.stderr.pipe(logStream);
   if (logLineStream) childProcess.stderr.pipe(logLineStream);
@@ -252,6 +252,7 @@ export function defaultHookEmitter(ee: EventEmitter) {
 export async function oak_run(args: {
   filename: string;
   targets: readonly string[];
+  name?: string;
   stdin?: string;
   stdout?: string;
   overrides?: readonly string[];
@@ -589,7 +590,7 @@ export async function oak_run(args: {
     process.stdin.pipe(createWriteStream(stdinTarget));
     await new Promise((resolve, reject) => {
       process.stdin.on("end", resolve);
-      process.stdin.on("error", resolve);
+      process.stdin.on("error", reject);
     });
   }
   const origDir = process.cwd();

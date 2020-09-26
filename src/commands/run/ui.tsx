@@ -1,5 +1,5 @@
 import React, { Component, useState, useEffect, useRef } from "react";
-import { render, Box, Color, Static, Text } from "ink";
+import { render, Box, Static, Text } from "ink";
 import Spinner from "ink-spinner";
 import { EventEmitter } from "events";
 import { OrderedMap } from "immutable";
@@ -27,9 +27,11 @@ function AppSchedulerLine(props) {
   return (
     <Box>
       <Text>
-        <Color cyanBright bold>
-          {scheduler.name}
-        </Color>
+        <Text color="cyanBright" bold>
+          {scheduler.name || 
+          ''
+          }
+        </Text>
         {` - `}
         {`"${cronstrue.toString(scheduler.schedule)}"`}
         {` - `}
@@ -76,7 +78,7 @@ function AppCellLineIcon(props) {
   if (cell.fresh) return <Text>{"\u{2192}"}</Text>;
   switch (cell.status) {
     case "p":
-      return <Spinner type="dots" />;
+      return <Text><Spinner type="dots" /></Text>;
     case "o":
       return <Text>{"\u{2022}"}</Text>;
     case "f":
@@ -96,9 +98,9 @@ function AppCellLineText(props: { cell: AppCell }) {
   else label = "";
   return (
     <Text>
-      <Color white>{label}</Color>
+      <Text color="white">{label}</Text>
       {` `}
-      <Color dim>{cell.task && cell.target && cell.target}</Color>
+      <Text dimColor>{cell.task && cell.target && cell.target}</Text>
     </Text>
   );
 }
@@ -119,14 +121,14 @@ function AppCellLine(props: { cell: AppCell; name: string }) {
   return (
     <Box flexDirection="column">
       <Box flexDirection="column">
-        <Box textWrap="truncate">
-          <Color {...{ [color]: true }}>
+        <Box >
+          <Text color={color} wrap="truncate">
             <AppCellLineIcon cell={cell} />
             {` `}
             <Text bold underline>
               {name}
             </Text>
-          </Color>
+          </Text>
           <AppCellLineText cell={cell} />
         </Box>
       </Box>
@@ -135,15 +137,16 @@ function AppCellLine(props: { cell: AppCell; name: string }) {
   );
 }
 
-function Logs({ lines }) {
+function Logs({ lines, borderColor="" }) {
+  if(lines.length===0) return null;
   return (
-    <Color gray>
-      <Box flexDirection="column" paddingLeft={2}>
+    //@ts-ignore
+      <Box borderStyle="single" borderColor={borderColor} flexDirection="column" paddingLeft={2}>
         {lines.map((line, i) => (
-          <Box key={i}>{line}</Box>
+          <Box key={i}>
+            <Text color="gray">{line||''}</Text></Box>
         ))}
       </Box>
-    </Color>
   );
 }
 class App extends Component {
@@ -234,6 +237,7 @@ class App extends Component {
     });
 
     // "task execution log"
+    /*
     this.props.runEvents.on("te-log", (cellName, logStream) => {
       const { cells } = this.state;
 
@@ -245,7 +249,7 @@ class App extends Component {
         });
         this.setState({ cells: cells.set(cellName, newCell) });
       });
-    });
+    });//*/
 
     // "task is fresh"
     this.props.runEvents.on("t-f", (cellName, cellTarget) => {
@@ -267,14 +271,28 @@ class App extends Component {
       .removeAllListeners("cf")
       .removeAllListeners("cr")
       .removeAllListeners("te-start")
+      .removeAllListeners("te-log")
       .removeAllListeners("te-end")
       .removeAllListeners("t-f");
   }
   render() {
     // without the reverse, Static doesnt work correctly.
-    // idk why.
+    // idk why
+    const failedTasksWithLogs = Array.from(this.state.cells)
+    .filter(([name, cell]) => cell.status === "r" && cell.logLines.length > 0)
+    .sort((a, b) => a[1].statusTime.getTime() - b[1].statusTime.getTime());
     return (
       <Box flexDirection="column">
+        <Static items={failedTasksWithLogs}>
+          {([name, cell]) => (
+            <Box key={name} flexDirection="column">
+              <Text bold underline color="red">
+                {name}
+              </Text>
+              <Logs borderColor="red" lines={cell.logLines} />
+            </Box>
+          )}
+        </Static>
         {this.state.schedulers.size > 0 && (
           <Box>
             <Text>Schedulers</Text>
@@ -299,7 +317,5 @@ class App extends Component {
 }
 
 export function runInkApp(runEvents: EventEmitter) {
-  return render(<App runEvents={runEvents} />, {
-    experimental: true,
-  });
+  return render(<App runEvents={runEvents} />);
 }
