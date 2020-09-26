@@ -1,9 +1,8 @@
-export { default as Library, RunLibrary, RunScheduleLibrary } from "./library";
+export { default as Library, RunLibrary } from "./library";
 export const LibraryKeys = new Set([
   "Task",
   "shell",
   "command",
-  "Scheduler",
   "env",
   "invalidation",
 ]);

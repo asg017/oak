@@ -1,6 +1,5 @@
 import { join } from "path";
 import { Execution } from "./Execution";
-import { Scheduler } from "./Library/Scheduler";
 
 type WatchArg = string | string[];
 
@@ -8,7 +7,6 @@ type TaskParams = {
   target: string;
   run: (any) => any;
   watch?: WatchArg;
-  schedule?: Scheduler;
   createFileBeforeRun?: boolean;
   createDirectoryBeforeRun?: boolean;
   freshIgnoreTarget?: boolean;
@@ -21,8 +19,6 @@ export default class Task {
   targetOriginal: string;
   run: (any) => any;
   watch: string[];
-  schedule: Scheduler;
-  dependencySchedule: Scheduler;
   baseTargetDir: string;
   freshIgnoreTarget: boolean;
   stdin: boolean;
@@ -39,7 +35,6 @@ export default class Task {
       target,
       run,
       watch = [],
-      schedule = null,
       freshIgnoreTarget = false,
       ensureEmptyFile = false,
       ensureEmptyDirectory = false,
@@ -59,8 +54,6 @@ export default class Task {
     this.ensureEmptyFile = ensureEmptyFile;
     this.ensureEmptyDirectory = ensureEmptyDirectory;
     this.persistTarget = persistTarget;
-    this.schedule = schedule;
-    this.dependencySchedule = schedule;
     this.stdin = false;
     this.upstreamStdin = false;
     this.upstreamStdinId = null;

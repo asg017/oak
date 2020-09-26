@@ -4,7 +4,6 @@ import Spinner from "ink-spinner";
 import { EventEmitter } from "events";
 import { OrderedMap } from "immutable";
 import cronstrue from "cronstrue";
-import scheduleLib from "node-schedule";
 import { durationFuture } from "../../utils";
 
 type AppCell = {
@@ -16,43 +15,6 @@ type AppCell = {
   executing?: boolean;
   target?: string;
 };
-type AppScheduler = {
-  job: scheduleLib.Job;
-  schedule: string;
-  name: string;
-};
-
-function AppSchedulerLine(props) {
-  const { scheduler } = props;
-  return (
-    <Box>
-      <Text>
-        <Text color="cyanBright" bold>
-          {scheduler.name || 
-          ''
-          }
-        </Text>
-        {` - `}
-        {`"${cronstrue.toString(scheduler.schedule)}"`}
-        {` - `}
-        <AppSchedulerNextTick scheduler={scheduler} />
-        {` - `}
-        {scheduler.job.nextInvocation().toString()}
-      </Text>
-    </Box>
-  );
-}
-function AppSchedulerNextTick(props) {
-  const { scheduler } = props;
-  let [label, setLabel] = useState(
-    durationFuture(scheduler.job.nextInvocation())
-  );
-  useInterval(() => {
-    let nextTick = scheduler.job.nextInvocation();
-    if (nextTick) setLabel(durationFuture(nextTick));
-  }, 1000);
-  return <Text>Next tick {label}</Text>;
-}
 
 function useInterval(callback, delay) {
   const savedCallback = useRef(() => {});
@@ -153,32 +115,14 @@ class App extends Component {
   props: { runEvents: EventEmitter };
   state: {
     cells: OrderedMap<string, AppCell>;
-    schedulers: OrderedMap<string, AppScheduler>;
   };
   constructor(props) {
     super(props);
     this.state = {
       cells: OrderedMap(),
-      schedulers: OrderedMap(),
     };
   }
   componentDidMount() {
-    this.props.runEvents.on("s", scheduler => {
-      const { schedulers } = this.state;
-      const s = schedulers.get(scheduler.id);
-      this.setState({
-        schedulers: schedulers.set(scheduler.id, {
-          job: scheduler.job,
-          schedule: scheduler.schedule,
-          name: scheduler.cellName,
-        }),
-      });
-    });
-    /*this.props.runEvents.on("st", (tick, scheduler) => {
-          const { schedulers } = this.state;
-          const s = schedulers.get(scheduler.id);
-          this.setState({ schedulers: schedulers.set(scheduler.id, scheduler) });
-        });//*/
     this.props.runEvents.on("co", cellName => {
       const { cells } = this.state;
       const cell = cells.get(cellName);
@@ -293,14 +237,6 @@ class App extends Component {
             </Box>
           )}
         </Static>
-        {this.state.schedulers.size > 0 && (
-          <Box>
-            <Text>Schedulers</Text>
-          </Box>
-        )}
-        {Array.from(this.state.schedulers).map(([id, scheduler]) => (
-          <AppSchedulerLine key={id} scheduler={scheduler} />
-        ))}
         {this.state.cells.size ? (
           <Box>
             <Text bold underline>

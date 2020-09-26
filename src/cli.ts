@@ -4,7 +4,6 @@ import { logsCommand } from "./commands/logs";
 import { pathCommand } from "./commands/path";
 import { pulseCommand } from "./commands/pulse";
 import { runCommand } from "./commands/run";
-import { scheduleCommand } from "./commands/schedule";
 import { studioCommand } from "./commands/studio";
 import { versionCommand } from "./commands/version";
 
@@ -214,54 +213,6 @@ class RunAction extends CommandLineAction {
   }
 }
 
-class ScheduleAction extends CommandLineAction {
-  private _filename: CommandLineStringParameter;
-  private _port: CommandLineStringParameter;
-  private _targets: CommandLineStringListParameter;
-  private _dash: CommandLineFlagParameter;
-
-  public constructor() {
-    super({
-      actionName: "schedule",
-      summary: "Run an Oakfile on it's schedule.",
-      documentation: "TODO",
-    });
-  }
-  protected async onExecute(): Promise<void> {
-    await scheduleCommand({
-      filename: this._filename.value,
-      targets: this._targets.values,
-      dash: this._dash.value,
-      port: this._port.value,
-    });
-  }
-  protected onDefineParameters(): void {
-    this._filename = this.defineStringParameter({
-      argumentName: "FILENAME",
-      parameterLongName: "--file",
-      parameterShortName: "-f",
-      description: "Path to Oakfile.",
-      defaultValue: "./Oakfile",
-    });
-    this._targets = this.defineStringListParameter({
-      argumentName: "TARGETS",
-      parameterLongName: "--targets",
-      parameterShortName: "-t",
-      description: "List of target names to resolve.",
-    });
-    this._dash = this.defineFlagParameter({
-      parameterLongName: "--dash",
-      description: "Run a dashboard alongside the scheduled oak run.",
-    });
-    this._port = this.defineStringParameter({
-      argumentName: "PORT",
-      parameterLongName: "--port",
-      parameterShortName: "-p",
-      description: "Port to start the server.",
-      defaultValue: "8888",
-    });
-  }
-}
 
 class VersionAction extends CommandLineAction {
   public constructor() {
@@ -288,7 +239,6 @@ class OakCommandLine extends CommandLineParser {
     this.addAction(new PathAction());
     this.addAction(new PulseAction());
     this.addAction(new RunAction());
-    this.addAction(new ScheduleAction());
     this.addAction(new VersionAction());
   }
 

@@ -32,7 +32,6 @@ export async function runCommand(args: {
     targets: args.targets,
     stdout: args.stdout,
     stdin: args.stdin,
-    schedule: false,
     hooks,
   });
   if (unmountApp) unmountApp();
