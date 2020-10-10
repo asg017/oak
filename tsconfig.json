@@ -7,9 +7,5 @@
     "esModuleInterop": true,
     "jsx":"react"
   },
-  "include": ["./src/**/*"], 
-  "exclude": [
-    "./src/commands/schedule/dashboard/*", 
-    "./src/commands/studio/frontend/*"
-  ]
+  "include": ["./src/**/*"]
 }

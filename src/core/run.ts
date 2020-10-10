@@ -1,23 +1,14 @@
 import { Runtime } from "@observablehq/runtime";
-import { RunLibrary, RunScheduleLibrary } from "../Library";
+import { RunLibrary } from "../Library";
 import { OakCompiler } from "../oak-compile";
-import {
-  formatCellName,
-  formatPath,
-  hashFile,
-  hashString,
-  getStat,
-  getSignature,
-} from "../utils";
-import { dirname, join, isAbsolute, basename } from "path";
-import { EventEmitter } from "events";
+import { hashFile, hashString, getStat, getSignature } from "../utils";
+import { dirname, join } from "path";
 import pino from "pino";
 import { fileArgument } from "../cli-utils";
 import {
   mkdirsSync,
   ensureFile,
   ensureDir,
-  createReadStream,
   ensureDirSync,
   remove,
 } from "fs-extra";
@@ -25,14 +16,70 @@ import { OakDB, getAndMaybeIntializeOakDB } from "../db";
 import Task from "../Task";
 import { createWriteStream, createFileSync } from "fs-extra";
 import decorator from "../decorator";
-import { ScheduleTick, Scheduler } from "../Library/Scheduler";
-import untildify from "untildify";
-import split2 from "split2";
+
+type RunTaskResults = {
+  status: "succeed" | "fail";
+  exitcode: number;
+  pid?: number;
+  finalTargetSignature?: string;
+};
+async function actuallyRunTask(
+  cell: Task,
+  logFile: string,
+  currentTargetSignature: string
+): Promise<RunTaskResults> {
+  const runTask = cell.runTask();
+  if (runTask === null || !runTask.process) {
+    return { exitcode: -1, status: "fail" };
+  }
+  const {
+    process: childProcess,
+    outStream: taskOutStream,
+    config: taskConfig,
+  } = runTask;
+  createFileSync(logFile);
+
+  let logStream = createWriteStream(logFile);
+
+  let logLineStream;
+
+  childProcess.stdout.pipe(logStream);
+  if (logLineStream) childProcess.stdout.pipe(logLineStream);
+  if (taskOutStream && taskConfig.stdout)
+    childProcess.stdout.pipe(taskOutStream);
+
+  childProcess.stderr.pipe(logStream);
+  if (logLineStream) childProcess.stderr.pipe(logLineStream);
+  if (taskOutStream && taskConfig.stderr) childProcess.stderr.pipe(logStream);
+
+  const processResult: { exitcode: number; error?: any } = await new Promise(
+    (resolve, reject) => {
+      // TODO handle childProccess.on('error') at some point
+      childProcess.on("exit", exitcode => {
+        if (exitcode !== 0) {
+          return resolve({ error: "Non-zero exit code", exitcode });
+        }
+        resolve({ exitcode });
+      });
+    }
+  );
+  //if(logStream.writable)
+  logStream.end();
+
+  const finalTargetSignature = await getSignature(cell.target);
+
+  return {
+    status:
+      currentTargetSignature === finalTargetSignature ? "fail" : "succeed",
+    exitcode: processResult.exitcode,
+    pid: childProcess.pid,
+    finalTargetSignature,
+  };
+}
 
 async function runTask(
   oakfileHash: string,
   runHash: string,
-  scheduled: boolean,
   redefined: boolean,
   cellName: string,
   oakDB: OakDB,
@@ -42,82 +89,10 @@ async function runTask(
   ancestorHash: string,
   dependenciesSignature: string,
   freshStatus: string,
-  cellArgs: any[],
-  hooks?: OakRunHooks
+  currentTargetSignature: string
 ): Promise<number> {
   let logFile = join(logDirectory, `${cellName}.log`);
 
-  // If any of  the task's upstream tasks dependencies were from stdin,
-  // then we need to save the target to a different folder.
-
-  // picking the first one should be safe, since only 1 Task should be stdin
-  const upstreamStdinTask = cellArgs.find(
-    dep => dep instanceof Task && (dep.stdin || dep.upstreamStdin)
-  );
-  if (upstreamStdinTask) {
-    cell.upstreamStdin = true;
-    cell.upstreamStdinId = upstreamStdinTask.upstreamStdinId;
-    cell.updateBasePath(
-      join(cell.baseTargetDir, ".oak_stdin", cell.upstreamStdinId)
-    );
-    // no need to update logFile here, it can log like normal.
-  }
-
-  // If any of  the task's upstream tasks dependencies were overriddeb,
-  // then we need to save the target to a different folder.
-
-  // picking the first one should be safe, since only 1 Task should be stdin
-  const upstreamOverriddenTask = cellArgs.find(
-    dep => dep instanceof Task && dep.upstreamOverridden
-  );
-  if (upstreamOverriddenTask) {
-    cell.upstreamOverridden = true;
-    cell.upstreamOverriddenId = upstreamOverriddenTask.upstreamOverriddenId;
-    cell.updateBasePath(
-      join(cell.baseTargetDir, ".oak_override", cell.upstreamOverriddenId)
-    );
-    // no need to update logFile here, it can log like normal.
-  }
-
-  // i believe we'd never run into the problem where a task
-  // has an upstream stdin task AND was schedule, since --stdin
-  // is only for `oak run`, not `oak schedule`
-
-  if (scheduled) {
-    // if the task was scheduled, or if any of it's upstream
-    // tasks dependencies were scheduled, then we need to save the
-    // target to a different folder.
-    // it should be the most schedule with the most recent lastTick
-    const cellsWithSchedule = cellArgs
-      .filter(dep => dep instanceof Task && dep.dependencySchedule)
-      .sort(
-        (a, b) =>
-          b.dependencySchedule.lastTick.emitTime.getTime() -
-          a.dependencySchedule.lastTick.emitTime.getTime()
-      );
-    if (cellsWithSchedule.length)
-      cell.dependencySchedule = cellsWithSchedule[0].dependencySchedule;
-
-    if (cell.dependencySchedule) {
-      cell.updateBasePath(
-        join(
-          cell.baseTargetDir,
-          ".oak_schedule",
-          cell.dependencySchedule.id.toString(),
-          cell.dependencySchedule.lastTick.id.toString(),
-          cell.dependencySchedule.lastTick.emitTime.getTime().toString()
-        )
-      );
-      logFile = join(
-        logDirectory,
-        "scheduled",
-        cell.dependencySchedule.id.toString(),
-        cell.dependencySchedule.lastTick.id.toString(),
-        cell.dependencySchedule.lastTick.emitTime.getTime().toString(),
-        `${cellName}.log`
-      );
-    }
-  }
   if (redefined) {
     // if any cell was redefined from the command line,
     // then we need to save the target to a different folder.
@@ -125,8 +100,6 @@ async function runTask(
     logFile = join(logDirectory, "redefined", runHash, `${cellName}.log`);
   }
 
-  logger.info(`${cellName} Running task for ${cell.target}. `);
-  logger.info(`\tLogfile: ${logFile}`);
   await oakDB.addLog(
     oakfileHash,
     runHash,
@@ -149,130 +122,64 @@ async function runTask(
   }
   const taskExecutionRowID = await oakDB.addTaskExecution(
     runHash,
-    Boolean(cell.dependencySchedule),
     cellName,
     ancestorHash,
     dependenciesSignature,
     freshStatus,
     new Date().getTime(),
     logFile,
-    cell.target,
-    cell?.dependencySchedule?.id,
-    cell?.dependencySchedule?.lastTick?.id,
-    cell?.dependencySchedule?.lastTick?.emitTime?.getTime()
+    cell.target
   );
-  hooks?.onTaskExectionStart(cellName, cell.target);
-  const runProcessStart = new Date().getTime();
-  const {
-    process: childProcess,
-    outStream: taskOutStream,
-    config: taskConfig,
-  } = cell.runTask();
-  createFileSync(logFile);
-  const runProcessPID = childProcess.pid;
-  const logStream = createWriteStream(logFile);
-  let logLineStream;
-  if (hooks?.onTaskExecutionLog) {
-    logLineStream = split2();
-    hooks?.onTaskExecutionLog(cellName, logLineStream);
-  }
+  logger.info({
+    type: "task-run",
+    event: "start",
+    task: cellName,
+    logfile: logFile,
+    rowid: taskExecutionRowID,
+  });
 
-  childProcess.stdout.pipe(logStream);
-  if (logLineStream) childProcess.stdout.pipe(logLineStream);
-  if (taskOutStream && taskConfig.stdout)
-    childProcess.stdout.pipe(taskOutStream);
+  const runProcessResult = await actuallyRunTask(
+    cell,
+    logFile,
+    currentTargetSignature
+  ).catch(e => null);
 
-  childProcess.stderr.pipe(logStream);
-  if (logLineStream) childProcess.stderr.pipe(logLineStream);
-  if (taskOutStream && taskConfig.stderr) childProcess.stderr.pipe(logStream);
-
-  const { runExitCode, runProcessEnd } = await new Promise(
-    (resolve, reject) => {
-      childProcess.on("error", err => {
-        //logger.error(`childProcess error event.`);
-        logStream.end();
-        reject(err);
-      });
-      childProcess.on("exit", code => {
-        logStream.end();
-        if (code !== 0) {
-          return reject({ code });
-        }
-        resolve({ runExitCode: code, runProcessEnd: new Date().getTime() });
-      });
-    }
-  );
-  const finalTargetSignature = await getSignature(cell.target);
-  await oakDB.updateTaskExection(
+  logger.info({
+    type: "task-run",
+    event: "end",
+    task: cellName,
+    logfile: logFile,
+    rowid: taskExecutionRowID,
+    status: runProcessResult.status,
+    exitcode: runProcessResult.exitcode,
+  });
+  oakDB.updateTaskExection(
     Number(taskExecutionRowID),
-    finalTargetSignature,
-    runProcessStart,
-    runProcessEnd,
-    runExitCode,
-    runProcessPID.toString()
+    runProcessResult.finalTargetSignature,
+    0, // runProcessStart
+    0, // runProcessEnd
+    runProcessResult.exitcode,
+    runProcessResult.pid.toString() || ""
   );
-  hooks?.onTaskExectionEnd(cellName);
-  return runExitCode;
+  if (runProcessResult.status !== "succeed") throw Error("Task failed.");
+  return runProcessResult.exitcode;
 }
 
-type OakRunHooks = {
-  onTaskExectionStart(cellName: string, cellTarget: string);
-  onTaskExecutionLog?(cellName: string, lineStream: ReadableStream);
-  onTaskExectionEnd(cellName: string);
-  onTaskNotFresh(cellName: string, reason: string);
-  onTaskFresh(cellName: string, cellTarget: string);
-  onCellObserved(cellName: string);
-  onCellPending(cellName: string);
-  onCellFulfilled(cellName: string);
-  onCellRejected(cellName: string);
-  onScheduler?(scheduler: Scheduler);
-  onScheduleTick(tick: ScheduleTick, scheduler: Scheduler);
-};
-
-export function defaultHookEmitter(ee: EventEmitter) {
+function createLogger({ name: string }) {
+  const logger = pino({ name });
   return {
-    onTaskExectionStart: (cellName: string, cellTarget) =>
-      ee.emit("te-start", cellName, cellTarget),
-    onTaskExectionEnd: (cellName: string) => ee.emit("te-end", cellName),
-    onTaskExecutionLog: (cellName: string, stream: ReadableStream) =>
-      ee.emit("te-log", cellName, stream),
-    onTaskNotFresh: (cellName: string, reason: string) =>
-      ee.emit("t-nf", cellName, reason),
-    onTaskFresh: (cellName: string, cellTarget: string) =>
-      ee.emit("t-f", cellName, cellTarget),
-    onCellObserved: (cellName: string) => ee.emit("co", cellName),
-    onCellPending: (cellName: string) => ee.emit("cp", cellName),
-    onCellFulfilled: (cellName: string) => ee.emit("cf", cellName),
-    onCellRejected: (cellName: string) => ee.emit("cr", cellName),
-    onScheduleTick: (tick, scheduler) => ee.emit("st", tick, scheduler),
-    onScheduler: scheduler => ee.emit("s", scheduler),
+    info: params => {
+      //logger.info()
+    },
   };
 }
-
 export async function oak_run(args: {
   filename: string;
   targets: readonly string[];
-  stdin?: string;
-  stdout?: string;
-  overrides?: readonly string[];
+  runHash?: string;
+  name?: string;
   redefines?: readonly string[];
-  schedule?: boolean;
-  hooks?: OakRunHooks;
 }): Promise<void> {
-  if (args.targets.length > 0 && args.stdout)
-    throw Error('Only "targets" or "stdout" can be provided, not both.');
-  if (args.stdin && args.overrides?.length > 0)
-    throw Error('Only "stdin" or "override" can be provided, not both.');
-  if (args.stdin && args.redefines?.length > 0)
-    throw Error('Only "stdin" or "redefine" can be provided, not both.');
-  if (args.overrides?.length > 0 && args.redefines?.length > 0)
-    throw Error('Only "override" or "redefine" can be provided, not both.');
-
-  // if we are doing stdout, then only build up to that.
-  if (args.stdout) {
-    args.targets = [args.stdout];
-  }
-
   const targetSet = new Set(args.targets);
   const oakfilePath = fileArgument(args.filename);
   const oakfileStat = await getStat(oakfilePath);
@@ -280,12 +187,12 @@ export async function oak_run(args: {
 
   const startTime = new Date();
 
-  const library = args.schedule ? new RunScheduleLibrary() : new RunLibrary();
+  const library = new RunLibrary();
   const runtime = new Runtime(library);
   const compiler = new OakCompiler();
 
   const oakfileHash = hashFile(oakfilePath);
-  const runHash = hashString(`${startTime.getTime()}`);
+  const runHash = args.runHash || hashString(`${Math.random()}`);
   const logDirectory = join(
     dirname(oakfilePath),
     ".oak",
@@ -293,24 +200,22 @@ export async function oak_run(args: {
     `${oakfileHash}-${startTime.getTime()}`
   );
   mkdirsSync(logDirectory);
-  const oakLogPath = join(
-    dirname(oakfilePath),
-    ".oak",
-    "oak-logs",
-    `run-${runHash}.log`
-  );
-  mkdirsSync(dirname(oakLogPath));
 
-  const logger = pino({ name: "oak run" }, createWriteStream(oakLogPath));
-
+  const logger = pino({ name: "oak run" });
+  logger.info({
+    type: "meta",
+    runHash,
+    oakfilePath,
+  });
   const d = decorator(
     {
       onTaskUpToDate: (t: Task, decoratorArgs) => {
-        args?.hooks?.onTaskFresh(decoratorArgs.cellName, t.target);
-        logger.info(
-          "oak-run decorator",
-          `${formatPath(t.target)} - not out of date `
-        );
+        logger.info({
+          type: "task-status",
+          task: decoratorArgs.cellName,
+          target: t.target,
+          status: "fresh",
+        });
         return t;
       },
       onTaskCellDefinitionChanged: async (
@@ -319,18 +224,16 @@ export async function oak_run(args: {
         cellArgs,
         taskContext
       ) => {
-        args?.hooks?.onTaskNotFresh(decoratorArgs.cellName, "out-def");
-        logger.info(
-          "oak-run decorator",
-          `${formatPath(
-            t.target
-          )} - out of date because direct cell defintion changed since last Oakfile.`
-        );
-        t.watch;
+        logger.info({
+          type: "task-status",
+          task: decoratorArgs.cellName,
+          target: t.target,
+          status: "stale",
+          why: "out-def",
+        });
         await runTask(
           oakfileHash,
           runHash,
-          args.schedule,
           false,
           decoratorArgs.cellName,
           oakDB,
@@ -340,8 +243,7 @@ export async function oak_run(args: {
           decoratorArgs.cellSignature.ancestorHash,
           taskContext.dependenciesSignature,
           "out-def",
-          cellArgs,
-          args?.hooks
+          taskContext.currentTargetSignature
         );
         return t;
       },
@@ -351,17 +253,16 @@ export async function oak_run(args: {
         cellArgs,
         taskContext
       ) => {
-        args?.hooks?.onTaskNotFresh(decoratorArgs.cellName, "out-dep");
-        logger.info(
-          "oak-run decorator",
-          `${formatPath(
-            t.target
-          )} - out of date because one or more of its dependencies are out of date.`
-        );
+        logger.info({
+          type: "task-status",
+          task: decoratorArgs.cellName,
+          target: t.target,
+          status: "stale",
+          why: "out-dep",
+        });
         await runTask(
           oakfileHash,
           runHash,
-          args.schedule,
           false,
           decoratorArgs.cellName,
           oakDB,
@@ -371,23 +272,21 @@ export async function oak_run(args: {
           decoratorArgs.cellSignature.ancestorHash,
           taskContext.dependenciesSignature,
           "out-dep",
-          cellArgs,
-          args?.hooks
+          taskContext.currentTargetSignature
         );
         return t;
       },
       onTaskTargetChanged: async (t, decoratorArgs, cellArgs, taskContext) => {
-        args?.hooks?.onTaskNotFresh(decoratorArgs.cellName, "out-target");
-        logger.info(
-          "oak-run decorator",
-          `${formatPath(
-            t.target
-          )} - out of date because the target has changed since last run.`
-        );
+        logger.info({
+          type: "task-status",
+          task: decoratorArgs.cellName,
+          target: t.target,
+          status: "stale",
+          why: "out-target",
+        });
         await runTask(
           oakfileHash,
           runHash,
-          args.schedule,
           false,
           decoratorArgs.cellName,
           oakDB,
@@ -397,21 +296,21 @@ export async function oak_run(args: {
           decoratorArgs.cellSignature.ancestorHash,
           taskContext.dependenciesSignature,
           "out-target",
-          cellArgs,
-          args?.hooks
+          taskContext.currentTargetSignature
         );
         return t;
       },
       onTaskTargetMissing: async (t, decoratorArgs, cellArgs, taskContext) => {
-        args?.hooks?.onTaskNotFresh(decoratorArgs.cellName, "dne");
-        logger.info(
-          "oak-run decorator",
-          `${formatPath(t.target)} - Doesn't exist - running recipe...`
-        );
+        logger.info({
+          type: "task-status",
+          task: decoratorArgs.cellName,
+          target: t.target,
+          status: "stale",
+          why: "dne",
+        });
         await runTask(
           oakfileHash,
           runHash,
-          args.schedule,
           false,
           decoratorArgs.cellName,
           oakDB,
@@ -421,16 +320,9 @@ export async function oak_run(args: {
           decoratorArgs.cellSignature.ancestorHash,
           taskContext.dependenciesSignature,
           "dne",
-          cellArgs,
-          args?.hooks
+          taskContext.currentTargetSignature
         );
         return t;
-      },
-      onScheduleTick: (tick: ScheduleTick, scheduler: Scheduler) => {
-        args?.hooks?.onScheduleTick(tick, scheduler);
-      },
-      onScheduler: (scheduler: Scheduler) => {
-        args?.hooks?.onScheduler(scheduler);
       },
     },
     oakDB,
@@ -438,15 +330,16 @@ export async function oak_run(args: {
       ? {
           check: () => true,
           value: async (t, decoratorArgs, cellArgs, taskContext) => {
-            args?.hooks?.onTaskNotFresh(decoratorArgs.cellName, "redefine");
-            logger.info(
-              "oak-run decorator",
-              `${formatPath(t.target)} - Defineded, running task...`
-            );
+            logger.info({
+              type: "task-status",
+              task: decoratorArgs.cellName,
+              target: t.target,
+              status: "stale",
+              why: "redefine",
+            });
             await runTask(
               oakfileHash,
               runHash,
-              args.schedule,
               true,
               decoratorArgs.cellName,
               oakDB,
@@ -456,45 +349,12 @@ export async function oak_run(args: {
               decoratorArgs.cellSignature.ancestorHash,
               taskContext.dependenciesSignature,
               "schedule",
-              cellArgs,
-              args?.hooks
+              taskContext.currentTargetSignature
             );
             return t;
           },
         }
-      : args.schedule
-      ? {
-          // if the Task has a schedule, then it is never fresh
-          check: (task: Task) => {
-            return Boolean(task.schedule);
-          },
-          value: async (t, decoratorArgs, cellArgs, taskContext) => {
-            args?.hooks?.onTaskNotFresh(decoratorArgs.cellName, "schedule");
-            logger.info(
-              "oak-run decorator",
-              `${formatPath(t.target)} - Scheduled, running task...`
-            );
-            await runTask(
-              oakfileHash,
-              runHash,
-              args.schedule,
-              false,
-              decoratorArgs.cellName,
-              oakDB,
-              logger,
-              t,
-              logDirectory,
-              decoratorArgs.cellSignature.ancestorHash,
-              taskContext.dependenciesSignature,
-              "schedule",
-              cellArgs,
-              args?.hooks
-            );
-            return t;
-          },
-        }
-      : null,
-    args.schedule
+      : null
   );
 
   const { define, cellHashMap } = await compiler.file(oakfilePath, d, null);
@@ -505,99 +365,52 @@ export async function oak_run(args: {
   oakDB.addRun(
     oakfileHash,
     runHash,
-    Boolean(args.schedule),
     startTime.getTime(),
     JSON.stringify(args.targets)
   );
 
-  const events: {
-    ancestorHash: string;
-    type: string;
-    name: string;
-    time: number;
-    meta: string;
-  }[] = [];
-  logger.info(
-    "oak-run",
-    `Oak: ${formatPath(oakfilePath)}${
-      targetSet.size > 0
-        ? ` - targets: ${Array.from(targetSet)
-            .map(formatCellName)
-            .join(",")}`
-        : ""
-    }`
-  );
-  const ee = new EventEmitter();
-
-  ee.on("pending", name => {
-    args?.hooks?.onCellPending(name);
-    logger.debug("pending", name);
-    events.push({
-      type: "pending",
-      ancestorHash: cellHashMap.get(name)?.ancestorHash || "",
-      name,
-      time: new Date().getTime(),
-      meta: null,
-    });
-  });
-  ee.on("fulfilled", name => {
-    args?.hooks?.onCellFulfilled(name);
-    logger.debug("fulfilled", name);
-    events.push({
-      type: "fulfilled",
-      ancestorHash: cellHashMap.get(name)?.ancestorHash || "",
-      name,
-      time: new Date().getTime(),
-      meta: null,
-    });
-  });
-  ee.on("rejected", (name, error) => {
-    args?.hooks?.onCellRejected(name);
-    logger.error("rejected", name);
-    events.push({
-      type: "rejected",
-      ancestorHash: cellHashMap.get(name)?.ancestorHash || "",
-      name,
-      time: new Date().getTime(),
-      meta: error,
-    });
-  });
-
   const cells: Set<string> = new Set();
   const Inspector = (name: string) => ({
     pending() {
-      ee.emit("pending", name);
+      logger.info({
+        type: "inspector",
+        cell: name,
+        status: "pending",
+        ancestorHash: cellHashMap.get(name)?.ancestorHash || "",
+      });
     },
     fulfilled(value) {
-      ee.emit("fulfilled", name, value);
+      logger.info({
+        type: "inspector",
+        cell: name,
+        status: "fulfilled",
+        ancestorHash: cellHashMap.get(name)?.ancestorHash || "",
+      });
     },
     rejected(error) {
-      ee.emit("rejected", name, error);
+      logger.info({
+        type: "inspector",
+        cell: name,
+        status: "rejected",
+        error,
+        ancestorHash: cellHashMap.get(name)?.ancestorHash || "",
+      });
     },
   });
 
-  let stdinTarget;
-  if (args.stdin) {
-    stdinTarget = join(
-      dirname(oakfilePath),
-      "oak_data",
-      ".oak_stdin",
-      runHash,
-      ".oak_stdin"
-    );
-    ensureDirSync(dirname(stdinTarget));
-    process.stdin.pipe(createWriteStream(stdinTarget));
-    await new Promise((resolve, reject) => {
-      process.stdin.on("end", resolve);
-      process.stdin.on("error", resolve);
-    });
-  }
   const origDir = process.cwd();
   process.chdir(dirname(oakfilePath));
 
   const observer = name => {
-    // call the hook on all cells
-    if (name) args?.hooks?.onCellObserved(name);
+    // log when named cells are observed
+    if (name) {
+      logger.info({
+        type: "inspector",
+        cell: name,
+        status: "observed",
+        ancestorHash: cellHashMap.get(name)?.ancestorHash || "",
+      });
+    }
 
     // it no targets, then we want to observe everything with a name.
     if (targetSet.size === 0 && name) {
@@ -617,70 +430,10 @@ export async function oak_run(args: {
       redefine(m1, observer);
     }
   }
-  if (args.stdin) {
-    const stdinTask = new Task({ target: ".oak_stdin", run: () => {} });
-    stdinTask.updateBasePath(dirname(stdinTarget));
-    stdinTask.stdin = true;
-    stdinTask.upstreamStdin = true;
-    stdinTask.upstreamStdinId = runHash;
-    m1.redefine(args.stdin, stdinTask);
-  }
-  if (args.overrides?.length > 0) {
-    for (const override of args.overrides) {
-      const colon = override.indexOf(":");
-      if (colon < 0) {
-        throw Error(`"override" usage: "cellName:/path/to/file"`);
-      }
-      const cellName = override.substring(0, colon);
-      let path = override.substring(colon + 1);
-      path = untildify(path);
-      if (!isAbsolute(path)) {
-        path = join(origDir, path);
-      }
-
-      const overrideTask = new Task({
-        target: basename(path),
-        run: () => {},
-      });
-      overrideTask.updateBasePath(dirname(path));
-      overrideTask.upstreamOverridden = true;
-      overrideTask.upstreamOverriddenId = runHash;
-      m1.redefine(cellName, overrideTask);
-    }
-  }
   await runtime._compute();
-  if (!args.schedule) {
-    await Promise.all(Array.from(cells).map(cell => m1.value(cell)));
-    // if stdout was specified, query for it, get file location.
-    if (args.stdout) {
-      const task = await m1.value(args.stdout).catch(() => null);
-      if (!task) {
-        console.error(
-          `stdout argument "${args.stdout}" doesn't appear to be a cell in the Oakfile.`
-        );
-      } else if (!(task instanceof Task)) {
-        console.error(
-          `stdout argument "${args.stdout}" doesn't appear to be a Task cell in the Oakfile.`
-        );
-      } else {
-        const readStream = createReadStream(task.target);
-        readStream.pipe(process.stdout);
-        await new Promise((resolve, reject) => {
-          readStream.on("end", resolve);
-          readStream.on("error", reject);
-        });
-      }
-    }
-    runtime.dispose();
-    process.chdir(origDir);
-    oakDB.addEvents(runHash, events);
-  } else {
-    return await new Promise((resolve, reject) => {
-      process.on("SIGINT", function() {
-        runtime.dispose();
-        process.chdir(origDir);
-        resolve();
-      });
-    });
-  }
+  await Promise.all(
+    Array.from(cells).map(cell => m1.value(cell).catch(e => null))
+  );
+  runtime.dispose();
+  process.chdir(origDir);
 }

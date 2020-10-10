@@ -12,6 +12,7 @@ function cleanUp() {
 
 test.onFinish(() => {
   cleanUp();
+  console.log('finished');
 });
 
 cleanUp();

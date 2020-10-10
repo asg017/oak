@@ -10,11 +10,11 @@ Not all of the examples found here are complete. Here is an up-to-date table wit
 
 | Directory | Complete? | Short Description |
 | --- | --- | --- |
-| [`barr-redaction-pixels/`](barr-redaction-pixels) | :heavy_check_mark: | Shell scripts for PDF art on Mueller's report.
-| [`c/`](c) | :heavy_check_mark: | Compiling C code. |
-| [`ca-schools/`](ca-schools) | :heavy_check_mark: | Retrieve list of California public and charter schools. |
-| [`mbostock_planets/`](mbostock_planets) | :heavy_check_mark: | Generate list of familiar and unfamiliar planets. |
-| [`native-lands-colleges/`](native-lands-colleges) | :heavy_check_mark: | Get list of which native lands US colleges fall into.  |
-| [`pudding-hyphen-names/`](pudding-hyphen-names) | :heavy_check_mark: | See how popular hyphenated names are. |
-| [`simple/`](simple) | :heavy_check_mark: | Simple Oak workflow. |
-| [`ucsd-parking/`](ucsd-parking) | :heavy_check_mark: | Retrieve data on parking spaces at UC San Diego. |
+| [`barr-redaction-pixels/`](barr-redaction-pixels) | :x: | Shell scripts for PDF art on Mueller's report.
+| [`c/`](c) | :x: | Compiling C code. |
+| [`ca-schools/`](ca-schools) | :x: | Retrieve list of California public and charter schools. |
+| [`mbostock_planets/`](mbostock_planets) | :x: | Generate list of familiar and unfamiliar planets. |
+| [`native-lands-colleges/`](native-lands-colleges) | :x: | Get list of which native lands US colleges fall into.  |
+| [`pudding-hyphen-names/`](pudding-hyphen-names) | :x: | See how popular hyphenated names are. |
+| [`simple/`](simple) | :x: | Simple Oak workflow. |
+| [`ucsd-parking/`](ucsd-parking) | :x: | Retrieve data on parking spaces at UC San Diego. |

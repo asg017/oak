@@ -2,10 +2,7 @@
 
 import { logsCommand } from "./commands/logs";
 import { pathCommand } from "./commands/path";
-import { pulseCommand } from "./commands/pulse";
 import { runCommand } from "./commands/run";
-import { scheduleCommand } from "./commands/schedule";
-import { studioCommand } from "./commands/studio";
 import { versionCommand } from "./commands/version";
 
 import {
@@ -15,39 +12,6 @@ import {
   CommandLineParser,
   CommandLineFlagParameter,
 } from "@rushstack/ts-command-line";
-
-class StudioAction extends CommandLineAction {
-  private _port: CommandLineStringParameter;
-  private _filename: CommandLineStringParameter;
-  public constructor() {
-    super({
-      actionName: "studio",
-      summary: "Start Oak Studio to interact with an Oakfile.",
-      documentation: "TODO",
-    });
-  }
-  protected onExecute(): Promise<void> {
-    studioCommand({ filename: this._filename.value, port: this._port.value });
-    return Promise.resolve();
-  }
-
-  protected onDefineParameters(): void {
-    this._filename = this.defineStringParameter({
-      argumentName: "FILENAME",
-      parameterLongName: "--file",
-      parameterShortName: "-f",
-      description: "Path to Oakfile.",
-      defaultValue: "./Oakfile",
-    });
-    this._port = this.defineStringParameter({
-      argumentName: "PORT",
-      parameterLongName: "--port",
-      parameterShortName: "-p",
-      description: "Port to start the server.",
-      defaultValue: "8888",
-    });
-  }
-}
 
 class LogsAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
@@ -121,38 +85,9 @@ class PathAction extends CommandLineAction {
   }
 }
 
-class PulseAction extends CommandLineAction {
-  private _filename: CommandLineStringParameter;
-
-  public constructor() {
-    super({
-      actionName: "pulse",
-      summary: "Take a pulse of an oak project.",
-      documentation: "TODO",
-    });
-  }
-  protected async onExecute(): Promise<void> {
-    await pulseCommand({
-      filename: this._filename.value,
-    });
-  }
-  protected onDefineParameters(): void {
-    this._filename = this.defineStringParameter({
-      argumentName: "FILENAME",
-      parameterLongName: "--file",
-      parameterShortName: "-f",
-      description: "Path to Oakfile.",
-      defaultValue: "./Oakfile",
-    });
-  }
-}
-
 class RunAction extends CommandLineAction {
   private _filename: CommandLineStringParameter;
-  private _overrides: CommandLineStringListParameter;
   private _redefines: CommandLineStringListParameter;
-  private _stdout: CommandLineStringParameter;
-  private _stdin: CommandLineStringParameter;
   private _targets: CommandLineStringListParameter;
 
   public constructor() {
@@ -165,10 +100,7 @@ class RunAction extends CommandLineAction {
   protected async onExecute(): Promise<void> {
     await runCommand({
       filename: this._filename.value,
-      overrides: this._overrides.values,
       targets: this._targets.values,
-      stdout: this._stdout.value,
-      stdin: this._stdin.value,
       redefines: this._redefines.values,
     });
     return;
@@ -182,29 +114,11 @@ class RunAction extends CommandLineAction {
       description: "Path to Oakfile.",
       defaultValue: "./Oakfile",
     });
-    this._overrides = this.defineStringListParameter({
-      argumentName: "OVERRIDESTRING",
-      parameterLongName: "--override",
-      description:
-        "List of override-formatted strings to override cells as Tasks.",
-    });
     this._redefines = this.defineStringListParameter({
       argumentName: "CELLDEFINITION",
       parameterLongName: "--redefine",
       description: "Code that redefines a cell in the Oakfile.",
     });
-    this._stdout = this.defineStringParameter({
-      argumentName: "TASKNAME",
-      parameterLongName: "--stdout",
-      description:
-        "The name of a Task cell that should be printed to stdout once complete.",
-    });
-    this._stdin = this.defineStringParameter({
-      argumentName: "TASKNAME",
-      parameterLongName: "--stdin",
-      description:
-        "The name of a Task cell whose target should be overwritten by the contents of stdin.",
-    });
     this._targets = this.defineStringListParameter({
       argumentName: "TARGETS",
       parameterLongName: "--targets",
@@ -214,54 +128,6 @@ class RunAction extends CommandLineAction {
   }
 }
 
-class ScheduleAction extends CommandLineAction {
-  private _filename: CommandLineStringParameter;
-  private _port: CommandLineStringParameter;
-  private _targets: CommandLineStringListParameter;
-  private _dash: CommandLineFlagParameter;
-
-  public constructor() {
-    super({
-      actionName: "schedule",
-      summary: "Run an Oakfile on it's schedule.",
-      documentation: "TODO",
-    });
-  }
-  protected async onExecute(): Promise<void> {
-    await scheduleCommand({
-      filename: this._filename.value,
-      targets: this._targets.values,
-      dash: this._dash.value,
-      port: this._port.value,
-    });
-  }
-  protected onDefineParameters(): void {
-    this._filename = this.defineStringParameter({
-      argumentName: "FILENAME",
-      parameterLongName: "--file",
-      parameterShortName: "-f",
-      description: "Path to Oakfile.",
-      defaultValue: "./Oakfile",
-    });
-    this._targets = this.defineStringListParameter({
-      argumentName: "TARGETS",
-      parameterLongName: "--targets",
-      parameterShortName: "-t",
-      description: "List of target names to resolve.",
-    });
-    this._dash = this.defineFlagParameter({
-      parameterLongName: "--dash",
-      description: "Run a dashboard alongside the scheduled oak run.",
-    });
-    this._port = this.defineStringParameter({
-      argumentName: "PORT",
-      parameterLongName: "--port",
-      parameterShortName: "-p",
-      description: "Port to start the server.",
-      defaultValue: "8888",
-    });
-  }
-}
 
 class VersionAction extends CommandLineAction {
   public constructor() {
@@ -283,12 +149,9 @@ class OakCommandLine extends CommandLineParser {
       toolDescription: "CLI for oak.",
     });
 
-    this.addAction(new StudioAction());
     this.addAction(new LogsAction());
     this.addAction(new PathAction());
-    this.addAction(new PulseAction());
     this.addAction(new RunAction());
-    this.addAction(new ScheduleAction());
     this.addAction(new VersionAction());
   }
 

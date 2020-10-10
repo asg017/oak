@@ -334,24 +334,3 @@ export function duration(referenceDate: Date, fromDate?: Date): string {
   const numDays = Math.floor(numHours / 24);
   return `${numDays} day${numDays <= 1 ? "" : "s"} ago`;
 }
-
-export function durationFuture(referenceDate: Date, fromDate?: Date): string {
-  if (!fromDate) fromDate = new Date();
-  const ms = referenceDate.getTime() - fromDate.getTime();
-  if (ms < 0) return `time already passed.`;
-  if (ms < 1000) return `in less than 1 second`;
-  const numSeconds = Math.floor(ms / 1000);
-  if (numSeconds < 60) {
-    return `in ${numSeconds} second${numSeconds <= 1 ? "" : "s"}`;
-  }
-  const numMinutes = Math.floor(numSeconds / 60);
-  if (numMinutes < 60) {
-    return `in ${numMinutes} minute${numMinutes <= 1 ? "" : "s"}`;
-  }
-  const numHours = Math.floor(numMinutes / 60);
-  if (numHours < 24) {
-    return `in ${numHours} hour${numHours <= 1 ? "" : "s"}`;
-  }
-  const numDays = Math.floor(numHours / 24);
-  return `in ${numDays} day${numDays <= 1 ? "" : "s"} `;
-}

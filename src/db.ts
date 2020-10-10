@@ -151,27 +151,6 @@ export class OakDB {
     return result;
   }
 
-  registerScheduler(cellName: string, schedulerInstanceId: number) {
-    const q = `INSERT INTO Schedulers (
-      schedulerInstanceId,
-      cellName
-    )
-    VALUES (?, ?)`;
-    this.db.prepare(q).run(schedulerInstanceId, cellName);
-  }
-  addSchedulerTick(
-    schedulerInstanceId: number,
-    tickId: number,
-    emitTime: number
-  ) {
-    const q = `INSERT INTO ScheduleTicks (
-      scheduler,
-      tickId,
-      emitTime
-    )
-    VALUES (?, ?, ?)`;
-    this.db.prepare(q).run(schedulerInstanceId, tickId, emitTime);
-  }
   registerOakfile(
     oakfileHash: string,
     mtime: number,
@@ -229,7 +208,6 @@ export class OakDB {
   }
   addTaskExecution(
     runHash: string,
-    scheduled: boolean,
     cellName: string,
     anecestorHash: string,
     dependenciesSignature: string,
@@ -237,17 +215,10 @@ export class OakDB {
     timeStart: number,
     runLog: string,
     target: string,
-    schedulerInstanceId?: number,
-    tickId?: number,
-    tickEmitTime?: number
   ) {
     const q = `INSERT INTO TaskExecutions (
       run,
       target,
-      scheduled,
-      schedulerInstanceId,
-      tickId,
-      tickTime,
       cellName,
       cellAncestorHash,
       dependenciesSignature,
@@ -255,16 +226,12 @@ export class OakDB {
       timeStart,
       runLog
     ) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
     const result = this.db
       .prepare(q)
       .run(
         runHash,
         target,
-        scheduled ? 1 : 0,
-        schedulerInstanceId,
-        tickId,
-        tickEmitTime,
         cellName,
         anecestorHash,
         dependenciesSignature,
@@ -289,7 +256,6 @@ export class OakDB {
   addRun(
     oakfileHash: string,
     runHash: string,
-    scheduled: boolean,
     mtime: number,
     args: string
   ) {
@@ -297,14 +263,13 @@ export class OakDB {
     (
       hash,
       oakfile,
-      scheduled,
       time, 
       arguments
     )
-     VALUES (?, ?, ?, ?, ?)`;
+     VALUES (?, ?, ?, ?)`;
     this.db
       .prepare(q)
-      .run(runHash, oakfileHash, scheduled ? 1 : 0, mtime, args);
+      .run(runHash, oakfileHash, mtime, args);
   }
 
   addCells(oakfileHash: string, cellHashMap: Map<string, CellSignature>) {
@@ -345,10 +310,6 @@ CREATE TABLE IF NOT EXISTS Oakfiles(
   UNIQUE(hash)
 );
 
-CREATE TABLE IF NOT EXISTS Schedulers(
-  schedulerInstanceId INTEGER PRIMARY KEY,
-  cellName TEXT
-); 
 CREATE TABLE IF NOT EXISTS Cells(
   oakfile TEXT,
   hash TEXT,
@@ -361,7 +322,6 @@ CREATE TABLE IF NOT EXISTS Cells(
 CREATE TABLE IF NOT EXISTS Runs(
   hash TEXT PRIMARY KEY,
   oakfile TEXT,
-  scheduled BOOLEAN,
   time INTEGER,
   arguments TEXT,
   FOREIGN KEY (oakfile) REFERENCES Oakfiles(hash)
@@ -379,10 +339,6 @@ CREATE TABLE IF NOT EXISTS Logs(
 CREATE TABLE IF NOT EXISTS TaskExecutions(
     run TEXT,
     target TEXT,
-    scheduled BOOLEAN,
-    schedulerInstanceId INTEGER,
-    tickId INTEGER,
-    tickTime INTEGER,
     cellName TEXT,
     cellAncestorHash TEXT,
     dependenciesSignature TEXT,
@@ -394,8 +350,7 @@ CREATE TABLE IF NOT EXISTS TaskExecutions(
     runProcessEnd INTEGER,
     runProcessExitCode INTEGER,
     runProcessPID TEXT,
-    FOREIGN KEY (run) REFERENCES Runs(hash),
-    FOREIGN KEY (schedulerInstanceId) REFERENCES Schedulers(schedulerInstanceId)
+    FOREIGN KEY (run) REFERENCES Runs(hash)
 ); 
 CREATE TABLE IF NOT EXISTS Events(
     run TEXT,
@@ -405,10 +360,4 @@ CREATE TABLE IF NOT EXISTS Events(
     time INTEGER,
     meta TEXT,
     FOREIGN KEY (run) REFERENCES Runs(hash)
-); 
-CREATE TABLE IF NOT EXISTS ScheduleTicks(
-  scheduler INTEGER,
-  tickId INTEGER,
-  emitTime INTEGER,  
-  FOREIGN KEY (scheduler) REFERENCES Scheduler(rowid)
-); `;
+);`;

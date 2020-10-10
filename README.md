@@ -1,14 +1,8 @@
 # oak
 
-A CLI tool for reproducible, customizable data workflows.
+A tool for reproducible, customizable data workflows.
 
 **Note** - `oak` is still under development - Watch this repo or [follow me on twitter](https://twitter.com/agarcia_me) to keep updated!
-
-**Another Note** - this readme will be changing A LOT in the next few weeks
-
-## What is `oak`?
-
-`oak` is a CLI tool for small, static, data analysis projects.
 
 `oak` works well with projects that have a chain (or tree) of scripts that process files. For example, you may have a series of python/R/shell scripts that all take in a file as an input, processes it in some way, then outputs a new file (which then is used as an input to the next script). This is an ETL (Extract, Transform, Load) workflow - and `oak` makes it easier to define, develop, and re-use these workflows.
 
@@ -16,27 +10,25 @@ A CLI tool for reproducible, customizable data workflows.
 
 ### Reproducibility
 
-With many data projects, it can be unclear on how to start - which script do you run first? What argument do I pass in, if any? what if I want to change a filename?
 
-`oak` makes this all easy - just run `oak static` to execute an `Oakfile` that run the entire project - in-order, everytime. `oak` could be ran in a service like CircleCI to prove that your analysis is technically sound and reproducible (examples coming soon).
 
 ### Language Agnostic
 
-While `oak` is written in TypeScript, you can use the tool to kickoff any process in any language - for example, this is a sample `Oakfile` that uses python, R, and nodeJS:
+While `oak` is written in TypeScript, you can use the tool to kickoff any process in any language - for example, this is an `Oakfile` that uses Python, R, and Node.JS:
 
 ```javascript
-scraped_data = recipe({
+scraped_data = new Task({
   path: "scraped_data.csv",
  scraped_data => shell`python scrape.py > ${scraped_data}`
 });
 
-analyzed_data = recipe({
+analyzed_data = new Task({
   path: "analysis.csv",
  analyzed_data =>
     shell`Rscript analysis.R --input=${scraped_data} > ${analyzed_data}`
 });
 
-graphic = recipe({
+graphic = new Task({
   path: "graphic.jpg",
  graphic =>
     shell`node generate-graphic.js --input=${analyzed_data} > ${graphic}`
