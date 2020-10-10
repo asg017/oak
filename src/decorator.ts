@@ -15,6 +15,7 @@ export type TaskHookDecoratorArguments = {
 type TaskHookCellArguments = any[];
 export type TaskHookTaskContext = {
   dependenciesSignature: string;
+  currentTargetSignature: string;
 };
 type TaskHookArguments = [
   any,
@@ -98,6 +99,7 @@ export default function decorator(
       };
       const taskContext = {
         dependenciesSignature,
+        currentTargetSignature
       };
 
       if (

@@ -1,46 +1,32 @@
-import React, { Component, useState, useEffect, useRef } from "react";
+import React, { Component } from "react";
 import { render, Box, Static, Text } from "ink";
 import Spinner from "ink-spinner";
 import { EventEmitter } from "events";
-import { OrderedMap } from "immutable";
-import cronstrue from "cronstrue";
-import { durationFuture } from "../../utils";
+import { OrderedMap, List } from "immutable";
 
 type AppCell = {
   status: "p" | "f" | "r" | "o";
-  statusTime: Date;
+  logfile?: string;
   logLines: string[];
   task?: boolean;
   fresh?: boolean;
   executing?: boolean;
   target?: string;
+  taskStatusWhy?: string;
+  taskRunStatus?: string;
+  taskRunExitcode?: string;
 };
 
-function useInterval(callback, delay) {
-  const savedCallback = useRef(() => {});
-
-  // Remember the latest callback.
-  useEffect(() => {
-    savedCallback.current = callback;
-  }, [callback]);
-
-  // Set up the interval.
-  useEffect(() => {
-    function tick() {
-      savedCallback.current();
-    }
-    if (delay !== null) {
-      let id = setInterval(tick, delay);
-      return () => clearInterval(id);
-    }
-  }, [delay]);
-}
 function AppCellLineIcon(props) {
   const { cell } = props;
   if (cell.fresh) return <Text>{"\u{2192}"}</Text>;
   switch (cell.status) {
     case "p":
-      return <Text><Spinner type="dots" /></Text>;
+      return (
+        <Text>
+          <Spinner type="dots" />
+        </Text>
+      );
     case "o":
       return <Text>{"\u{2022}"}</Text>;
     case "f":
@@ -52,38 +38,39 @@ function AppCellLineIcon(props) {
 
 function AppCellLineText(props: { cell: AppCell }) {
   const { cell } = props;
-  let label;
-  if (cell.task && cell.fresh) label = " - Task fresh, not ran.";
-  else if (cell.task && cell.status === "f") label = " - Task complete!";
+  let label, dimLabel;
+  if (cell.task && cell.fresh) label = " - Target fresh, skipped.";
+  else if (cell.task && cell.status === "f") label = " - Task run complete!";
+  else if (cell.task && cell.status === "r") label = " - Task run failed";
   else if (cell.task && cell.executing) label = " - Task running...";
-  else if (cell.task && cell.status === "r") label = " - Task run unsuccessful";
   else label = "";
+
+  if (cell.task && cell.taskRunExitcode)
+    dimLabel = `Proccess failed with ${cell.taskRunExitcode} `;
+  else if (cell.taskStatusWhy) dimLabel = `${cell.taskStatusWhy}`;
+
   return (
-    <Text>
-      <Text color="white">{label}</Text>
-      {` `}
-      <Text dimColor>{cell.task && cell.target && cell.target}</Text>
+    <Text color="white">
+      {label} {dimLabel ? <Text dimColor>{dimLabel}</Text> : null}
     </Text>
   );
 }
+
+function cellColor(cell: AppCell) {
+  if (cell.task && cell.fresh) return "yellow";
+  if (cell.task && cell.executing) return "magenta";
+  if (cell.status === "p") return "blueBright";
+  if (cell.status === "f") return "greenBright";
+  if (cell.status === "r") return "red";
+  return "grey";
+}
 function AppCellLine(props: { cell: AppCell; name: string }) {
   const { cell, name } = props;
-  const color =
-    cell.task && cell.fresh
-      ? "yellowBright"
-      : cell.task && cell.executing
-      ? "magenta"
-      : cell.status === "p"
-      ? "blueBright"
-      : cell.status === "f"
-      ? "greenBright"
-      : cell.status === "r"
-      ? "redBright"
-      : "grey";
+  const color = cellColor(cell);
   return (
     <Box flexDirection="column">
       <Box flexDirection="column">
-        <Box >
+        <Box>
           <Text color={color} wrap="truncate">
             <AppCellLineIcon cell={cell} />
             {` `}
@@ -93,158 +80,137 @@ function AppCellLine(props: { cell: AppCell; name: string }) {
           </Text>
           <AppCellLineText cell={cell} />
         </Box>
+        {cell.target && !cell.fresh ? (
+          <Box paddingLeft={4}>
+            <Box flexDirection="column">
+              {cell.target ? (
+                <Text>
+                  target: <Text dimColor>{cell.target}</Text>
+                </Text>
+              ) : null}
+              {cell.logfile ? (
+                <Text>
+                  logs: <Text dimColor>{cell.logfile}</Text>
+                </Text>
+              ) : null}
+            </Box>
+          </Box>
+        ) : null}
       </Box>
       {cell.status === "p" && <Logs lines={cell.logLines.slice(-5)} />}
     </Box>
   );
 }
 
-function Logs({ lines, borderColor="" }) {
-  if(lines.length===0) return null;
+function Logs({ lines, borderColor = "" }) {
+  if (lines.length === 0) return null;
   return (
-    //@ts-ignore
-      <Box borderStyle="single" borderColor={borderColor} flexDirection="column" paddingLeft={2}>
-        {lines.map((line, i) => (
-          <Box key={i}>
-            <Text color="gray">{line||''}</Text></Box>
-        ))}
-      </Box>
+    <Box
+      borderStyle="single"
+      //@ts-ignore
+      borderColor={borderColor}
+      flexDirection="column"
+      paddingLeft={2}
+    >
+      {lines.map((line, i) => (
+        <Box key={i}>
+          <Text color="gray">{line || ""}</Text>
+        </Box>
+      ))}
+    </Box>
   );
 }
 class App extends Component {
-  props: { runEvents: EventEmitter };
+  props: { runEvents: EventEmitter; runHash: string };
   state: {
     cells: OrderedMap<string, AppCell>;
+    messages: List<any>;
   };
   constructor(props) {
     super(props);
     this.state = {
       cells: OrderedMap(),
+      messages: List(),
     };
   }
+  _onInspector(data: any) {
+    const cellName = data.cell;
+    const { cells } = this.state;
+    const newCell: AppCell = Object.assign(cells.get(cellName) ?? {}, {
+      status: data.status.charAt(0),
+      logLines: [],
+    });
+    this.setState({ cells: cells.set(cellName, newCell) });
+  }
+  _onTaskStatus(data: any) {
+    const cellName = data.task;
+    const { cells } = this.state;
+    const newCell: AppCell = Object.assign(cells.get(cellName), {
+      task: true,
+      executing: false,
+      target: data.target,
+      fresh: data.status === "fresh",
+      taskStatusWhy: data.why,
+    });
+    this.setState({ cells: cells.set(cellName, newCell) });
+  }
+  _onTaskRun(data: any) {
+    const cellName = data.task;
+    const { cells } = this.state;
+    const newCell: AppCell = Object.assign(cells.get(cellName), {
+      executing: data.event === "start",
+      logfile: data.logfile,
+      taskRunStatus: data.status,
+      taskRunExitcode: data.exitcode,
+      //why: data.why
+    });
+    this.setState({ cells: cells.set(cellName, newCell) });
+  }
   componentDidMount() {
-    this.props.runEvents.on("co", cellName => {
-      const { cells } = this.state;
-      const cell = cells.get(cellName);
-      const newCell: AppCell = cell
-        ? Object.assign(cell, { status: "o", statusTime: new Date() })
-        : { status: "o", statusTime: new Date(), logLines: [] };
-      this.setState({ cells: cells.set(cellName, newCell) });
-    });
-    this.props.runEvents.on("cp", cellName => {
-      const { cells } = this.state;
-      const cell = cells.get(cellName);
-      const newCell: AppCell = cell
-        ? Object.assign(cell, { status: "p", statusTime: new Date() })
-        : { status: "p", logLines: [], statusTime: new Date() };
-      this.setState({ cells: cells.set(cellName, newCell) });
-    });
-    this.props.runEvents.on("cf", cellName => {
-      const { cells } = this.state;
-      const cell = cells.get(cellName);
-      const newCell: AppCell = cell
-        ? Object.assign(cell, { status: "f", statusTime: new Date() })
-        : { status: "f", logLines: [], statusTime: new Date() };
-      this.setState({ cells: cells.set(cellName, newCell) });
-    });
-    this.props.runEvents.on("cr", cellName => {
-      const { cells } = this.state;
-      const cell = cells.get(cellName);
-      const newCell: AppCell = cell
-        ? Object.assign(cell, {
-            status: "r",
-            executing: null,
-            statusTime: new Date(),
-          })
-        : { status: "r", logLines: [], statusTime: new Date() };
-      this.setState({ cells: cells.set(cellName, newCell) });
-    });
-
-    // "task execution start"
-    this.props.runEvents.on("te-start", (cellName, cellTarget) => {
-      const { cells } = this.state;
-      const newCell: AppCell = Object.assign(cells.get(cellName), {
-        task: true,
-        executing: true,
-        target: cellTarget,
-      });
-      this.setState({ cells: cells.set(cellName, newCell) });
-    });
-    // "task execution end"
-    this.props.runEvents.on("te-end", cellName => {
-      const { cells } = this.state;
-      const newCell: AppCell = Object.assign(cells.get(cellName), {
-        task: true,
-        executing: false,
-      });
-      this.setState({ cells: cells.set(cellName, newCell) });
-    });
-
-    // "task execution log"
-    /*
-    this.props.runEvents.on("te-log", (cellName, logStream) => {
-      const { cells } = this.state;
-
-      logStream.on("data", line => {
-        const prevLines = this.state.cells.get(cellName).logLines;
-        const newLines = prevLines.concat([line]).slice(-100);
-        const newCell: AppCell = Object.assign(cells.get(cellName), {
-          logLines: newLines,
-        });
-        this.setState({ cells: cells.set(cellName, newCell) });
-      });
-    });//*/
-
-    // "task is fresh"
-    this.props.runEvents.on("t-f", (cellName, cellTarget) => {
-      const { cells } = this.state;
-      const newCell: AppCell = Object.assign(cells.get(cellName), {
-        task: true,
-        executing: false,
-        fresh: true,
-        target: cellTarget,
-      });
-      this.setState({ cells: cells.set(cellName, newCell) });
+    this.props.runEvents.on("log", data => {
+      this.setState({ messages: this.state.messages.push(data) });
+      switch (data.type) {
+        case "inspector":
+          return this._onInspector(data);
+        case "task-status":
+          return this._onTaskStatus(data);
+        case "task-run":
+          return this._onTaskRun(data);
+      }
     });
   }
   componentWillUnmount() {
-    this.props.runEvents
-      .removeAllListeners("s")
-      .removeAllListeners("co")
-      .removeAllListeners("cp")
-      .removeAllListeners("cf")
-      .removeAllListeners("cr")
-      .removeAllListeners("te-start")
-      .removeAllListeners("te-log")
-      .removeAllListeners("te-end")
-      .removeAllListeners("t-f");
+    this.props.runEvents.removeAllListeners("log");
   }
   render() {
-    // without the reverse, Static doesnt work correctly.
-    // idk why
-    const failedTasksWithLogs = Array.from(this.state.cells)
-    .filter(([name, cell]) => cell.status === "r" && cell.logLines.length > 0)
-    .sort((a, b) => a[1].statusTime.getTime() - b[1].statusTime.getTime());
+    const tasks = Array.from(this.state.cells).filter(
+      ([name, cell]) => cell.task
+    );
+    const debug = true;
     return (
       <Box flexDirection="column">
-        <Static items={failedTasksWithLogs}>
-          {([name, cell]) => (
-            <Box key={name} flexDirection="column">
-              <Text bold underline color="red">
-                {name}
-              </Text>
-              <Logs borderColor="red" lines={cell.logLines} />
-            </Box>
-          )}
-        </Static>
-        {this.state.cells.size ? (
+        {debug ? (
+          <Static items={Array.from(this.state.messages)}>
+            {(item, i) => (
+              <Text key={i.toString()}>{JSON.stringify(item)}</Text>
+            )}
+          </Static>
+        ) : null}
+        {
           <Box>
             <Text bold underline>
-              Cells
+              Running Oakfile at [TODO] {this.props.runHash}
+            </Text>
+          </Box>
+        }
+        {tasks.length ? (
+          <Box>
+            <Text bold underline>
+              Tasks
             </Text>
           </Box>
         ) : null}
-        {Array.from(this.state.cells).map(([name, cell]) => (
+        {tasks.map(([name, cell]) => (
           <AppCellLine name={name} cell={cell} key={name} />
         ))}
       </Box>
@@ -252,6 +218,6 @@ class App extends Component {
   }
 }
 
-export function runInkApp(runEvents: EventEmitter) {
-  return render(<App runEvents={runEvents} />);
+export function runInkApp(runEvents: EventEmitter, runHash: string) {
+  return render(<App runEvents={runEvents} runHash={runHash} />);
 }

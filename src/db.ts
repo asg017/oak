@@ -215,14 +215,10 @@ export class OakDB {
     timeStart: number,
     runLog: string,
     target: string,
-    tickId?: number,
-    tickEmitTime?: number
   ) {
     const q = `INSERT INTO TaskExecutions (
       run,
       target,
-      tickId,
-      tickTime,
       cellName,
       cellAncestorHash,
       dependenciesSignature,
@@ -230,14 +226,12 @@ export class OakDB {
       timeStart,
       runLog
     ) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
     const result = this.db
       .prepare(q)
       .run(
         runHash,
         target,
-        tickId,
-        tickEmitTime,
         cellName,
         anecestorHash,
         dependenciesSignature,
@@ -345,8 +339,6 @@ CREATE TABLE IF NOT EXISTS Logs(
 CREATE TABLE IF NOT EXISTS TaskExecutions(
     run TEXT,
     target TEXT,
-    tickId INTEGER,
-    tickTime INTEGER,
     cellName TEXT,
     cellAncestorHash TEXT,
     dependenciesSignature TEXT,
