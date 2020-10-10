@@ -35,7 +35,7 @@
     "oak"
   ],
   "scripts": {
-    "yarn build": "tsc",
+    "build": "tsc",
     "pkg": "mkdir -p pkg && pkg . --out-path ./pkg",
     "prepare": "rm -rf built && npm run build",
     "preversion": "npm test",
