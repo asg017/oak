@@ -1,0 +1,17 @@
+// pases alright
+a = new Task({
+  target: "a",
+  run: target => shell`echo -n "a" > ${target}`
+});
+
+// creates file, but exits non-zero
+b = new Task({
+  target: "b",
+  run: target => shell`echo -n "b" > ${target}; exit 1;`
+});
+
+// doesnt create file, exits with 0
+c = new Task({
+  target: "c",
+  run: target => shell`exit 0`
+});

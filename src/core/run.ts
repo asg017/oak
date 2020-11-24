@@ -70,7 +70,10 @@ async function actuallyRunTask(
 
   return {
     status:
-      currentTargetSignature === finalTargetSignature ? "fail" : "succeed",
+      currentTargetSignature === finalTargetSignature ||
+      processResult.exitcode !== 0
+        ? "fail"
+        : "succeed",
     exitcode: processResult.exitcode,
     pid: childProcess.pid,
     finalTargetSignature,
@@ -161,6 +164,7 @@ async function runTask(
     runProcessResult.exitcode,
     runProcessResult.pid.toString() || ""
   );
+  console.log(JSON.stringify({ cellName, runProcessResult }));
   if (runProcessResult.status !== "succeed") throw Error("Task failed.");
   return runProcessResult.exitcode;
 }

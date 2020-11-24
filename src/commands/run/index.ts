@@ -18,7 +18,9 @@ export async function runCommand(args: {
   
   const runHash = hashString(`${Math.random()}`);
 
-  let { unmount: unmountApp } = runInkApp(runEvents, runHash);
+  let app;
+  if(process.stdout.isTTY) 
+  app = runInkApp(runEvents, runHash);
   const oakfilePath = fileArgument(args.filename);
 
   const oakLogPath = join(
@@ -31,7 +33,8 @@ export async function runCommand(args: {
   let oakLogStream = createWriteStream(oakLogPath);
 
   process.on("SIGINT", () => {
-    unmountApp();
+    if(app)
+      app.unmount();
   });
   const runProcess = fork(
     join(__dirname, "fork"),
@@ -52,6 +55,7 @@ export async function runCommand(args: {
     })
     .on("close", () => {
       runEvents.emit("close");
-      unmountApp();
+      if(app)
+        app.unmount();
     });
 }
