@@ -1,8 +1,0 @@
-
-wnba_html = recipe({})
-
-wnba_csv = recipe({})
-
-nba_html = recipe({})
-
-nba_csv = recipe({})

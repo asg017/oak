@@ -1,3 +1,0 @@
-name = "Penguin"
-
-import {t} with {name} from "./sub/Oakfile"
