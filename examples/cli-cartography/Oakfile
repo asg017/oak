@@ -1,0 +1,34 @@
+tract_zip = Task({
+  path: "tract.zip",
+  run: (path) =>
+    sh`wget -O ${path} 'http://www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_06_tract_500k.zip'`.end(),
+});
+
+tract_dir = Task({
+  path: "tract",
+  run: (path) =>
+    sh`bash -c ${`mkdir ${path} && unzip -d ${path} ${tract_zip}`}`.end(),
+});
+
+// TODO stdlib path.join
+state_json = Task({
+  path: "state.json",
+  run: (path) =>
+    sh`shp2json ${`${tract_dir}/cb_2014_06_tract_500k.shp`} -o ${path}`.end(),
+});
+
+// TODO state projections
+state_albers = Task({
+  path: "state_albers.json",
+  run: (path) =>
+    sh`cat ${state_json}
+  | geoproject 'd3.geoConicEqualArea().parallels([34, 40.5]).rotate([120, 0]).fitSize([960, 960], d)'
+  | tee ${path}
+  | echo ""`.end(),
+});
+
+state_albers_svg = Task({
+  path: "state_albers.svg",
+  run: (path) =>
+    sh`cat ${state_albers} | geo2svg -w 960 -h 960 | tee ${path} | echo ""`,
+});

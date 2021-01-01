@@ -1,0 +1,8 @@
+# ignore everything
+**
+
+!src
+!Makefile
+!deps/quickjs
+!deps/runtime/runtime-qjs.js
+!deps/unofficial-observablehq-compiler/ocompiler-qjs.js

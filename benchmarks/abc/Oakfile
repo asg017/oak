@@ -1,0 +1,15 @@
+a = Task({
+  path: "a",
+  run: (path) => sh`echo -n "a" | tee ${path}`,
+});
+
+b = Task({
+  path: "b",
+  run: (path) => sh`echo -n "b" | tee ${path}`,
+});
+
+c = Task({
+  path: "c",
+  deps: [a, b],
+  run: (path) => sh`cat ${a} ${b} | tee ${path}`,
+});
