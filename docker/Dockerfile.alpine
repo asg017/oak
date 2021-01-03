@@ -1,0 +1,25 @@
+FROM alpine
+COPY ./deps/quickjs /deps/quickjs
+WORKDIR /deps/quickjs
+RUN apk --no-cache add \
+    clang \
+    gcc \
+    make \
+    musl-dev 
+
+RUN make
+RUN make install
+
+RUN cp /deps/quickjs/qjs /usr/local/bin
+RUN cp /deps/quickjs/qjsc /usr/local/bin
+
+WORKDIR /src/oak
+COPY src /src/oak/src
+COPY Makefile /src/oak
+COPY deps/runtime/runtime-qjs.js /src/oak/deps/runtime/runtime-qjs.js 
+COPY deps/unofficial-observablehq-compiler/ocompiler-qjs.js  /src/oak/deps/unofficial-observablehq-compiler/ocompiler-qjs.js
+RUN make build
+
+FROM alpine
+COPY --from=0 /src/oak/bin/oak /usr/local/bin
+CMD ["oak"]

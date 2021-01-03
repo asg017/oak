@@ -157,6 +157,15 @@ function parseShellTemplate(strings, values) {
   return pipes;
 }
 
+export class ShellPipelineError extends Error {
+  constructor(type, i, ...params) {
+    super(...params);
+    this.name = "ShellPipelineError";
+    this.type = type;
+    this.i = i;
+  }
+}
+
 export class ShellPipeline {
   constructor(pipes = []) {
     this.pipes = pipes;
@@ -172,18 +181,39 @@ export class ShellPipeline {
       stdin: this.tail.r,
       stdout: std.out.fileno(),
     });
+    return this;
   }
 
   end() {
-    this.pipes.forEach((pipe) => {
-      const [ret, status] = os.waitpid(pipe.pid, 0);
-      os.close(pipe.w);
-      if (ret !== pipe.pid)
-        throw Error(`ret not pid ret=${ret} pipe.pid=${pipe.pid}`);
-      if ((status & 0x7f) !== 0)
-        throw Error(`(status & 0x7f) !== 0 ${status & 0x7f}`);
-      if (status >> 8 !== 0) throw Error(`status >> 8 !== 0) #{status >> 8}`);
-    });
+    try {
+      this.pipes.forEach((pipe, i) => {
+        print(`wating on ${pipe.pid}`);
+        os.close(pipe.w);
+        const [ret, status] = os.waitpid(pipe.pid, 0);
+        os.close(pipe.r);
+        os.close(pipe.w);
+        if (ret !== pipe.pid)
+          //throw Error(`[${i}] ret not pid ret=${ret} pipe.pid=${pipe.pid}`);
+          throw new ShellPipelineError("ret_match_pid", i);
+        if ((status & 0x7f) !== 0)
+          throw new ShellPipelineError("status_0x7f", i);
+        //throw Error(`[${i}] (status & 0x7f) !== 0 ${status & 0x7f}`);
+        if (status >> 8 !== 0) throw new ShellPipelineError("status_8", i);
+        //throw Error(`[${i}] (status >> 8 !== 0) ${status >> 8}`);
+      });
+    } catch (e) {
+      if (!e instanceof ShellPipelineError) throw e;
+
+      // handle any pipeline errors, kill future pipes.
+      for (let i = e.i + 1; i < this.pipes.length; i++) {
+        const ret = os.kill(this.pipes[i].pid, 9);
+        if (ret !== 0)
+          throw Error(
+            `Error killing PID ${this.pipes[i].pid}, returned=${ret}`
+          );
+      }
+      throw e;
+    }
   }
 
   pipe(shellPipe) {
@@ -222,6 +252,6 @@ export function shell(strings, ...values) {
     const p = new ShellPipe(pipe.cmdFile, pipe.args, pipeline.tail.r);
     pipeline = pipeline.pipe(p);
   }
-  pipeline.cap();
+  //pipeline.cap();
   return pipeline;
 }

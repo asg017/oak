@@ -1,7 +1,10 @@
 import * as std from "std";
 import * as os from "os";
-import { ShellPipeline, shell as sh } from "./sh.js";
+import { ShellPipeline, ShellPipelineError, shell as sh } from "./sh.js";
 
+function fail() {
+  throw Error("Testing failure.");
+}
 function assert(actual, expected, message) {
   if (arguments.length == 1) expected = true;
 
@@ -23,8 +26,8 @@ function assert(actual, expected, message) {
   );
 }
 
-async function main() {
-  const tmp = "tmp.txt";
+async function test(tmp) {
+  let pipeline;
   await sh`echo -n "hello" | tee ${tmp}`.end();
   assert(std.open(tmp, "r").readAsString(), "hello");
 
@@ -34,12 +37,49 @@ async function main() {
   await sh`echo "alex" | rev | tr a-z A-Z | tee ${tmp}`.end();
   assert(std.open(tmp, "r").readAsString(), "XELA\n");
 
-  os.remove(tmp);
+  pipeline = sh`not exist | tee ${tmp}`;
+
+  try {
+    await pipeline.end();
+    fail();
+  } catch (e) {
+    assert(
+      e instanceof ShellPipelineError,
+      true,
+      "Error is ShellPipelineError"
+    );
+    assert(e.i, 0, "First pipe should have throw error.");
+    const lastPipe = pipeline.pipes[1];
+    const lastPipeWaitResult = os.waitpid(lastPipe.pid);
+    assert(lastPipeWaitResult[0], lastPipe.pid);
+    assert(
+      lastPipeWaitResult[1],
+      9,
+      "Last pipe should ahve been killed with SIGKILL"
+    );
+  }
+  await sh`mkfile 100m ${tmp}`.end();
+  assert(os.stat(tmp)[0].size, 104857600);
+
+  // the wc-l is required here to not overflow the buffer
+  await sh`cat ${tmp} | wc -c`.end();
+  //await sh`cat ${tmp}`.end(); // will hang, TODO fix
+}
+
+async function main() {
+  const tmp = "tmp.txt";
+  try {
+    await test(tmp);
+    print("test_sh completed successfully!");
+  } finally {
+    os.remove(tmp);
+  }
 }
 
 main().catch((e) => {
   print("ERROR");
   print(e);
   print(e.stack);
-  exit(1);
+  print("Exiting 1.");
+  std.exit(1);
 });

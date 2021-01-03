@@ -39,7 +39,7 @@ lets hope it works!
 sh`echo "alex" > name.txt`;
 sh`echo "alex" 2> name.txt`;
 
-// sh can get finala stdout
+// sh can get final stdout
 sh`echo "heya"`.stdout();
 
 // ${value} can be qjs file object
@@ -49,3 +49,8 @@ sh`echo "hi" > ${fd}`;
 // ${value} can act as process substition
 sh`cat ${sh`echo hello`} ${sh`echo "from the other side"`}`;
 ```
+
+## Farout ideas
+
+- Non-file task targets
+  - S3 objects, remote databases, other filesystems

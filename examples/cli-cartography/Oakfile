@@ -1,34 +1,79 @@
 tract_zip = Task({
   path: "tract.zip",
   run: (path) =>
-    sh`wget -O ${path} 'http://www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_06_tract_500k.zip'`.end(),
+    sh`wget -O ${path} 'http://www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_06_tract_500k.zip'`,
 });
 
 tract_dir = Task({
   path: "tract",
+  deps: [tract_zip],
   run: (path) =>
-    sh`bash -c ${`mkdir ${path} && unzip -d ${path} ${tract_zip}`}`.end(),
+    sh`bash -c ${`mkdir ${path} && unzip -d ${path} ${tract_zip}`}`,
 });
 
 // TODO stdlib path.join
 state_json = Task({
   path: "state.json",
+  deps: [tract_dir],
   run: (path) =>
-    sh`shp2json ${`${tract_dir}/cb_2014_06_tract_500k.shp`} -o ${path}`.end(),
+    sh`shp2json ${`${tract_dir}/cb_2014_06_tract_500k.shp`} -o ${path}`,
 });
 
 // TODO state projections
 state_albers = Task({
   path: "state_albers.json",
-  run: (path) =>
-    sh`cat ${state_json}
+  deps: [state_json],
+  run: (path) => sh`cat ${state_json} | tee ${path}
   | geoproject 'd3.geoConicEqualArea().parallels([34, 40.5]).rotate([120, 0]).fitSize([960, 960], d)'
   | tee ${path}
-  | echo ""`.end(),
+  | wc -c`,
 });
 
 state_albers_svg = Task({
   path: "state_albers.svg",
+  deps: [state_albers],
   run: (path) =>
-    sh`cat ${state_albers} | geo2svg -w 960 -h 960 | tee ${path} | echo ""`,
+    sh`cat ${state_albers} 
+      | geo2svg -w 960 -h 960 
+      | tee ${path} 
+      | wc`,
+});
+
+state_tract_pop_raw_json = Task({
+  path: "state_tract_pop_raw.json",
+  run: (path) =>
+    sh`wget -O ${path} "https://api.census.gov/data/2018/acs/acs5?get=B01003_001E&for=tract:*&in=state:06"`,
+});
+state_tract_pop_ndjson = Task({
+  path: "state_tract_pop.ndjson",
+  deps: [state_tract_pop_raw_json],
+  run: (path) =>
+    sh`ndjson-cat ${state_tract_pop_raw_json} \
+      | ndjson-split 'd.slice(1)' \
+      | ndjson-map '{id: d[2] + d[3], B01003: +d[0]}'
+      | tee ${path}
+      | wc`,
+});
+
+state_albers_id_ndjson = Task({
+  path: "state_albers_id.ndjson",
+  deps: [state_tract_pop_ndjson],
+  run: (path) =>
+    sh`cat ${state_albers} 
+  | ndjson-split 'd.features'
+  | ndjson-map 'd.id = d.properties.GEOID.slice(2), d'
+  | tee ${path}
+  | wc`,
+});
+
+idk_man = Task({
+  path: "idk.svg",
+  deps: [state_albers_id_ndjson, state_tract_pop_ndjson],
+  run: (path) =>
+    sh`ndjson-join 'd.id' ${state_albers_id_ndjson} ${state_tract_pop_ndjson} 
+      | ndjson-map 'd[0].properties = {density: Math.floor(d[1].B01003 / d[0].properties.ALAND * 2589975.2356)}, d[0]'
+      | ndjson-map -r d3 
+        '(d.properties.fill = d3.scaleSequential(d3.interpolateViridis).domain([0, 4000])(d.properties.density), d)'
+      | geo2svg -n --stroke none -p 1 -w 960 -h 960
+      | tee ${path} | wc`,
 });
