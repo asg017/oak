@@ -1,11 +1,13 @@
+state = env("STATE") || "06";
+
 tract_zip = Task({
-  path: "tract.zip",
+  path: `tract_${state}.zip`,
   run: (path) =>
-    sh`wget -O ${path} 'http://www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_06_tract_500k.zip'`,
+    sh`wget -O ${path} ${`https://www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_${state}_tract_500k.zip`}`,
 });
 
 tract_dir = Task({
-  path: "tract",
+  path: `tract_${state}`,
   deps: [tract_zip],
   run: (path) =>
     sh`bash -c ${`mkdir ${path} && unzip -d ${path} ${tract_zip}`}`,
@@ -13,39 +15,29 @@ tract_dir = Task({
 
 // TODO stdlib path.join
 state_json = Task({
-  path: "state.json",
+  path: `state${state}.json`,
   deps: [tract_dir],
   run: (path) =>
-    sh`shp2json ${`${tract_dir}/cb_2014_06_tract_500k.shp`} -o ${path}`,
+    sh`shp2json ${`${tract_dir}/cb_2014_${state}_tract_500k.shp`} -o ${path}`,
 });
 
 // TODO state projections
 state_albers = Task({
-  path: "state_albers.json",
+  path: `state${state}_albers.json`,
   deps: [state_json],
-  run: (path) => sh`cat ${state_json} | tee ${path}
+  run: (path) => sh`cat ${state_json}
   | geoproject 'd3.geoConicEqualArea().parallels([34, 40.5]).rotate([120, 0]).fitSize([960, 960], d)'
   | tee ${path}
   | wc -c`,
 });
 
-state_albers_svg = Task({
-  path: "state_albers.svg",
-  deps: [state_albers],
-  run: (path) =>
-    sh`cat ${state_albers} 
-      | geo2svg -w 960 -h 960 
-      | tee ${path} 
-      | wc`,
-});
-
 state_tract_pop_raw_json = Task({
-  path: "state_tract_pop_raw.json",
+  path: `state${state}_tract_pop_raw.json`,
   run: (path) =>
-    sh`wget -O ${path} "https://api.census.gov/data/2018/acs/acs5?get=B01003_001E&for=tract:*&in=state:06"`,
+    sh`wget -O ${path} ${`https://api.census.gov/data/2018/acs/acs5?get=B01003_001E&for=tract:*&in=state:${state}`}`,
 });
 state_tract_pop_ndjson = Task({
-  path: "state_tract_pop.ndjson",
+  path: `state${state}_tract_pop.ndjson`,
   deps: [state_tract_pop_raw_json],
   run: (path) =>
     sh`ndjson-cat ${state_tract_pop_raw_json} \
@@ -56,7 +48,7 @@ state_tract_pop_ndjson = Task({
 });
 
 state_albers_id_ndjson = Task({
-  path: "state_albers_id.ndjson",
+  path: `state${state}_albers_id.ndjson`,
   deps: [state_tract_pop_ndjson],
   run: (path) =>
     sh`cat ${state_albers} 
@@ -66,14 +58,36 @@ state_albers_id_ndjson = Task({
   | wc`,
 });
 
-idk_man = Task({
-  path: "idk.svg",
+state_albers_density_ndjson = Task({
+  path: `state${state}_albers_density.ndjson`,
   deps: [state_albers_id_ndjson, state_tract_pop_ndjson],
   run: (path) =>
     sh`ndjson-join 'd.id' ${state_albers_id_ndjson} ${state_tract_pop_ndjson} 
       | ndjson-map 'd[0].properties = {density: Math.floor(d[1].B01003 / d[0].properties.ALAND * 2589975.2356)}, d[0]'
-      | ndjson-map -r d3 
-        '(d.properties.fill = d3.scaleSequential(d3.interpolateViridis).domain([0, 4000])(d.properties.density), d)'
-      | geo2svg -n --stroke none -p 1 -w 960 -h 960
       | tee ${path} | wc`,
+});
+
+state_topojson = Task({
+  path: `state${state}.topojson`,
+  deps: [state_albers_density_ndjson],
+  run: (path) => sh`geo2topo -n tracts=${state_albers_density_ndjson}
+  | toposimplify -p 1 -f
+  | topoquantize 1e5
+  | topomerge -k 'd.id.slice(0, 3)' counties=tracts
+  | topomerge --mesh -f 'a !== b' counties=counties
+  | tee ${path} | wc`,
+});
+
+state_svg = Task({
+  path: `state${state}.svg`,
+  deps: [state_topojson],
+  run: (path) => sh`bash -c  ${`(topo2geo tracts=- \
+  < ${state_topojson} \
+  | ndjson-map -r d3 -r d3-scale-chromatic 'z = d3.scaleThreshold().domain([1, 10, 50, 200, 500, 1000, 2000, 4000]).range(d3.schemeOrRd[9]), d.features.forEach(f => f.properties.fill = z(f.properties.density)), d' \
+  | ndjson-split 'd.features'; \
+topo2geo counties=- \
+  < ${state_topojson} \
+  | ndjson-map 'd.properties = {"stroke": "#000", "stroke-opacity": 0.3}, d')`}
+| geo2svg -n --stroke none -p 1 -w 960 -h 960 \
+| tee ${path} | wc`,
 });

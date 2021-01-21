@@ -1,0 +1,4 @@
+tfp_json = Task({
+  path: "tfp.json",
+  run: (path) => sh`node scrape.js | tee ${path} | wc`,
+});

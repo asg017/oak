@@ -57,7 +57,31 @@ async function test(tmp) {
       9,
       "Last pipe should ahve been killed with SIGKILL"
     );
+
+    pipeline = sh`echo "I exist" | not_exist | tee ${tmp}`;
+
+    try {
+      await pipeline.end();
+      fail();
+    } catch (e) {
+      assert(
+        e instanceof ShellPipelineError,
+        true,
+        "Error is ShellPipelineError"
+      );
+      assert(e.i, 1, "Second pipe should have throw error.");
+      const lastPipe = pipeline.pipes[1];
+      const lastPipeWaitResult = os.waitpid(lastPipe.pid);
+      // TODO why isn't this PID
+      //assert(lastPipeWaitResult[0], lastPipe.pid);
+      assert(
+        lastPipeWaitResult[1],
+        9,
+        "Last pipe should have been killed with SIGKILL"
+      );
+    }
   }
+
   await sh`mkfile 100m ${tmp}`.end();
   assert(os.stat(tmp)[0].size, 104857600);
 

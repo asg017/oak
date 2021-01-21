@@ -12,6 +12,23 @@ function dirname(filepath) {
   return filepath.substring(0, filepath.lastIndexOf("/"));
 }
 
+function graph(module) {
+  const ignore = new Set(module._runtime._builtin._scope.keys());
+  return Array.from(module._runtime._variables)
+    .filter(
+      (v) =>
+        !(
+          (v._inputs.length === 1 && v._module !== v._inputs[0]._module) // isimport
+        ) && v._reachable
+    )
+    .filter((v) => v._module !== module._runtime._builtin) // is builtin
+    .filter((v) => !ignore.has(v._name))
+    .map((v) => ({
+      name: v._name,
+      inputs: v._inputs.map((d) => d._name).filter((d) => !ignore.has(d)),
+    }));
+}
+
 async function run(...args) {
   let ojsFilePath, err;
   print(args);
@@ -36,6 +53,7 @@ async function run(...args) {
   const stdlib = {
     Task: () => createTaskDefintion(outDir),
     sh: () => sh,
+    env: () => (key) => std.getenv(key),
   };
 
   const runtime = new Runtime(stdlib, null);
@@ -48,6 +66,11 @@ async function run(...args) {
       rejected: (error) => console.log("rejected", name, error),
     };
   });
+  print(`digraph {
+    ${graph(m)
+      .map((p) => `{${p.inputs.join(",")}} -> ${p.name};`)
+      .join("\n")}
+  }`);
   await runtime._compute();
   /*os.signal(os.SIGINT, (e) => {
     print("sigint");
@@ -58,6 +81,7 @@ async function run(...args) {
   print("done");
   //await new Promise((res, rej) => setTimeout(res, 1000));
 }
+
 async function main() {
   const [scriptName, cmd, ...args] = scriptArgs;
   if (!cmd) {

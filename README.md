@@ -50,7 +50,39 @@ sh`echo "hi" > ${fd}`;
 sh`cat ${sh`echo hello`} ${sh`echo "from the other side"`}`;
 ```
 
-## Farout ideas
+## Task freshness algo
+
+1. If target doesnt exist, run.
+2. If task deps are different than before, run.
+3. If any of the task deps have changed since before, run.
+4. If the task's run returns a different shell script, run.
+5. If any of the arguments in the tasks's run returned shell script is different, run. (???)
+
+- Wouldnt the task deps array catch this? (in v0)
+- for env var, I guess...
+
+## db
+
+- Task Executions
+  - `cellName TEXT`
+    - Not sure if this will be possible without a custom compiler...
+  - `targetPath TEXT`
+  - ``
+
+```
+{
+  tasks: {
+    "state.json": {
+      "depsSignature": "",
+      "postRunSignature": "aa09ec8dfe7a098ef7d0a9c7e"
+    }
+  }
+}
+```
+
+##
+
+## Far out ideas
 
 - Non-file task targets
   - S3 objects, remote databases, other filesystems

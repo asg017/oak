@@ -14,4 +14,4 @@ c = Task({
   run: (path) => sh`cat ${a} ${b} | tee ${path}`,
 });
 
-x = sh`echo "Whats up boi"`.end();
+x = sh`echo "Whats up boi" ${env("STATE") || "no"} lol`.end();
