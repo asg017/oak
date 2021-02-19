@@ -1,9 +1,0 @@
-raw_data = new Task({
-  target: "state.zip",
-  run: raw_data => shell`wget -O ${raw_data} "https://usbuildingdata.blob.core.windows.net/usbuildings-v1-1/DistrictofColumbia.zip"`
-})
-
-data = new Task({
-  target: "data",
-  run: data => shell`unzip -d ${data} ${raw_data}`
-})

@@ -1,6 +1,0 @@
-name = "Alex"
-
-t = new Task({
-    target: "file.txt",
-    run: target => shell`node write.js ${name} ${target}`
-})

@@ -1,9 +1,0 @@
-a_dir = new Task({
-  target: "a",
-  run: a_dir => command("node", ["generate_files.js", a_dir, 5, "a"])
-});
-
-b = new Task({
-  target: "b.txt",
-  run: b => shell`./print_files.sh ${a_dir} > ${b}`
-});

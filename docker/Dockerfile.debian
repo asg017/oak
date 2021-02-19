@@ -1,11 +1,14 @@
-FROM alpine
+
+FROM debian:buster-slim
+
 COPY ./deps/quickjs /deps/quickjs
 WORKDIR /deps/quickjs
-RUN apk --no-cache add \
+RUN apt-get update && apt-get install -y \
     clang \
     gcc \
     make \
-    musl-dev 
+     --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN make
 RUN make install
@@ -20,6 +23,6 @@ COPY deps/runtime/runtime-qjs.js /src/oak/deps/runtime/runtime-qjs.js
 COPY deps/unofficial-observablehq-compiler/ocompiler-qjs.js  /src/oak/deps/unofficial-observablehq-compiler/ocompiler-qjs.js
 RUN make build
 
-FROM alpine
+FROM debian:buster-slim
 COPY --from=0 /src/oak/bin/oak /usr/local/bin
 CMD ["oak"]

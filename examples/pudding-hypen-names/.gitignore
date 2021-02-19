@@ -1,8 +1,0 @@
-.DS_Store
-.tmp
-.vscode
-npm-debug.log
-node_modules
-dev
-dist
-package-lock.json

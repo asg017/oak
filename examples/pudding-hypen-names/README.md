@@ -1,3 +1,0 @@
-# Hyphenated Names
-
-Inspiration: [TODO]()
